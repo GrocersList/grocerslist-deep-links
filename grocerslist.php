@@ -3,7 +3,7 @@
 Plugin Name: Grocers List Deep Links for Amazon
 Plugin URI: https://grocerslist.com
 Description: Automatically rewrites Amazon affiliate links with deep links using Grocers List's App Links Product Catalog.
-Requires at least: 6.2
+Requires at least: 4.4
 Requires PHP: 7.0
 Tested up to: 6.8
 Version: 1.0.0
