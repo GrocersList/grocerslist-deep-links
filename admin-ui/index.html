@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Grocers List Admin</title>
+    <script>
+      window.grocersList = {
+        ajaxUrl: '/wp-admin/admin-ajax.php',
+        nonce: "<?php echo esc_js(wp_create_nonce('grocers_list_nonce')); ?>"
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
