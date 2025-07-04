@@ -109,7 +109,7 @@ export const SettingsPage = () => {
               color="primary"
             />
           }
-          label="Generate Grocers List short links when saving a post"
+          label="Generate Grocers List deep links when saving a post"
         />
 
         <FormControlLabel
@@ -120,7 +120,7 @@ export const SettingsPage = () => {
               color="primary"
             />
           }
-          label="Serve Grocers List short links to site viewer"
+          label="Serve Grocers List deep links to site viewer"
         />
 
         {/*/!* Link Count Status Card *!/*/}

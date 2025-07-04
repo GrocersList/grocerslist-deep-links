@@ -18,7 +18,7 @@ class SettingsPage {
     }
 
     public function addMenu(): void {
-        $svgPath = plugin_dir_path(__FILE__) . '../../assets/icon.svg';
+        $svgPath = plugin_dir_path(__FILE__) . '../../assets/gl.svg';
         $svgData = file_get_contents($svgPath);
         $iconUrl = 'data:image/svg+xml;base64,' . base64_encode($svgData);
 
@@ -27,7 +27,8 @@ class SettingsPage {
             'Grocers List',
             'manage_options',
             'grocers-list',
-            [$this, 'renderPage']
+            [$this, 'renderPage'],
+            $iconUrl
         );
     }
 
