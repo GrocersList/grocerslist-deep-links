@@ -1,6 +1,6 @@
 <?php
 
-namespace GrocersList\Public;
+namespace GrocersList\Frontend;
 
 use GrocersList\Support\Config;
 use GrocersList\Support\Hooks;

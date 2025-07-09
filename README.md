@@ -12,12 +12,9 @@ Automatically turn Amazon links on your blog into deep links that open the click
 
 == Description ==
 
-[Grocers List](https://grocerslist.com) is a suite of tools built for food and recipe bloggers. In a few clicks it super start earning more from the existing Amazon affiliate links published on your posts. Link your account in [Grocers List](https://grocerslist.com), and we’ll quickly find all amazon links published on your site.
+[Grocers List](https://grocerslist.com) is a suite of tools built for food and recipe bloggers. The plugin makes it super easy to start earning more from the existing Amazon affiliate links published on your posts. Connect the plugin to your existing grocers list account, and we’ll quickly find all amazon links published on your site.
 
 We’ll then automatically convert them into deep links for Amazon. When clicked, it will bring the visitor into their Amazon app on their phone, where they have the highest likelihood of converting. Driving clicks into the Amazon app, rather than into Amazon in the browser, converts 3-5X more.
-
-> <strong>Get the most out of Grocers List!</strong><br>
-> Once you sign up access our customer success reps immediately > right from within the App. No payment needed!
 
 <hr>
 
@@ -30,28 +27,13 @@ An overview of our features:
 - **_Automatically convert_** Amazon links **into deep links** when publishing a new blog post.
 - Track deep link clicks and performance inside your Grocers List Account.
 
-== Installation ==
-
-1. Upload the `wp-recipe-maker` directory (directory included) to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Add recipes using the "WP Recipe Maker" button when editing posts or pages
-
-<!-- == Frequently asked questions == -->
-
-== Screenshots ==
-
-1. Example Pasta Pesto recipe with the Simple template.
-2. Use the "WP Recipe Maker" button to add recipes or click on the recipe preview to edit one.
-3. The recipe form.
-4. Example Pasta Pesto recipe with the Tastefully Simple (EasyRecipe like) template.
-
 == Changelog ==
 
-#### - 7/3/2024 - Grocerslist Plugin for
+#### - 7/4/2024 - v1.0.0 now stable
 
 ### Resources:
 
-- [How we use external services and what data we collect](docs/EXTERNAL_SERVICES.md)
+- [How we use external services and what data we collect](https://github.com/GrocersList/grocerslist-deep-links/blob/main/docs/EXTERNAL_SERVICES.md)
 
 <hr>
 

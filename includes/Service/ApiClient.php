@@ -52,7 +52,15 @@ class ApiClient implements IApiClient
         return $code === 200;
     }
 
-    public function loginFollower(string $apiKey, string $email, string $password): string|\WP_Error
+    /**
+     * Login a follower
+     * 
+     * @param string $apiKey
+     * @param string $email
+     * @param string $password
+     * @return string|\WP_Error
+     */
+    public function loginFollower(string $apiKey, string $email, string $password)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
@@ -70,7 +78,14 @@ class ApiClient implements IApiClient
 		return wp_remote_retrieve_body($response);
     }
 
-    public function checkFollowerMembershipStatus(string $apiKey, string $jwt): string|\WP_Error
+    /**
+     * Check follower membership status
+     * 
+     * @param string $apiKey
+     * @param string $jwt
+     * @return string|\WP_Error
+     */
+    public function checkFollowerMembershipStatus(string $apiKey, string $jwt)
     {
 	    if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 

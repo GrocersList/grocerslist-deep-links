@@ -13,8 +13,8 @@ use GrocersList\Support\WordPressHooks;
 use GrocersList\Support\ContentFilter;
 use GrocersList\Support\GatingContentFilter;
 use GrocersList\Admin\AjaxController;
-use GrocersList\Public\PublicAjaxController;
-use GrocersList\Public\ClientScripts;
+use GrocersList\Frontend\PublicAjaxController;
+use GrocersList\Frontend\ClientScripts;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Jobs\LinkCountVisitor;
@@ -25,7 +25,7 @@ class Plugin
     private Hooks $hooks;
     private static bool $registered = false;
 
-    public function __construct(Hooks $hooks = null)
+    public function __construct(?Hooks $hooks = null)
     {
         $this->hooks = $hooks ?? new WordPressHooks();
     }

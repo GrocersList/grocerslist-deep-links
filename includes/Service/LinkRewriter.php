@@ -57,7 +57,9 @@ class LinkRewriter
 
         if ($result->rewritten) {
             Logger::debug("LinkRewriter::onPostSave() content rewritten, adding redirect hook");
-            $this->hooks->addFilter('redirect_post_location', fn($loc) => add_query_arg('adl_rewritten', '1', $loc));
+            $this->hooks->addFilter('redirect_post_location', function($loc) {
+                return add_query_arg('adl_rewritten', '1', $loc);
+            });
         } else {
             Logger::debug("LinkRewriter::onPostSave() nothing rewritten");
         }
