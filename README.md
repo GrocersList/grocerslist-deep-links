@@ -1,9 +1,9 @@
-=== Grocers List Deep Links for Amazon ===
+=== Grocers List ===
 Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -29,7 +29,9 @@ An overview of our features:
 
 == Changelog ==
 
-#### - 7/4/2024 - v1.0.0 now stable
+#### - 7/10/2025 - v1.0.0 - plugin rename
+
+#### - 7/4/2025 - v1.0.0 now stable
 
 ### Resources:
 

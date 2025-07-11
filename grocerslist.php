@@ -1,13 +1,13 @@
 <?php
 /*
-Plugin Name: Grocers List Deep Links for Amazon
+Plugin Name: Grocers List
 Plugin URI: https://grocerslist.com
 Description: Automatically rewrites Amazon affiliate links with deep links using Grocers List's App Links Product Catalog.
 Requires at least: 4.4
 Requires PHP: 7.0
 Tested up to: 6.8
-Version: 1.0.0
-Stable tag: 1.0.0
+Version: 1.0.1
+Stable tag: 1.0.1
 Author: Grocers List Engineering
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -17,7 +17,7 @@ Author URI: https://github.com/GrocersList/grocerslist-wordpress-plugin
 
 if (!defined('ABSPATH')) exit;
 
-define('GROCERS_LIST_VERSION', '1.0.0');
+define('GROCERS_LIST_VERSION', '1.0.1');
 define('GROCERS_LIST_PLUGIN_FILE', __FILE__);
 define('GROCERS_LIST_PLUGIN_DIR', __DIR__);
 
@@ -34,7 +34,7 @@ function grocers_list_activate() {
     // Check PHP version
     if (version_compare(PHP_VERSION, '7.0', '<')) {
         wp_die(
-            __('Grocers List Deep Links for Amazon requires PHP 7.0 or higher. Your server is running PHP ' . PHP_VERSION, 'grocers-list'),
+            __('Grocers List requires PHP 7.0 or higher. Your server is running PHP ' . PHP_VERSION, 'grocers-list'),
             __('Plugin Activation Error', 'grocers-list'),
             array('response' => 200, 'back_link' => TRUE)
         );
