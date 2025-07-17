@@ -26,7 +26,9 @@ class PublicAjaxController
     {
         $actions = [
             'grocers_list_validate_api_key' => 'validateApiKey',
+            'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
+            'grocers_list_checkoutFollower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
         ];
 
@@ -50,6 +52,25 @@ class PublicAjaxController
         wp_send_json_success(['is_valid' => $is_valid]);
     }
 
+    public function signupFollower(): void
+    {
+        check_ajax_referer('grocers_list_signup_follower_nonce', 'security');
+
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+        $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
+
+        if (empty($email) || empty($password)) {
+            wp_send_json_error(['error' => 'Email and password are required'], 400);
+            return;
+        }
+
+        $api_key = $this->settings->getApiKey();
+
+        $response = $this->api->signupFollower($api_key, $email, $password);
+
+        wp_send_json_success($response);
+    }
+
     public function loginFollower(): void
     {
         check_ajax_referer('grocers_list_login_follower_nonce', 'security');
@@ -65,6 +86,18 @@ class PublicAjaxController
         $api_key = $this->settings->getApiKey();
 
         $response = $this->api->loginFollower($api_key, $email, $password);
+
+        wp_send_json_success($response);
+    }
+
+    public function checkoutFollower(): void
+    {
+        check_ajax_referer('grocers_list_checkout_nonce', 'security');
+
+        $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
+        $api_key = $this->settings->getApiKey();
+
+        $response = $this->api->checkoutFollower($api_key, $jwt);
 
         wp_send_json_success($response);
     }

@@ -53,6 +53,32 @@ class ApiClient implements IApiClient
     }
 
     /**
+     * Signup a follower
+     *
+     * @param string $apiKey
+     * @param string $email
+     * @param string $password
+     * @return string|\WP_Error
+     */
+    public function signupFollower(string $apiKey, string $email, string $password)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+
+        $response = wp_remote_post("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/followers/signup", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+            ],
+            'body' => json_encode([
+                'username' => $email,
+                'password' => $password,
+            ])
+        ]);
+
+		return wp_remote_retrieve_body($response);
+    }
+
+    /**
      * Login a follower
      * 
      * @param string $apiKey
@@ -76,6 +102,27 @@ class ApiClient implements IApiClient
         ]);
 
 		return wp_remote_retrieve_body($response);
+    }
+
+    /**
+     * Generate Stripe checkout session and redirect to checkout session url
+     *
+     * @param string $apiKey
+     * @param string $jwt
+     * @return string|\WP_Error
+     */
+    public function checkoutFollower(string $apiKey, string $jwt)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+
+        $response = wp_remote_get("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/followers/checkout", [
+            'headers' => [
+                'x-api-key' => $apiKey,
+                'Authorization' => "Bearer " . $jwt,
+            ],
+        ]);
+
+	    return wp_remote_retrieve_body($response);
     }
 
     /**
