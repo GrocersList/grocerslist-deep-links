@@ -2,11 +2,11 @@
 namespace GrocersList\Support;
 
 class Config {
-    public static function getApiSubdomain(): string {
-        if (!defined('GROCERSLIST_API_SUBDOMAIN')) {
-            throw new \RuntimeException('GROCERSLIST_API_SUBDOMAIN is not defined');
+    public static function getApiBaseDomain(): string {
+        if (!defined('GROCERSLIST_API_BASE_DOMAIN')) {
+            throw new \RuntimeException('GROCERSLIST_API_BASE_DOMAIN is not defined');
         }
-        return GROCERSLIST_API_SUBDOMAIN;
+        return GROCERSLIST_API_BASE_DOMAIN;
     }
 
     public static function getLinkstaSubdomain(): string {

@@ -16,7 +16,7 @@ class ApiClient implements IApiClient
             return new LinkResponse([]);
         }
 
-        $response = wp_remote_post("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/links", [
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/links", [
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $api_key,
@@ -40,7 +40,7 @@ class ApiClient implements IApiClient
     {
         if (!$apiKey) return false;
 
-        $response = wp_remote_get("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/validate-api-key", [
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/validate-api-key", [
             'headers' => [
                 'x-api-key' => $apiKey,
             ],
@@ -64,7 +64,7 @@ class ApiClient implements IApiClient
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
-        $response = wp_remote_post("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/followers/signup", [
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/signup", [
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
@@ -90,7 +90,7 @@ class ApiClient implements IApiClient
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
-        $response = wp_remote_post("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/followers/login", [
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/login", [
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
@@ -115,7 +115,7 @@ class ApiClient implements IApiClient
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
-        $response = wp_remote_get("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/followers/checkout", [
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/checkout", [
             'headers' => [
                 'x-api-key' => $apiKey,
                 'Authorization' => "Bearer " . $jwt,
@@ -136,7 +136,7 @@ class ApiClient implements IApiClient
     {
 	    if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
-        $response = wp_remote_get("https://" . Config::getApiSubdomain() . ".grocerslist.com/api/v1/creator-api/followers/me", [
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/me", [
             'headers' => [
                 'x-api-key' => $apiKey,
                 'Authorization' => "Bearer " . $jwt,
