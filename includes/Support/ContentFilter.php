@@ -21,6 +21,19 @@ class ContentFilter
         $this->hooks->addFilter('the_content', [$this, 'filterContent']);
     }
 
+    private function create_timestamp_token($secret_key)
+    {
+        $timestamp = time() * 1000; // seconds -> milliseconds, to conform to javascript timestamp format
+
+        $hash = hash_hmac('sha256', $timestamp, $secret_key);
+        $encoded = base64_encode(json_encode([
+            't' => $timestamp,
+            'h' => $hash
+        ]));
+
+        return urlencode($encoded);
+    }
+
     public function filterContent(string $content): string
     {
         Logger::debug("ContentFilter::filterContent() called");
@@ -31,8 +44,14 @@ class ContentFilter
             return preg_replace_callback(
                 '/<a\s+[^>]*href="([^"]*)"[^>]*data-grocerslist-rewritten-link="([^"]*)"[^>]*>/i',
                 function ($matches) {
+                    // we hash a timestamp and include it in an encoded param "?token=" to allow us to reliably identify
+                    // clicks that should be considered originating from wordpress (which we do not charge for)
+                    $split = explode('/', $matches[2]); // split "linksta.io/asdfasdf" => ["linksta.io", "asdfasdf"]
+                    $link_hash = end($split);
+                    $token_param = $this->create_timestamp_token($link_hash);
+
                     Logger::debug("ContentFilter::filterContent() using rewritten link: {$matches[1]} -> {$matches[2]}");
-                    $tag = str_replace('href="' . $matches[1] . '"', 'href="' . $matches[2] . '"', $matches[0]);
+                    $tag = str_replace('href="' . $matches[1] . '"', 'href="' . $matches[2] . '?token=' . $token_param . '"', $matches[0]);
                     return str_replace('<a ', '<a data-grocers-list-rewritten="true" ', $tag);
                 },
                 $content
