@@ -2,6 +2,7 @@
 
 namespace GrocersList\Admin;
 
+use GrocersList\Support\Config;
 use GrocersList\Support\Hooks;
 
 class PostGating
@@ -46,9 +47,15 @@ class PostGating
 
     public function addMetaBoxes(): void
     {
+        // If external JS URL is not set, don't show the meta box
+        $externalJsUrl = Config::getExternalJsUrl();
+        if (empty($externalJsUrl)) {
+            return;
+        }
+
         add_meta_box(
             'grocers_list_gating_options',
-            'Grocers List Gating Options',
+            'Membership Options',
             [$this, 'renderMetaBox'],
             'post',
             'side',
