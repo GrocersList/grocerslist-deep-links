@@ -25,8 +25,14 @@ class ClientScripts
         $version = GROCERS_LIST_VERSION;
         wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $version, true);
 
-        wp_localize_script('grocers-list-client', 'grocersListClient', [
+        wp_localize_script('grocers-list-client', 'grocersList', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonces' => [
+                'grocers_list_signup_follower' => wp_create_nonce('grocers_list_signup_follower'),
+                'grocers_list_login_follower' => wp_create_nonce('grocers_list_login_follower'),
+                'grocers_list_checkout_follower' => wp_create_nonce('grocers_list_checkout_follower'),
+                'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
+            ],
         ]);
 
         $externalJsUrl = Config::getExternalJsUrl();

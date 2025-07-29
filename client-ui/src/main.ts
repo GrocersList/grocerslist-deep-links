@@ -1,6 +1,6 @@
 async function validateApiKey(): Promise<boolean> {
   try {
-    const ajaxUrl = (window as any).ajaxurl || (window as any).grocersListClient?.ajaxUrl || '/wp-admin/admin-ajax.php';
+    const ajaxUrl = (window as any).grocersList?.ajaxUrl;
 
     const response = await fetch(ajaxUrl, {
       method: 'POST',

@@ -28,7 +28,7 @@ class PublicAjaxController
             'grocers_list_validate_api_key' => 'validateApiKey',
             'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
-            'grocers_list_checkoutFollower' => 'checkoutFollower',
+            'grocers_list_checkout_follower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
         ];
 
@@ -54,7 +54,7 @@ class PublicAjaxController
 
     public function signupFollower(): void
     {
-        check_ajax_referer('grocers_list_signup_follower_nonce', 'security');
+        check_ajax_referer('grocers_list_signup_follower', 'security');
 
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
         $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
@@ -73,7 +73,7 @@ class PublicAjaxController
 
     public function loginFollower(): void
     {
-        check_ajax_referer('grocers_list_login_follower_nonce', 'security');
+        check_ajax_referer('grocers_list_login_follower', 'security');
 
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
         $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
@@ -92,24 +92,30 @@ class PublicAjaxController
 
     public function checkoutFollower(): void
     {
-        check_ajax_referer('grocers_list_checkout_nonce', 'security');
+        check_ajax_referer('grocers_list_checkout_follower', 'security');
 
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
         $api_key = $this->settings->getApiKey();
 
-        $response = $this->api->checkoutFollower($api_key, $jwt);
+        // TODO:
+        //  - account for removing url parameters that grocerslist sends like ?failure=
+        //  - switch "?failure= for something less likely to collide with 3rd party params
+        //      like ?gl-failure= or don't use url params
+        $redirectUrl = wp_get_referer();
+        $response = $this->api->checkoutFollower($api_key, $jwt, $redirectUrl);
 
         wp_send_json_success($response);
     }
 
     public function checkFollowerMembershipStatus(): void
     {
-        check_ajax_referer('grocers_list_check_follower_membership_status_nonce', 'security');
+        check_ajax_referer('grocers_list_check_follower_membership_status', 'security');
 
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
         $api_key = $this->settings->getApiKey();
 
-        $response = $this->api->checkFollowerMembershipStatus($api_key, $jwt);
+        $redirectUrl = wp_get_referer();
+        $response = $this->api->checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
         wp_send_json_success($response);
     }

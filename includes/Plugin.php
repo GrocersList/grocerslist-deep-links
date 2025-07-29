@@ -68,6 +68,13 @@ class Plugin
         $contentFilter = new ContentFilter($this->hooks, $pluginSettings);
         $contentFilter->register();
 
+        // Register post gating components
+        $postGating = new PostGating($this->hooks);
+        $postGating->register();
+
+        $gatingContentFilter = new GatingContentFilter($this->hooks);
+        $gatingContentFilter->register();
+
         self::$registered = true;
     }
 }

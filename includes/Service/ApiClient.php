@@ -111,18 +111,19 @@ class ApiClient implements IApiClient
      * @param string $jwt
      * @return string|\WP_Error
      */
-    public function checkoutFollower(string $apiKey, string $jwt)
+    public function checkoutFollower(string $apiKey, string $jwt, string $redirectUrl)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+        if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
 
-        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/checkout", [
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/checkout?redirect=" . urlencode($redirectUrl), [
             'headers' => [
                 'x-api-key' => $apiKey,
                 'Authorization' => "Bearer " . $jwt,
             ],
         ]);
 
-	    return wp_remote_retrieve_body($response);
+        return wp_remote_retrieve_body($response);
     }
 
     /**
@@ -132,11 +133,12 @@ class ApiClient implements IApiClient
      * @param string $jwt
      * @return string|\WP_Error
      */
-    public function checkFollowerMembershipStatus(string $apiKey, string $jwt)
+    public function checkFollowerMembershipStatus(string $apiKey, string $jwt, string $redirectUrl)
     {
 	    if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+        if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
 
-        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/me", [
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/me?redirect=" . urlencode($redirectUrl), [
             'headers' => [
                 'x-api-key' => $apiKey,
                 'Authorization' => "Bearer " . $jwt,
