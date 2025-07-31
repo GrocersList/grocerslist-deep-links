@@ -18,11 +18,13 @@ async function validateApiKey(): Promise<boolean> {
     }
 
     const {
+      data: {
+        membershipSettings = {},
+        hasMembershipsEnabled = false,
+        creatorAccountId = "",
+        valid = false,
+      },
       success,
-      membershipSettings = {},
-      membershipsEnabled = false,
-      creatorAccountId = "",
-      is_valid = false,
     } = await response.json();
 
     if (success) {
@@ -31,12 +33,12 @@ async function validateApiKey(): Promise<boolean> {
         ...(window as any).grocersList,
         config: {
           membershipSettings,
-          membershipsEnabled,
+          hasMembershipsEnabled,
           creatorAccountId,
-          apiKeyValid: is_valid,
+          apiKeyValid: valid,
         },
       };
-      return is_valid;
+      return valid;
     } else {
       return false;
     }

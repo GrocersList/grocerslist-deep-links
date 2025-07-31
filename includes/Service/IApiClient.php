@@ -7,5 +7,9 @@ use GrocersList\Support\Config;
 
 interface IApiClient {
     public function postAppLinks(array $urls): LinkResponse;
-    public function validateApiKey(string $apiKey): bool;
+    /**
+     * @param string $apiKey
+     * @return mixed Returns response data or false/WP_Error on failure
+     */
+    public function validateApiKey(string $apiKey);
 }

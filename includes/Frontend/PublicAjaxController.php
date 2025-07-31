@@ -30,6 +30,7 @@ class PublicAjaxController
             'grocers_list_login_follower' => 'loginFollower',
             'grocers_list_checkout_follower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
+            'grocers_list_get_creator_config' => 'getCreatorConfig',
         ];
 
         foreach ($actions as $hook => $method) {
@@ -47,9 +48,57 @@ class PublicAjaxController
             return;
         }
 
-        $is_valid = $this->api->validateApiKey($api_key);
+        $response = $this->api->validateApiKey($api_key);
 
-        wp_send_json_success(['is_valid' => $is_valid]);
+        // Parse the response if it's a string
+        $data = is_string($response) ? json_decode($response, true) : $response;
+        
+        // Handle error or invalid response
+        if (!$data || is_wp_error($response)) {
+            wp_send_json_success([
+                'valid' => false,
+                'membershipSettings' => new \stdClass(),
+                'membershipsEnabled' => false,
+                'creatorAccountId' => ''
+            ]);
+            return;
+        }
+
+        // Extract validation status - check for different possible response formats
+        $valid = isset($data['valid']) ? $data['valid'] : 
+                 (isset($data['is_valid']) ? $data['is_valid'] : 
+                 (isset($data['success']) ? $data['success'] : true));
+
+        // Format response for frontend
+        wp_send_json_success([
+            'valid' => $valid,
+            'membershipSettings' => $data['membershipSettings'] ?? new \stdClass(),
+            'membershipsEnabled' => $data['membershipsEnabled'] ?? false,
+            'creatorAccountId' => $data['creatorAccountId'] ?? ''
+        ]);
+    }
+
+    public function getCreatorConfig(): void
+    {
+        $api_key = $this->settings->getApiKey();
+        
+        // Since getCreatorConfig doesn't exist in ApiClient, use validateApiKey
+        $response = $this->api->validateApiKey($api_key);
+        
+        // Parse the response if it's a string
+        $data = is_string($response) ? json_decode($response, true) : $response;
+        
+        // Handle error or invalid response
+        if (!$data || is_wp_error($response)) {
+            wp_send_json_success([
+                'membershipSettings' => new \stdClass(),
+                'membershipsEnabled' => false,
+                'creatorAccountId' => ''
+            ]);
+            return;
+        }
+        
+        wp_send_json_success($data);
     }
 
     public function signupFollower(): void

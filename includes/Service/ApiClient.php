@@ -36,9 +36,15 @@ class ApiClient implements IApiClient
         return new LinkResponse($data);
     }
 
-    public function validateApiKey(string $apiKey): bool
+    /**
+     * Validate API key and get creator configuration
+     *
+     * @param string $apiKey
+     * @return string|\WP_Error Returns the response body or WP_Error on failure
+     */
+    public function validateApiKey(string $apiKey)
     {
-        if (!$apiKey) return false;
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
 
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/validate-api-key", [
             'headers' => [
@@ -46,10 +52,9 @@ class ApiClient implements IApiClient
             ],
         ]);
 
-        if (is_wp_error($response)) return false;
+        if (is_wp_error($response)) return $response;
 
-        $code = wp_remote_retrieve_response_code($response);
-        return $code === 200;
+        return wp_remote_retrieve_body($response);
     }
 
     /**
