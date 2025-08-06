@@ -31,6 +31,7 @@ class PublicAjaxController
             'grocers_list_checkout_follower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
             'grocers_list_get_creator_config' => 'getCreatorConfig',
+            'grocers_list_get_post_gating_options' => 'getPostGatingOptions',
         ];
 
         foreach ($actions as $hook => $method) {
@@ -170,5 +171,37 @@ class PublicAjaxController
         $response = $this->api->checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
         wp_send_json_success($response);
+    }
+
+    public function getPostGatingOptions(): void
+    {
+        check_ajax_referer('grocers_list_get_post_gating_options', 'security');
+
+        if (!isset($_POST['postId'])) {
+            wp_send_json_error(['error' => 'Invalid post ID'], 400);
+            return;
+        }
+
+        $post_id_raw = sanitize_text_field(wp_unslash($_POST['postId']));
+
+        if (!is_numeric($post_id_raw)) {
+            wp_send_json_error(['error' => 'Invalid post ID'], 400);
+            return;
+        }
+
+        $post_id = intval($post_id_raw);
+
+        if (!get_post($post_id)) {
+            wp_send_json_error(['error' => 'Post not found'], 404);
+            return;
+        }
+
+        $post_gated = get_post_meta($post_id, 'grocers_list_post_gated', true) === '1';
+        $recipe_card_gated = get_post_meta($post_id, 'grocers_list_recipe_card_gated', true) === '1';
+
+        wp_send_json_success([
+            'postGated' => $post_gated,
+            'recipeCardGated' => $recipe_card_gated,
+        ]);
     }
 }
