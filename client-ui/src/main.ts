@@ -23,6 +23,7 @@ async function validateApiKey(): Promise<boolean> {
         hasMembershipsEnabled = false,
         creatorAccountId = "",
         valid = false,
+        logoUrl = "",
       },
       success,
     } = await response.json();
@@ -36,6 +37,7 @@ async function validateApiKey(): Promise<boolean> {
           hasMembershipsEnabled,
           creatorAccountId,
           apiKeyValid: valid,
+          logoUrl,
         },
       };
       return valid;

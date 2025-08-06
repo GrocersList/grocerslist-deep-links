@@ -59,7 +59,8 @@ class PublicAjaxController
                 'valid' => false,
                 'membershipSettings' => new \stdClass(),
                 'membershipsEnabled' => false,
-                'creatorAccountId' => ''
+                'creatorAccountId' => '',
+                'logoUrl' => '',
             ]);
             return;
         }
@@ -74,7 +75,8 @@ class PublicAjaxController
             'valid' => $valid,
             'membershipSettings' => $data['membershipSettings'] ?? new \stdClass(),
             'membershipsEnabled' => $data['membershipsEnabled'] ?? false,
-            'creatorAccountId' => $data['creatorAccountId'] ?? ''
+            'creatorAccountId' => $data['creatorAccountId'] ?? '',
+            'logoUrl' => $data['logoUrl'] ?? '',
         ]);
     }
 
@@ -93,7 +95,8 @@ class PublicAjaxController
             wp_send_json_success([
                 'membershipSettings' => new \stdClass(),
                 'membershipsEnabled' => false,
-                'creatorAccountId' => ''
+                'creatorAccountId' => '',
+                'logoUrl' => '',
             ]);
             return;
         }
