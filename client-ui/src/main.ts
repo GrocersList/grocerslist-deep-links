@@ -75,7 +75,7 @@ async function validateApiKey(): Promise<boolean> {
     const {
       data: {
         membershipSettings = {},
-        hasMembershipsEnabled = false,
+        membershipsEnabled = false,
         creatorAccountId = "",
         valid = false,
         logoUrl = "",
@@ -89,7 +89,7 @@ async function validateApiKey(): Promise<boolean> {
         ...(window as any).grocersList,
         config: {
           membershipSettings,
-          hasMembershipsEnabled,
+          membershipsEnabled,
           creatorAccountId,
           apiKeyValid: valid,
           logoUrl,
