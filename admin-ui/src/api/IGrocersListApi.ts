@@ -14,6 +14,10 @@ export interface IGrocersListApi {
   getLinkCountInfo(): Promise<LinkCountInfo>
   getPostGatingOptions(postId: number): Promise<PostGatingOptions>
   updatePostGatingOptions(postId: number, options: PostGatingOptions): Promise<void>
+  getQueueStats(): Promise<QueueStats>
+  processQueue(): Promise<ProcessQueueResult>
+  resetFailedPosts(): Promise<ResetFailedResult>
+  getUrlMappings(limit?: number): Promise<UrlMapping[]>
 }
 
 export type MatchedLinks = {
@@ -47,4 +51,30 @@ export type MigrationResponse = {
 export type PostGatingOptions = {
   postGated: boolean
   recipeCardGated: boolean
+}
+
+export type QueueStats = {
+  total: number
+  pending: number
+  processing: number
+  completed: number
+  failed: number
+  nextScheduledRun?: string
+}
+
+export type ProcessQueueResult = {
+  processed: number
+  errors: number
+}
+
+export type ResetFailedResult = {
+  reset: number
+}
+
+export type UrlMapping = {
+  id: number
+  original_url: string
+  linksta_url: string
+  link_hash: string
+  created_at: string
 }

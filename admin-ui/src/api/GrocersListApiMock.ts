@@ -1,4 +1,14 @@
-import type {IGrocersListApi, MatchedLinks, MigrationStatus, LinkCountInfo, PostGatingOptions} from './IGrocersListApi'
+import type {
+  IGrocersListApi, 
+  MatchedLinks, 
+  MigrationStatus, 
+  LinkCountInfo, 
+  PostGatingOptions,
+  QueueStats,
+  ProcessQueueResult,
+  ResetFailedResult,
+  UrlMapping
+} from './IGrocersListApi'
 
 const STORAGE_KEY = 'grocers_list_mock_state'
 
@@ -17,17 +27,6 @@ const getDefaultState = (): GrocersListPluginState => ({
 })
 
 export class GrocersListApiMock implements IGrocersListApi {
-  getPostGatingOptions(_: number): Promise<PostGatingOptions> {
-    return Promise.resolve({
-      postGated: false,
-      recipeCardGated: false
-    });
-  }
-
-  updatePostGatingOptions(_1: number, _2: PostGatingOptions): Promise<void> {
-    return Promise.resolve();
-  }
-
   private delay(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
@@ -163,5 +162,76 @@ export class GrocersListApiMock implements IGrocersListApi {
       processedPosts: isComplete ? 25 : randomProcessed,
       isComplete
     };
+  }
+
+  async getPostGatingOptions(postId: number): Promise<PostGatingOptions> {
+    console.log('🔧 Mock getPostGatingOptions', postId);
+    await this.delay(300);
+    return {
+      postGated: Math.random() > 0.5,
+      recipeCardGated: Math.random() > 0.7
+    };
+  }
+
+  async updatePostGatingOptions(postId: number, options: PostGatingOptions): Promise<void> {
+    console.log('🔧 Mock updatePostGatingOptions', postId, options);
+    await this.delay(500);
+  }
+
+  async getQueueStats(): Promise<QueueStats> {
+    console.log('🔧 Mock getQueueStats');
+    await this.delay(400);
+    
+    const total = 15;
+    const completed = Math.floor(Math.random() * 8);
+    const failed = Math.floor(Math.random() * 3);
+    const processing = Math.random() > 0.7 ? 1 : 0;
+    const pending = total - completed - failed - processing;
+
+    return {
+      total,
+      pending: Math.max(0, pending),
+      processing,
+      completed,
+      failed,
+      nextScheduledRun: new Date(Date.now() + 180000).toISOString() // 3 minutes from now
+    };
+  }
+
+  async processQueue(): Promise<ProcessQueueResult> {
+    console.log('🔧 Mock processQueue');
+    await this.delay(2000); // Simulate processing time
+    
+    const processed = Math.floor(Math.random() * 5) + 1;
+    const errors = Math.random() > 0.8 ? 1 : 0;
+    
+    return { processed, errors };
+  }
+
+  async resetFailedPosts(): Promise<ResetFailedResult> {
+    console.log('🔧 Mock resetFailedPosts');
+    await this.delay(800);
+    
+    return { reset: Math.floor(Math.random() * 3) + 1 };
+  }
+
+  async getUrlMappings(limit = 100): Promise<UrlMapping[]> {
+    console.log('🔧 Mock getUrlMappings', limit);
+    await this.delay(600);
+    
+    const mappings: UrlMapping[] = [];
+    const count = Math.min(limit, Math.floor(Math.random() * 20) + 5);
+    
+    for (let i = 0; i < count; i++) {
+      mappings.push({
+        id: i + 1,
+        original_url: `https://amazon.com/dp/B${String(Math.random()).substr(2, 6)}`,
+        linksta_url: `https://linksta.io/${String(Math.random()).substr(2, 8)}`,
+        link_hash: String(Math.random()).substr(2, 8),
+        created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+      });
+    }
+    
+    return mappings;
   }
 }

@@ -3,19 +3,26 @@
 namespace GrocersList\Jobs;
 
 use GrocersList\Service\LinkRewriter;
+use GrocersList\Service\UrlMappingService;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Hooks;
+use GrocersList\Support\ILinkExtractor;
 use GrocersList\Support\Logger;
 
 class MigrationVisitor extends PostVisitor
 {
     private LinkRewriter $rewriter;
+    private ?UrlMappingService $urlMappingService;
+    private ILinkExtractor $linkExtractor;
     private PluginSettings $settings;
     private int $migratedPosts = 0;
     private int $lastMigrationTime = 0;
+    private int $totalMappingsCreated = 0;
 
     public function __construct(
         LinkRewriter   $rewriter,
+        ?UrlMappingService $urlMappingService,
+        ILinkExtractor $linkExtractor,
         PluginSettings $settings,
         Hooks          $hooks,
         int            $batchSize = 10
@@ -23,6 +30,8 @@ class MigrationVisitor extends PostVisitor
     {
         parent::__construct($hooks, $batchSize);
         $this->rewriter = $rewriter;
+        $this->urlMappingService = $urlMappingService;
+        $this->linkExtractor = $linkExtractor;
         $this->settings = $settings;
     }
 
@@ -45,11 +54,8 @@ class MigrationVisitor extends PostVisitor
                 $wpdb->prepare(
                     "SELECT p.ID
                      FROM {$wpdb->posts} p
-                     INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
                      WHERE p.post_status = 'publish'
                        AND p.post_type IN ('post', 'page')
-                       AND pm.meta_key = '_grocers_list_needs_migration'
-                       AND pm.meta_value = '1'
                        AND p.ID > %d
                      ORDER BY p.ID ASC
                      LIMIT %d",
@@ -66,17 +72,40 @@ class MigrationVisitor extends PostVisitor
 
     protected function visitPost($post): bool
     {
-        $result = $this->rewriter->rewrite($post->post_content);
+        // Use NEW mode: create database mappings instead of modifying content
+        if ($this->urlMappingService !== null) {
+            $content = $post->post_content;
+            $normalized = html_entity_decode(stripslashes($content));
+            $urls = $this->linkExtractor->extract($normalized);
+            
+            Logger::debug("MigrationVisitor: Post {$post->ID} has " . count($urls) . " URLs to process");
+            
+            if (!empty($urls)) {
+                // Create URL mappings in the database
+                $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post->ID);
+                
+                Logger::debug("MigrationVisitor: create_url_mappings_batch returned " . count($mappings) . " mappings");
+                
+                if (!empty($mappings)) {
+                    $this->migratedPosts++;
+                    $this->totalMappingsCreated += count($mappings);
+                    Logger::debug("MigrationVisitor: Created " . count($mappings) . " mappings for post {$post->ID}");
+                } else {
+                    Logger::debug("MigrationVisitor: No mappings created for post {$post->ID}");
+                }
+            }
+        } else {
+            // Fallback to OLD mode if UrlMappingService not available
+            $result = $this->rewriter->rewrite($post->post_content);
 
-        if ($result->rewritten) {
-            wp_update_post([
-                'ID' => $post->ID,
-                'post_content' => $result->content,
-            ]);
-            $this->migratedPosts++;
+            if ($result->rewritten) {
+                wp_update_post([
+                    'ID' => $post->ID,
+                    'post_content' => $result->content,
+                ]);
+                $this->migratedPosts++;
+            }
         }
-
-        delete_post_meta($post->ID, '_grocers_list_needs_migration');
 
         return true;
     }
@@ -93,16 +122,11 @@ class MigrationVisitor extends PostVisitor
                 $wpdb->prepare(
                     "SELECT COUNT(DISTINCT p.ID)
                     FROM {$wpdb->posts} p
-                    INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
                     WHERE p.post_status = %s
-                    AND p.post_type IN (%s, %s)
-                    AND pm.meta_key = %s
-                    AND pm.meta_value = %s",
+                    AND p.post_type IN (%s, %s)",
                     'publish',
                     'post',
-                    'page',
-                    '_grocers_list_needs_migration',
-                    '1'
+                    'page'
                 )
             );
 
@@ -125,12 +149,14 @@ class MigrationVisitor extends PostVisitor
         update_option('grocers_list_migration_migrated_posts', $this->migratedPosts);
         update_option('grocers_list_migration_total_posts', $this->getTotalPosts());
         update_option('grocers_list_migration_last_time', $this->lastMigrationTime);
+        update_option('grocers_list_migration_total_mappings', $this->totalMappingsCreated);
     }
 
     private function resetCounters(): void
     {
         $this->migratedPosts = 0;
         $this->lastMigrationTime = 0;
+        $this->totalMappingsCreated = 0;
     }
 
     public function getMigrationInfo(): array
@@ -138,10 +164,19 @@ class MigrationVisitor extends PostVisitor
         return [
             'migratedPosts' => (int)get_option('grocers_list_migration_migrated_posts', 0),
             'totalPosts' => (int)get_option('grocers_list_migration_total_posts', 0),
+            'totalMappings' => (int)get_option('grocers_list_migration_total_mappings', 0),
             'processedPosts' => $this->getProcessedPosts(),
             'isComplete' => true,
             'isRunning' => false,
             'lastMigration' => (int)get_option('grocers_list_migration_last_time', 0),
         ];
+    }
+    
+    /**
+     * Public method to migrate a single post
+     */
+    public function migratePost($post): bool
+    {
+        return $this->visitPost($post);
     }
 }

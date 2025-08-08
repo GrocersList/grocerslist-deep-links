@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   build: {
-    outDir: path.resolve(process.cwd(), '../../build/grocers-list/client-ui/dist'),
+    outDir: path.resolve(process.cwd(), '../../build/grocerslist/client-ui/dist'),
     emptyOutDir: true,
     manifest: false,
 

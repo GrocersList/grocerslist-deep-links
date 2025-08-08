@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   build: {
-    outDir: path.resolve(process.cwd(), '../../build/grocers-list/admin-ui/dist'),
+    outDir: path.resolve(process.cwd(), '../../build/grocerslist/admin-ui/dist'),
     emptyOutDir: true,
     manifest: false,
 

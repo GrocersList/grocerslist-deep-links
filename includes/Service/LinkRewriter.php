@@ -17,13 +17,15 @@ class LinkRewriter
     private ILinkReplacer $replacer;
     private Hooks $hooks;
     private PluginSettings $settings;
+    private ?UrlMappingService $urlMappingService;
 
     public function __construct(
         IApiClient     $api,
         ILinkExtractor $extractor,
         ILinkReplacer  $replacer,
         Hooks          $hooks,
-        PluginSettings $settings
+        PluginSettings $settings,
+        ?UrlMappingService $urlMappingService = null
     )
     {
         $this->hooks = $hooks;
@@ -31,6 +33,7 @@ class LinkRewriter
         $this->extractor = $extractor;
         $this->api = $api;
         $this->settings = $settings;
+        $this->urlMappingService = $urlMappingService;
     }
 
     public function register(): void
@@ -52,6 +55,31 @@ class LinkRewriter
             return $data;
         }
 
+        // Process links synchronously with URL mapping service
+        if ($this->urlMappingService !== null) {
+            $content = $data['post_content'];
+            $normalized = html_entity_decode(stripslashes($content));
+            $urls = $this->extractor->extract($normalized);
+            
+            if (!empty($urls)) {
+                // Get post ID from postarr or data
+                $post_id = isset($postarr['ID']) ? $postarr['ID'] : (isset($data['ID']) ? $data['ID'] : 0);
+                
+                // Create URL mappings in the database but don't modify content
+                $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post_id);
+                
+                if (!empty($mappings)) {
+                    $this->hooks->addFilter('redirect_post_location', function($loc) {
+                        return add_query_arg('adl_mapped', '1', $loc);
+                    });
+                }
+            }
+            
+            // Return unmodified content - URL replacement happens at render time
+            return $data;
+        }
+
+        // Fallback to direct API rewrite approach
         $result = $this->rewrite($data['post_content']);
         $data['post_content'] = $result->content;
 

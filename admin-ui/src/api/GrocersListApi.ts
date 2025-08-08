@@ -82,4 +82,24 @@ export class GrocersListApi implements IGrocersListApi {
       recipeCardGated: options.recipeCardGated ? '1' : '0'
     });
   }
+
+  async getQueueStats() {
+    const res = await this.post('grocerslist_get_queue_stats', {});
+    return res.data;
+  }
+
+  async processQueue() {
+    const res = await this.post('grocerslist_process_queue', {});
+    return res.data;
+  }
+
+  async resetFailedPosts() {
+    const res = await this.post('grocerslist_reset_failed_posts', {});
+    return res.data;
+  }
+
+  async getUrlMappings(limit = 100) {
+    const res = await this.post('grocerslist_get_url_mappings', { limit: limit.toString() });
+    return res.data;
+  }
 }

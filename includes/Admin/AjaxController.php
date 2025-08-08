@@ -9,6 +9,7 @@ use GrocersList\Support\Regex;
 use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Jobs\LinkCountVisitor;
 use GrocersList\Support\Logger;
+use GrocersList\Scanner\PostScanner;
 
 class AjaxController
 {
@@ -63,15 +64,20 @@ class AjaxController
         check_ajax_referer('grocers_list_clear_settings', 'security');
 
         $this->checkPermission('grocers_list_clear_settings');
-        delete_option('grocers_list_GrocersList\Jobs\LinkCountVisitor_running');
-        delete_option('grocers_list_GrocersList\Jobs\LinkCountVisitor_processed');
-        delete_option('grocers_list_GrocersList\Jobs\LinkCountVisitor_total');
-        delete_option('grocers_list_GrocersList\Jobs\LinkCountVisitor_last_processed_id');
-
-        delete_option('grocers_list_GrocersList\Jobs\MigrationVisitor_running');
-        delete_option('grocers_list_GrocersList\Jobs\MigrationVisitor_processed');
-        delete_option('grocers_list_GrocersList\Jobs\MigrationVisitor_total');
-        delete_option('grocers_list_GrocersList\Jobs\MigrationVisitor_last_processed_id');
+        // Clean up any legacy stored counts (both old and new prefixes)
+        delete_option('grocers_list_link_count_posts_with_links');
+        delete_option('grocers_list_link_count_total_links');
+        delete_option('grocers_list_link_count_total_posts');
+        delete_option('grocers_list_link_count_processed_posts');
+        delete_option('grocers_list_link_count_last_time');
+        
+        // Also delete with new prefix if they exist
+        delete_option('grocerslist_link_count_posts_with_links');
+        delete_option('grocerslist_link_count_total_links');
+        delete_option('grocerslist_link_count_total_posts');
+        delete_option('grocerslist_link_count_processed_posts');
+        delete_option('grocerslist_link_count_last_time');
+        
         $this->settings->reset();
         wp_send_json_success(['message' => 'All settings cleared']);
     }
@@ -135,21 +141,18 @@ class AjaxController
         check_ajax_referer('grocers_list_find_matched_links', 'security');
 
         $this->checkPermission('grocers_list_find_matched_links');
-        $posts = $this->getAllPublishedPosts();
-        $regex = Regex::amazonLink();
+        
+        $results = PostScanner::scanForAmazonLinks();
+        
+        $matched = array_map(function($post) {
+            return [
+                'id' => $post['id'],
+                'title' => $post['title'],
+                'count' => $post['link_count']
+            ];
+        }, $results['posts']);
 
-        $matched = array_filter(array_map(function ($post) use ($regex) {
-            if (preg_match_all($regex, $post->post_content, $matches)) {
-                return [
-                    'id' => $post->ID,
-                    'title' => $post->post_title,
-                    'count' => count($matches[0]),
-                ];
-            }
-            return null;
-        }, $posts));
-
-        wp_send_json_success(['posts' => array_values($matched)]);
+        wp_send_json_success(['posts' => $matched]);
     }
 
     public function countMatchedLinks(): void
@@ -157,23 +160,9 @@ class AjaxController
         check_ajax_referer('grocers_list_count_matched_links', 'security');
 
         $this->checkPermission('grocers_list_count_matched_links');
-        $posts = $this->getAllPublishedPosts();
-        $regex = Regex::amazonLink();
-
-        $postCount = 0;
-        $linkCount = 0;
-
-        foreach ($posts as $post) {
-            if (preg_match_all($regex, $post->post_content, $matches)) {
-                $postCount++;
-                $linkCount += count($matches[0]);
-            }
-        }
-
-        wp_send_json_success([
-            'postsWithLinks' => $postCount,
-            'totalLinks' => $linkCount,
-        ]);
+        
+        $summary = PostScanner::getSummary();
+        wp_send_json_success($summary['data']);
     }
 
     public function markSetupComplete(): void
@@ -193,14 +182,6 @@ class AjaxController
         }
     }
 
-    private function getAllPublishedPosts(): array
-    {
-        return get_posts([
-            'numberposts' => -1,
-            'post_type' => ['post', 'page'],
-            'post_status' => 'publish',
-        ]);
-    }
 
     public function getMigrationStatus(): void
     {
@@ -265,22 +246,11 @@ class AjaxController
             return;
         }
 
-        $posts = $this->getAllPublishedPosts();
-        $flagged = 0;
-
-        foreach ($posts as $post) {
-            if (!get_post_meta($post->ID, '_grocers_list_needs_migration', true)) {
-                update_post_meta($post->ID, '_grocers_list_needs_migration', '1');
-                $flagged++;
-            }
-        }
-
         $migrationInfo = $this->migrationJob->startMigration();
 
         wp_send_json_success([
             'success' => true,
             'message' => 'Migration completed',
-            'flagged' => $flagged,
             'data' => $migrationInfo,
         ]);
     }

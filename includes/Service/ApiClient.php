@@ -5,12 +5,15 @@ namespace GrocersList\Service;
 use GrocersList\Model\LinkResponse;
 use GrocersList\Support\Config;
 use GrocersList\Support\Logger;
+use GrocersList\Settings\PluginSettings;
 
 class ApiClient implements IApiClient
 {
     public function postAppLinks(array $urls): LinkResponse
     {
-        $api_key = get_option('grocers_list_api_key');
+        // Use PluginSettings to get API key with proper prefix handling
+        $settings = new PluginSettings();
+        $api_key = $settings->getApiKey();
 
         if (!$api_key) {
             return new LinkResponse([]);

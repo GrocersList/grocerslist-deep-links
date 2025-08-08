@@ -7,11 +7,13 @@ use GrocersList\Support\Hooks;
 use GrocersList\Support\ILinkExtractor;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Logger;
+use GrocersList\Database\UrlMappingTable;
 
 class LinkCountVisitor extends PostVisitor
 {
     private ILinkExtractor $extractor;
     private PluginSettings $settings;
+    private ?UrlMappingTable $urlMappingTable;
 
     private int $postsWithLinks = 0;
     private int $totalLinks = 0;
@@ -24,19 +26,21 @@ class LinkCountVisitor extends PostVisitor
         PluginSettings $settings,
         Hooks          $hooks,
         ILinkExtractor $extractor,
-        int            $batchSize = 500
+        int            $batchSize = 500,
+        ?UrlMappingTable $urlMappingTable = null
     )
     {
         parent::__construct($hooks, $batchSize);
         $this->settings = $settings;
         $this->extractor = $extractor;
+        $this->urlMappingTable = $urlMappingTable;
     }
 
     public function startCounting(): array
     {
         Logger::debug("LinkCountVisitor::startCounting()");
-        $this->resetCounters();
-        return $this->start();
+        // Return real-time count instead of starting batch process
+        return $this->getRealtimeCount();
     }
 
     protected function getPostsForBatch(int $lastId): array
@@ -70,7 +74,17 @@ class LinkCountVisitor extends PostVisitor
     protected function visitPost($post): bool
     {
         $content = $post->post_content;
-        $linkCount = count($this->extractor->extractUnrewrittenLinks($content));
+        $amazonLinks = $this->extractor->extractUnrewrittenLinks($content);
+        
+        // If we have the mapping table, only count links without mappings
+        if ($this->urlMappingTable !== null && !empty($amazonLinks)) {
+            $existingMappings = $this->urlMappingTable->get_mappings_by_urls($amazonLinks);
+            $unmappedLinks = array_diff($amazonLinks, array_keys($existingMappings));
+            $linkCount = count($unmappedLinks);
+        } else {
+            // Fallback to counting all Amazon links
+            $linkCount = count($amazonLinks);
+        }
 
         if ($linkCount > 0) {
             $this->postsWithLinks++;
@@ -111,30 +125,61 @@ class LinkCountVisitor extends PostVisitor
     protected function onJobCompleted(): void
     {
         $this->lastCountTime = time();
-        $this->saveResults();
-
+        // No longer storing results - counts are calculated in real-time
         wp_cache_delete('grocers_list_link_count_total_count');
-    }
-
-    private function saveResults(): void
-    {
-        update_option('grocers_list_link_count_posts_with_links', $this->postsWithLinks);
-        update_option('grocers_list_link_count_total_links', $this->totalLinks);
-        update_option('grocers_list_link_count_total_posts', $this->getTotalPosts());
-        update_option('grocers_list_link_count_processed_posts', $this->getProcessedPosts());
-        update_option('grocers_list_link_count_last_time', time());
     }
 
     public function getCountInfo(): array
     {
+        // Calculate counts in real-time
+        return $this->getRealtimeCount();
+    }
+    
+    public function getRealtimeCount(): array
+    {
+        global $wpdb;
+        
+        $postsWithLinks = 0;
+        $totalLinks = 0;
+        
+        // Get all published posts with content
+        $posts = $wpdb->get_results(
+            "SELECT ID, post_content
+             FROM {$wpdb->posts}
+             WHERE post_status = 'publish'
+               AND post_type IN ('post', 'page')
+               AND post_content IS NOT NULL
+               AND post_content != ''"
+        );
+        
+        foreach ($posts as $post) {
+            $amazonLinks = $this->extractor->extractUnrewrittenLinks($post->post_content);
+            
+            if (!empty($amazonLinks)) {
+                // Check which links don't have mappings
+                if ($this->urlMappingTable !== null) {
+                    $existingMappings = $this->urlMappingTable->get_mappings_by_urls($amazonLinks);
+                    $unmappedLinks = array_diff($amazonLinks, array_keys($existingMappings));
+                    $linkCount = count($unmappedLinks);
+                } else {
+                    $linkCount = count($amazonLinks);
+                }
+                
+                if ($linkCount > 0) {
+                    $postsWithLinks++;
+                    $totalLinks += $linkCount;
+                }
+            }
+        }
+        
         return [
-            'postsWithLinks' => (int) get_option('grocers_list_link_count_posts_with_links', 0),
-            'totalLinks' => (int) get_option('grocers_list_link_count_total_links', 0),
-            'totalPosts' => (int) get_option('grocers_list_link_count_total_posts', 0),
-            'processedPosts' => (int) get_option('grocers_list_link_count_processed_posts', 0),
+            'postsWithLinks' => $postsWithLinks,
+            'totalLinks' => $totalLinks,
+            'totalPosts' => count($posts),
+            'processedPosts' => count($posts),
             'isComplete' => true,
             'isRunning' => false,
-            'lastCount' => (int) get_option('grocers_list_link_count_last_time', 0),
+            'lastCount' => time(),
         ];
     }
 

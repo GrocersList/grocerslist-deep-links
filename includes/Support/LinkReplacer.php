@@ -24,9 +24,11 @@ class LinkReplacer implements ILinkReplacer
                 $originalUrl = esc_attr($url);
                 $newUrl = esc_attr($normalizedMap[$url]);
 
+                // Handle both single and double quotes
+                $quoteChar = strpos($match[0], 'href="') !== false ? '"' : "'";
                 return str_replace(
-                    '<a href="' . $match[1] . '"',
-                    '<a href="' . $match[1] . '" data-grocerslist-rewritten-link="' . $newUrl . '"',
+                    '<a href=' . $quoteChar . $match[1] . $quoteChar,
+                    '<a href=' . $quoteChar . $match[1] . $quoteChar . ' data-grocerslist-rewritten-link="' . $newUrl . '"',
                     $match[0]
                 );
             }

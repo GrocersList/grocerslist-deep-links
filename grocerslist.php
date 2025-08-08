@@ -6,8 +6,8 @@ Description: Automatically rewrites Amazon affiliate links with deep links using
 Requires at least: 4.4
 Requires PHP: 7.0
 Tested up to: 6.8
-Version: 1.0.1
-Stable tag: 1.0.1
+Version: 1.0.3
+Stable tag: 1.0.3
 Author: Grocers List Engineering
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -70,10 +70,21 @@ function grocers_list_activate() {
         }
     }
 
-    // Set default options
-    add_option('grocers_list_auto_rewrite', true);
-    add_option('grocers_list_use_linksta_links', true);
-    add_option('grocers_list_setup_complete', false);
+    // Set up autoloader for activation
+    spl_autoload_register(function ($class) {
+        if (strpos($class, 'GrocersList\\') !== 0) return;
+        
+        $path = __DIR__ . '/includes/' . str_replace('GrocersList\\', '', $class);
+        $path = str_replace('\\', '/', $path) . '.php';
+        
+        if (file_exists($path)) {
+            require_once $path;
+        }
+    });
+    
+    // Run database installation
+    require_once __DIR__ . '/includes/Database/Installer.php';
+    GrocersList\Database\Installer::install();
 
     // Flush rewrite rules (useful for nginx compatibility)
     flush_rewrite_rules();
