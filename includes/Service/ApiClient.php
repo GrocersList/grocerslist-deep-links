@@ -110,6 +110,56 @@ class ApiClient implements IApiClient
     }
 
     /**
+     * Send password reset email
+     *
+     * @param string $apiKey
+     * @param string $email
+     * @return string|\WP_Error
+     */
+    public function forgotPassword(string $apiKey, string $email)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/forgot-password", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+            ],
+            'body' => json_encode([
+                'email' => $email,
+                'blog_url' => get_bloginfo('url'),
+            ])
+        ]);
+
+        return wp_remote_retrieve_body($response);
+    }
+
+    /**
+     * Reset password
+     *
+     * @param string $apiKey
+     * @param string $email
+     * @return string|\WP_Error
+     */
+    public function resetPassword(string $apiKey, string $token, string $password)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/reset-password", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+            ],
+            'body' => json_encode([
+                'token' => $token,
+                'password' => $password,
+            ])
+        ]);
+
+        return wp_remote_retrieve_body($response);
+    }
+
+    /**
      * Generate Stripe checkout session and redirect to checkout session url
      *
      * @param string $apiKey

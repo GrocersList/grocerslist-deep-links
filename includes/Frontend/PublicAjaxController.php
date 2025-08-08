@@ -28,6 +28,8 @@ class PublicAjaxController
             'grocers_list_validate_api_key' => 'validateApiKey',
             'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
+            'grocers_list_forgot_password' => 'forgotPassword',
+            'grocers_list_reset_password' => 'resetPassword',
             'grocers_list_checkout_follower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
             'grocers_list_get_creator_config' => 'getCreatorConfig',
@@ -139,6 +141,48 @@ class PublicAjaxController
         $api_key = $this->settings->getApiKey();
 
         $response = $this->api->loginFollower($api_key, $email, $password);
+
+        wp_send_json_success($response);
+    }
+
+    public function forgotPassword(): void
+    {
+        check_ajax_referer('grocers_list_forgot_password', 'security');
+
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+
+        if (empty($email)) {
+            wp_send_json_error(['error' => 'Email is required'], 400);
+            return;
+        }
+
+        $api_key = $this->settings->getApiKey();
+
+        $response = $this->api->forgotPassword($api_key, $email);
+
+        wp_send_json_success($response);
+    }
+
+    public function resetPassword(): void
+    {
+        check_ajax_referer('grocers_list_reset_password', 'security');
+
+        $token = isset($_POST['token']) ? sanitize_text_field(wp_unslash($_POST['token'])) : '';
+        $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
+
+        if (empty($token)) {
+            wp_send_json_error(['error' => 'Token is invalid'], 400);
+            return;
+        }
+
+        if (empty($password)) {
+            wp_send_json_error(['error' => 'Password is required'], 400);
+            return;
+        }
+
+        $api_key = $this->settings->getApiKey();
+
+        $response = $this->api->resetPassword($api_key, $token, $password);
 
         wp_send_json_success($response);
     }

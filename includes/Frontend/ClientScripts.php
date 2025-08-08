@@ -30,6 +30,8 @@ class ClientScripts
             'nonces' => [
                 'grocers_list_signup_follower' => wp_create_nonce('grocers_list_signup_follower'),
                 'grocers_list_login_follower' => wp_create_nonce('grocers_list_login_follower'),
+                'grocers_list_forgot_password' => wp_create_nonce('grocers_list_forgot_password'),
+                'grocers_list_reset_password' => wp_create_nonce('grocers_list_reset_password'),
                 'grocers_list_checkout_follower' => wp_create_nonce('grocers_list_checkout_follower'),
                 'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
                 'grocers_list_get_post_gating_options' => wp_create_nonce('grocers_list_get_post_gating_options'),
