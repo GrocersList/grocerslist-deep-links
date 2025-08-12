@@ -52,6 +52,7 @@ class ApiClient implements IApiClient
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/validate-api-key", [
             'headers' => [
                 'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
             ],
         ]);
 

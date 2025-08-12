@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -34,6 +34,8 @@ An overview of our features:
 #### - 7/4/2025 - v1.0.0 now stable
 
 #### - 8/4/2025 - v1.0.3 - This change fixes a bug where bulk app links migration changes the Post's updated at field unintentionally.
+
+#### - 8/11/2025 - v1.0.4 - Sends plugin version in header of validate-api-key requests
 
 ### Resources:
 
