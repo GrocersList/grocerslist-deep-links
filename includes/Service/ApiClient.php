@@ -23,6 +23,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $api_key,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
             ],
             'body' => json_encode(['urls' => $urls]),
         ]);
@@ -77,6 +78,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
             ],
             'body' => json_encode([
                 'username' => $email,
@@ -103,6 +105,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
             ],
             'body' => json_encode([
                 'username' => $email,
@@ -128,6 +131,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
             ],
             'body' => json_encode([
                 'email' => $email,
@@ -153,6 +157,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
             ],
             'body' => json_encode([
                 'token' => $token,
@@ -178,6 +183,7 @@ class ApiClient implements IApiClient
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/checkout?redirect=" . urlencode($redirectUrl), [
             'headers' => [
                 'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
                 'Authorization' => "Bearer " . $jwt,
             ],
         ]);
@@ -200,6 +206,7 @@ class ApiClient implements IApiClient
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/me?redirect=" . urlencode($redirectUrl), [
             'headers' => [
                 'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
                 'Authorization' => "Bearer " . $jwt,
             ],
         ]);
