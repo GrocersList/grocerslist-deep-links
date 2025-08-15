@@ -13,7 +13,6 @@ use GrocersList\Support\LinkExtractor;
 use GrocersList\Support\LinkReplacer;
 use GrocersList\Support\WordPressHooks;
 use GrocersList\Support\ContentFilter;
-use GrocersList\Support\GatingContentFilter;
 use GrocersList\Admin\AjaxController;
 use GrocersList\Frontend\PublicAjaxController;
 use GrocersList\Frontend\ClientScripts;
@@ -79,9 +78,6 @@ class Plugin
         // Register post gating components
         $postGating = new PostGating($this->hooks);
         $postGating->register();
-
-        $gatingContentFilter = new GatingContentFilter($this->hooks);
-        $gatingContentFilter->register();
 
         self::$registered = true;
     }
