@@ -69,39 +69,37 @@ class PostGating
 
         $post_gated = get_post_meta($post->ID, self::META_POST_GATED, true);
         $recipe_card_gated = get_post_meta($post->ID, self::META_RECIPE_CARD_GATED, true);
+        
+        // Determine current gating option
+        $current_option = 'none';
+        if ($post_gated === '1') {
+            $current_option = 'post';
+        } elseif ($recipe_card_gated === '1') {
+            $current_option = 'recipe';
+        }
         ?>
         <div class="grocers-list-gating-options">
+            <p><strong>Gating Options:</strong></p>
             <p>
                 <label>
-                    <input type="checkbox" id="grocers_list_post_gated" name="grocers_list_post_gated" value="1" <?php checked($post_gated, '1'); ?> />
-                    Post Gated
+                    <input type="radio" name="grocers_list_gating_option" value="none" <?php checked($current_option, 'none'); ?> />
+                    No gating
                 </label>
             </p>
-            <p style="margin-left: 20px;">
+            <p>
                 <label>
-                    <input type="checkbox" id="grocers_list_recipe_card_gated" name="grocers_list_recipe_card_gated" value="1" <?php checked($recipe_card_gated, '1'); ?> />
-                    Recipe Card Gated
+                    <input type="radio" name="grocers_list_gating_option" value="post" <?php checked($current_option, 'post'); ?> />
+                    Gate entire post
                 </label>
             </p>
+            <p>
+                <label>
+                    <input type="radio" name="grocers_list_gating_option" value="recipe" <?php checked($current_option, 'recipe'); ?> />
+                    Gate recipe cards only
+                </label>
+            </p>
+           
         </div>
-        <script type="text/javascript">
-            (function() {
-                var postGatedCheckbox = document.getElementById('grocers_list_post_gated');
-                var recipeCardGatedCheckbox = document.getElementById('grocers_list_recipe_card_gated');
-
-                // When Post Gated is checked, Recipe Card Gated should also be checked
-                postGatedCheckbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        recipeCardGatedCheckbox.checked = true;
-                    }
-                });
-
-                // Initial check - if Post Gated is checked, Recipe Card Gated should also be checked
-                if (postGatedCheckbox.checked) {
-                    recipeCardGatedCheckbox.checked = true;
-                }
-            })();
-        </script>
         <?php
     }
 
@@ -123,17 +121,27 @@ class PostGating
             return;
         }
 
-        $post_gated = isset($_POST['grocers_list_post_gated']) ? '1' : '0';
-        update_post_meta($post_id, self::META_POST_GATED, sanitize_text_field($post_gated));
-
-        // If post is gated, recipe card should also be gated
-        if ($post_gated === '1') {
-            $recipe_card_gated = '1';
-        } else {
-            $recipe_card_gated = isset($_POST['grocers_list_recipe_card_gated']) ? '1' : '0';
+        $gating_option = isset($_POST['grocers_list_gating_option']) ? sanitize_text_field($_POST['grocers_list_gating_option']) : 'none';
+        
+        // Set meta values based on radio selection
+        switch ($gating_option) {
+            case 'post':
+                $post_gated = '1';
+                $recipe_card_gated = '0';
+                break;
+            case 'recipe':
+                $post_gated = '0';
+                $recipe_card_gated = '1';
+                break;
+            case 'none':
+            default:
+                $post_gated = '0';
+                $recipe_card_gated = '0';
+                break;
         }
 
-        update_post_meta($post_id, self::META_RECIPE_CARD_GATED, sanitize_text_field($recipe_card_gated));
+        update_post_meta($post_id, self::META_POST_GATED, $post_gated);
+        update_post_meta($post_id, self::META_RECIPE_CARD_GATED, $recipe_card_gated);
     }
 
     public static function isPostGated($post_id): bool
