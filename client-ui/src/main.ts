@@ -91,7 +91,7 @@ async function validateApiKey(): Promise<boolean> {
           membershipSettings,
           membershipsEnabled,
           creatorAccountId,
-          apiKeyValid: valid,
+          valid,
           logoUrl,
         },
       };
