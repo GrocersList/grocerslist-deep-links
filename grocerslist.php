@@ -6,8 +6,8 @@ Description: Automatically rewrites Amazon affiliate links with deep links using
 Requires at least: 4.4
 Requires PHP: 7.0
 Tested up to: 6.8
-Version: 1.0.6
-Stable tag: 1.0.6
+Version: 1.0.7
+Stable tag: 1.0.7
 Author: Grocers List Engineering
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -17,7 +17,7 @@ Author URI: https://github.com/GrocersList/grocerslist-wordpress-plugin
 
 if (!defined('ABSPATH')) exit;
 
-define('GROCERS_LIST_VERSION', '1.0.6');
+define('GROCERS_LIST_VERSION', '1.0.7');
 define('GROCERS_LIST_PLUGIN_FILE', __FILE__);
 define('GROCERS_LIST_PLUGIN_DIR', __DIR__);
 

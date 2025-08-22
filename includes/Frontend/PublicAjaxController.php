@@ -26,6 +26,7 @@ class PublicAjaxController
     {
         $actions = [
             'grocers_list_validate_api_key' => 'validateApiKey',
+            'grocers_list_record_membership_event' => 'recordMembershipEvent',
             'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
             'grocers_list_forgot_password' => 'forgotPassword',
@@ -83,6 +84,26 @@ class PublicAjaxController
         ]);
     }
 
+    public function recordMembershipEvent(): void
+    {
+        check_ajax_referer('grocers_list_record_membership_event', 'security');
+
+        $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash($_POST['type'])) : '';
+        $occurred_at = isset($_POST['occurred_at']) ? sanitize_text_field(wp_unslash($_POST['occurred_at'])) : '';
+        $url = isset($_POST['url']) ? sanitize_text_field(wp_unslash($_POST['url'])) : '';
+
+        $api_key = $this->settings->getApiKey();
+
+        if (empty($api_key)) {
+            wp_send_json_error(['error' => 'No API key configured in plugin settings'], 401);
+            return;
+        }
+
+        $response = $this->api->recordMembershipEvent($api_key, $type, $occurred_at, $url);
+
+        wp_send_json_success($response);
+    }
+
     public function getCreatorConfig(): void
     {
         $api_key = $this->settings->getApiKey();
@@ -113,6 +134,7 @@ class PublicAjaxController
 
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
         $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
+        $url = isset($_POST['url']) ? sanitize_text_field(wp_unslash($_POST['url'])) : '';
 
         if (empty($email) || empty($password)) {
             wp_send_json_error(['error' => 'Email and password are required'], 400);
@@ -121,7 +143,7 @@ class PublicAjaxController
 
         $api_key = $this->settings->getApiKey();
 
-        $response = $this->api->signupFollower($api_key, $email, $password);
+        $response = $this->api->signupFollower($api_key, $email, $password, $url);
 
         wp_send_json_success($response);
     }

@@ -16,6 +16,7 @@ use GrocersList\Support\ContentFilter;
 use GrocersList\Admin\AjaxController;
 use GrocersList\Frontend\PublicAjaxController;
 use GrocersList\Frontend\ClientScripts;
+use GrocersList\Frontend\PageViewTracker;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Jobs\LinkCountVisitor;
@@ -71,6 +72,9 @@ class Plugin
 
         $clientScripts = new ClientScripts($this->hooks);
         $clientScripts->register();
+
+        $pageViewTracker = new PageViewTracker($this->hooks, $pluginSettings, $api);
+        $pageViewTracker->register();
 
         $contentFilter = new ContentFilter($this->hooks, $pluginSettings, $urlMappingService);
         $contentFilter->register();

@@ -79,9 +79,10 @@ class ApiClient implements IApiClient
      * @param string $apiKey
      * @param string $email
      * @param string $password
+     * @param string $url
      * @return string|\WP_Error
      */
-    public function signupFollower(string $apiKey, string $email, string $password)
+    public function signupFollower(string $apiKey, string $email, string $password, string $url)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
@@ -94,6 +95,7 @@ class ApiClient implements IApiClient
             'body' => json_encode([
                 'username' => $email,
                 'password' => $password,
+                'post_url' => $url,
             ])
         ]);
 
@@ -102,7 +104,7 @@ class ApiClient implements IApiClient
 
     /**
      * Login a follower
-     * 
+     *
      * @param string $apiKey
      * @param string $email
      * @param string $password
@@ -204,7 +206,7 @@ class ApiClient implements IApiClient
 
     /**
      * Check follower membership status
-     * 
+     *
      * @param string $apiKey
      * @param string $jwt
      * @return string|\WP_Error
@@ -221,7 +223,36 @@ class ApiClient implements IApiClient
                 'Authorization' => "Bearer " . $jwt,
             ],
         ]);
-		
+
 	    return wp_remote_retrieve_body($response);
+    }
+
+    /**
+     * Record a MembershipEvent
+     *
+     * @param string $apiKey
+     * @param string $type
+     * @param string $occurredAt
+     * @param string $url
+     * @return string|\WP_Error
+     */
+    public function recordMembershipEvent(string $apiKey, string $type, string $occurredAt, string $url)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/membership-events", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+            ],
+            'body' => json_encode([
+                'type' => $type,
+                'occurred_at' => $occurredAt,
+                'post_url' => $url,
+            ])
+        ]);
+
+        return wp_remote_retrieve_body($response);
     }
 }
