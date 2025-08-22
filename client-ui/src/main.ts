@@ -19,7 +19,7 @@ async function getPostGatingOptions(): Promise<void> {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      action: "grocers_list_get_post_gating_options",
+      action: "public_grocers_list_get_post_gating_options",
       postId: postId.toString(),
       security: security,
     }),
