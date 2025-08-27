@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -41,6 +41,8 @@ An overview of our features:
 #### - 8/14/2025 - v1.0.6 - Removes GatingContentFilter plugin which was injecting a div between .entry-content and the actual post content, which caused Raptive's ad injection to fail.
 
 #### - 8/18/2025 - v1.0.7 - Analytics (PAGE_VIEW, GATE_VIEW)
+
+#### - 8/27/2025 - v1.0.8 - window.grocersList.ready
 
 ### Resources:
 

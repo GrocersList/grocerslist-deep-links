@@ -116,6 +116,8 @@ window.addEventListener("load", async () => {
       await getPostGatingOptions();
     }
 
+    grocersList.ready = true; // tells widget setup is complete
+
     if (isValid) {
       console.info("Grocers List Setup Complete");
     } else {
