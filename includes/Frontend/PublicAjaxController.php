@@ -14,12 +14,43 @@ class PublicAjaxController
 
     public function __construct(
         PluginSettings $settings,
-        ApiClient $api,
-        Hooks $hooks
-    ) {
+        ApiClient      $api,
+        Hooks          $hooks
+    )
+    {
         $this->settings = $settings;
         $this->api = $api;
         $this->hooks = $hooks;
+    }
+
+    /**
+     * Helper method to pass through response code
+     *
+     * @param mixed $response The API response (string body or WP_Error)
+     * @return void
+     */
+    private function passResponseCode($response): void
+    {
+        // Handle WP_Error responses
+        if (is_wp_error($response)) {
+            wp_send_json_error([
+                'error' => $response->get_error_message(),
+            ], 500);
+            return;
+        }
+
+        $status = wp_remote_retrieve_response_code($response) || 400;
+        $_body = wp_remote_retrieve_body($response);
+        $body = is_string($_body) ? json_decode($_body, true) : $_body;
+
+        // Pass through non-2xx
+        if ($status < 200 || $status >= 300) {
+            wp_send_json_error($body, $status);
+            return;
+        }
+
+        // Response appears to be successful
+        wp_send_json_success($body);
     }
 
     public function register(): void
@@ -33,7 +64,6 @@ class PublicAjaxController
             'grocers_list_reset_password' => 'resetPassword',
             'grocers_list_checkout_follower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
-            'grocers_list_get_creator_config' => 'getCreatorConfig',
             'grocers_list_get_post_gating_options' => 'getPostGatingOptions',
         ];
 
@@ -54,34 +84,7 @@ class PublicAjaxController
 
         $response = $this->api->validateApiKey($api_key);
 
-        // Parse the response if it's a string
-        $data = is_string($response) ? json_decode($response, true) : $response;
-        
-        // Handle error or invalid response
-        if (!$data || is_wp_error($response)) {
-            wp_send_json_success([
-                'valid' => false,
-                'membershipSettings' => new \stdClass(),
-                'membershipsEnabled' => false,
-                'creatorAccountId' => '',
-                'logoUrl' => '',
-            ]);
-            return;
-        }
-
-        // Extract validation status - check for different possible response formats
-        $valid = isset($data['valid']) ? $data['valid'] : 
-                 (isset($data['is_valid']) ? $data['is_valid'] : 
-                 (isset($data['success']) ? $data['success'] : true));
-
-        // Format response for frontend
-        wp_send_json_success([
-            'valid' => $valid,
-            'membershipSettings' => $data['membershipSettings'] ?? new \stdClass(),
-            'membershipsEnabled' => $data['membershipsEnabled'] ?? false,
-            'creatorAccountId' => $data['creatorAccountId'] ?? '',
-            'logoUrl' => $data['logoUrl'] ?? '',
-        ]);
+        $this->passResponseCode($response);
     }
 
     public function recordMembershipEvent(): void
@@ -101,31 +104,7 @@ class PublicAjaxController
 
         $response = $this->api->recordMembershipEvent($api_key, $type, $occurred_at, $url);
 
-        wp_send_json_success($response);
-    }
-
-    public function getCreatorConfig(): void
-    {
-        $api_key = $this->settings->getApiKey();
-        
-        // Since getCreatorConfig doesn't exist in ApiClient, use validateApiKey
-        $response = $this->api->validateApiKey($api_key);
-        
-        // Parse the response if it's a string
-        $data = is_string($response) ? json_decode($response, true) : $response;
-        
-        // Handle error or invalid response
-        if (!$data || is_wp_error($response)) {
-            wp_send_json_success([
-                'membershipSettings' => new \stdClass(),
-                'membershipsEnabled' => false,
-                'creatorAccountId' => '',
-                'logoUrl' => '',
-            ]);
-            return;
-        }
-        
-        wp_send_json_success($data);
+        $this->passResponseCode($response);
     }
 
     public function signupFollower(): void
@@ -145,7 +124,7 @@ class PublicAjaxController
 
         $response = $this->api->signupFollower($api_key, $email, $password, $url);
 
-        wp_send_json_success($response);
+        $this->passResponseCode($response);
     }
 
     public function loginFollower(): void
@@ -164,7 +143,7 @@ class PublicAjaxController
 
         $response = $this->api->loginFollower($api_key, $email, $password);
 
-        wp_send_json_success($response);
+        $this->passResponseCode($response);
     }
 
     public function forgotPassword(): void
@@ -182,7 +161,7 @@ class PublicAjaxController
 
         $response = $this->api->forgotPassword($api_key, $email);
 
-        wp_send_json_success($response);
+        $this->passResponseCode($response);
     }
 
     public function resetPassword(): void
@@ -206,7 +185,7 @@ class PublicAjaxController
 
         $response = $this->api->resetPassword($api_key, $token, $password);
 
-        wp_send_json_success($response);
+        $this->passResponseCode($response);
     }
 
     public function checkoutFollower(): void
@@ -223,7 +202,7 @@ class PublicAjaxController
         $redirectUrl = wp_get_referer();
         $response = $this->api->checkoutFollower($api_key, $jwt, $redirectUrl);
 
-        wp_send_json_success($response);
+        $this->passResponseCode($response);
     }
 
     public function checkFollowerMembershipStatus(): void
@@ -236,7 +215,7 @@ class PublicAjaxController
         $redirectUrl = wp_get_referer();
         $response = $this->api->checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
-        wp_send_json_success($response);
+        $this->passResponseCode($response);
     }
 
     public function getPostGatingOptions(): void

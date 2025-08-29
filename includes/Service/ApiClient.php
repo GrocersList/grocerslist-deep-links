@@ -57,20 +57,7 @@ class ApiClient implements IApiClient
             ],
         ]);
 
-        if (is_wp_error($response)) return $response;
-
-        $status = wp_remote_retrieve_response_code($response);
-        $body   = wp_remote_retrieve_body($response);
-
-        // Surface non-2xx as an error so callers can propagate it to the client
-        if ($status < 200 || $status >= 300) {
-            return new \WP_Error('remote_http_error', 'Validation request failed', [
-                'status' => $status,
-                'body'   => $body,
-            ]);
-        }
-
-        return $body;
+        return $response;
     }
 
     /**
@@ -99,7 +86,7 @@ class ApiClient implements IApiClient
             ])
         ]);
 
-		return wp_remote_retrieve_body($response);
+		return $response;
     }
 
     /**
@@ -126,7 +113,7 @@ class ApiClient implements IApiClient
             ])
         ]);
 
-		return wp_remote_retrieve_body($response);
+        return $response;
     }
 
     /**
@@ -152,7 +139,7 @@ class ApiClient implements IApiClient
             ])
         ]);
 
-        return wp_remote_retrieve_body($response);
+        return $response;
     }
 
     /**
@@ -178,7 +165,7 @@ class ApiClient implements IApiClient
             ])
         ]);
 
-        return wp_remote_retrieve_body($response);
+        return $response;
     }
 
     /**
@@ -201,7 +188,7 @@ class ApiClient implements IApiClient
             ],
         ]);
 
-        return wp_remote_retrieve_body($response);
+        return $response;
     }
 
     /**
@@ -224,7 +211,7 @@ class ApiClient implements IApiClient
             ],
         ]);
 
-	    return wp_remote_retrieve_body($response);
+        return $response;
     }
 
     /**
@@ -253,6 +240,6 @@ class ApiClient implements IApiClient
             ])
         ]);
 
-        return wp_remote_retrieve_body($response);
+        return $response;
     }
 }
