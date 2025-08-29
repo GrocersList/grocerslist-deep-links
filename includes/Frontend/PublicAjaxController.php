@@ -97,11 +97,6 @@ class PublicAjaxController
 
         $api_key = $this->settings->getApiKey();
 
-        if (empty($api_key)) {
-            wp_send_json_error(['error' => 'No API key configured in plugin settings'], 401);
-            return;
-        }
-
         $response = $this->api->recordMembershipEvent($api_key, $type, $occurred_at, $url);
 
         $this->passResponseCode($response);
@@ -116,7 +111,12 @@ class PublicAjaxController
         $url = isset($_POST['url']) ? sanitize_text_field(wp_unslash($_POST['url'])) : '';
 
         if (empty($email) || empty($password)) {
-            wp_send_json_error(['error' => 'Email and password are required'], 400);
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Email and password are required',
+                'status' => 400,
+            ], 400);
             return;
         }
 
@@ -135,7 +135,12 @@ class PublicAjaxController
         $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
 
         if (empty($email) || empty($password)) {
-            wp_send_json_error(['error' => 'Email and password are required'], 400);
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Email and password are required',
+                'status' => 400,
+            ], 400);
             return;
         }
 
@@ -153,7 +158,12 @@ class PublicAjaxController
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
 
         if (empty($email)) {
-            wp_send_json_error(['error' => 'Email is required'], 400);
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Email is required',
+                'status' => 400,
+            ], 400);
             return;
         }
 
@@ -172,12 +182,22 @@ class PublicAjaxController
         $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
 
         if (empty($token)) {
-            wp_send_json_error(['error' => 'Token is invalid'], 400);
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Token is required',
+                'status' => 400,
+            ], 400);
             return;
         }
 
         if (empty($password)) {
-            wp_send_json_error(['error' => 'Password is required'], 400);
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Password is required',
+                'status' => 400,
+            ], 400);
             return;
         }
 
