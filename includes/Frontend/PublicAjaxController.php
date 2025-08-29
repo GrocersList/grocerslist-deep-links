@@ -39,7 +39,7 @@ class PublicAjaxController
             return;
         }
 
-        $status = wp_remote_retrieve_response_code($response) || 400;
+        $status = wp_remote_retrieve_response_code($response);
         $_body = wp_remote_retrieve_body($response);
         $body = is_string($_body) ? json_decode($_body, true) : $_body;
 
