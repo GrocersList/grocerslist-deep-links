@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.0.8
+Stable tag: 1.1.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -29,20 +29,13 @@ An overview of our features:
 
 == Changelog ==
 
-#### - 7/10/2025 - v1.0.0 - plugin rename
+#### - 7/4/2025 - v1.0.0 - initial release, deeplinking
 
-#### - 7/4/2025 - v1.0.0 now stable
+#### - 8/4/2025 - v1.0.3 - fixed a bug where bulk app links migration changes the Post's updated at field unintentionally
 
-#### - 8/4/2025 - v1.0.3 - This change fixes a bug where bulk app links migration changes the Post's updated at field unintentionally.
+#### - 8/14/2025 - v1.0.6 - fixed a bug which broke third-party advertising plugins
 
-#### - 8/11/2025 - v1.0.4 - Sends plugin version in header of validate-api-key requests
-#### - 8/12/2025 - v1.0.5 - Sends plugin version in header of all requests that include x-api-key
-
-#### - 8/14/2025 - v1.0.6 - Removes GatingContentFilter plugin which was injecting a div between .entry-content and the actual post content, which caused Raptive's ad injection to fail.
-
-#### - 8/18/2025 - v1.0.7 - Analytics (PAGE_VIEW, GATE_VIEW)
-
-#### - 8/27/2025 - v1.0.8 - window.grocersList.ready
+#### - 9/02/2025 - v1.1.0 - introduced memberships feature
 
 ### Resources:
 

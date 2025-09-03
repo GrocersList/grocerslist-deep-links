@@ -48,7 +48,7 @@ class ApiClient implements IApiClient
      */
     public function validateApiKey(string $apiKey)
     {
-        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+        if (!$apiKey) return false;
 
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/validate-api-key", [
             'headers' => [
@@ -57,8 +57,49 @@ class ApiClient implements IApiClient
             ],
         ]);
 
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (json_last_error()) {
+            Logger::debug("API response could not be parsed: " . wp_remote_retrieve_body($response));
+            return false;
+        }
+
+        return !!$data['valid'];
+    }
+
+    /**
+     * Get creator membership settings
+     *
+     * @param string $apiKey
+     * @param string $jwt
+     * @param string $redirectUrl
+     * @param boolean $gated
+     * @return string|\WP_Error Returns the response body or WP_Error on failure
+     */
+    public function getMembershipSettings(string $apiKey, string $jwt, string $redirectUrl, bool $gated = false)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+        if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
+
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain()
+            . "/api/v1/creator-api/membership-settings" .
+            "?gated=" . $gated .
+            "&redirect=" . urlencode($redirectUrl),
+            [
+                'headers' => [
+                    'x-api-key' => $apiKey,
+                    'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                    'Authorization' => "Bearer " . $jwt,
+                ],
+            ]);
+
         return $response;
     }
+
 
     /**
      * Signup a follower
@@ -86,7 +127,7 @@ class ApiClient implements IApiClient
             ])
         ]);
 
-		return $response;
+        return $response;
     }
 
     /**
@@ -173,6 +214,7 @@ class ApiClient implements IApiClient
      *
      * @param string $apiKey
      * @param string $jwt
+     * @param string $redirectUrl
      * @return string|\WP_Error
      */
     public function checkoutFollower(string $apiKey, string $jwt, string $redirectUrl)
@@ -200,7 +242,7 @@ class ApiClient implements IApiClient
      */
     public function checkFollowerMembershipStatus(string $apiKey, string $jwt, string $redirectUrl)
     {
-	    if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
         if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
 
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/me?redirect=" . urlencode($redirectUrl), [
@@ -209,35 +251,6 @@ class ApiClient implements IApiClient
                 'x-gl-plugin-version' => GROCERS_LIST_VERSION,
                 'Authorization' => "Bearer " . $jwt,
             ],
-        ]);
-
-        return $response;
-    }
-
-    /**
-     * Record a MembershipEvent
-     *
-     * @param string $apiKey
-     * @param string $type
-     * @param string $occurredAt
-     * @param string $url
-     * @return string|\WP_Error
-     */
-    public function recordMembershipEvent(string $apiKey, string $type, string $occurredAt, string $url)
-    {
-        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
-
-        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/membership-events", [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
-            ],
-            'body' => json_encode([
-                'type' => $type,
-                'occurred_at' => $occurredAt,
-                'post_url' => $url,
-            ])
         ]);
 
         return $response;

@@ -54,65 +54,8 @@ function grocersListSetup() {
     }
   }
 
-  async function validateApiKey(): Promise<boolean> {
-    try {
-      const ajaxUrl = (window as any).grocersList?.ajaxUrl;
-
-      const response = await fetch(ajaxUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          action: "public_grocers_list_validate_api_key",
-        }),
-      });
-
-      if (!response.ok) {
-        console.warn(
-          "Error fetching grocers list config:",
-          response.statusText
-        );
-        return false;
-      }
-
-      const {
-        data: {
-          membershipSettings = {},
-          membershipsEnabled = false,
-          creatorAccountId = "",
-          valid = false,
-          logoUrl = "",
-        },
-        success,
-      } = await response.json();
-
-      if (success) {
-        (window as any).grocersList = {
-          // Merge the existing config with the new config
-          ...(window as any).grocersList,
-          config: {
-            membershipSettings,
-            membershipsEnabled,
-            creatorAccountId,
-            valid,
-            logoUrl,
-          },
-        };
-        return valid;
-      } else {
-        return false;
-      }
-    } catch (error) {
-      console.error("Error fetching grocers list config:", error);
-      return false;
-    }
-  }
-
   window.addEventListener("load", async () => {
     try {
-      const isValid = await validateApiKey();
-
       // Only fetch post gating options if we have a postId (i.e., we're on a single post)
       const grocersList = (window as any).grocersList;
       if (grocersList?.postId) {
@@ -121,14 +64,6 @@ function grocersListSetup() {
       }
 
       grocersList.ready = true; // tells widget setup is complete
-
-      if (isValid) {
-        console.info("Grocers List Setup Complete");
-      } else {
-        console.warn(
-          "GrocersList API key validation: Invalid or not configured"
-        );
-      }
     } catch (error) {
       console.error("GrocersList API key validation error:", error);
     }

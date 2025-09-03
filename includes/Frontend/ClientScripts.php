@@ -28,6 +28,7 @@ class ClientScripts
         $localize_data = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonces' => [
+                'grocers_list_get_membership_settings' => wp_create_nonce('grocers_list_get_membership_settings'),
                 'grocers_list_record_membership_event' => wp_create_nonce('grocers_list_record_membership_event'),
                 'grocers_list_signup_follower' => wp_create_nonce('grocers_list_signup_follower'),
                 'grocers_list_login_follower' => wp_create_nonce('grocers_list_login_follower'),

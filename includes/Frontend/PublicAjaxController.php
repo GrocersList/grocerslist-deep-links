@@ -56,8 +56,7 @@ class PublicAjaxController
     public function register(): void
     {
         $actions = [
-            'grocers_list_validate_api_key' => 'validateApiKey',
-            'grocers_list_record_membership_event' => 'recordMembershipEvent',
+            'grocers_list_get_membership_settings' => 'getMembershipSettings',
             'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
             'grocers_list_forgot_password' => 'forgotPassword',
@@ -73,8 +72,10 @@ class PublicAjaxController
         }
     }
 
-    public function validateApiKey(): void
+    public function getMembershipSettings(): void
     {
+        check_ajax_referer('grocers_list_get_membership_settings', 'security');
+
         $api_key = $this->settings->getApiKey();
 
         if (empty($api_key)) {
@@ -82,22 +83,13 @@ class PublicAjaxController
             return;
         }
 
-        $response = $this->api->validateApiKey($api_key);
+        $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
+        $redirectUrl = wp_get_referer();
 
-        $this->passResponseCode($response);
-    }
+        $gating_options = $this->fetchPostGatingOptions();
+        $gated = isset($gating_options) && ($gating_options['postGated'] || $gating_options['recipeCardGated']);
 
-    public function recordMembershipEvent(): void
-    {
-        check_ajax_referer('grocers_list_record_membership_event', 'security');
-
-        $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash($_POST['type'])) : '';
-        $occurred_at = isset($_POST['occurred_at']) ? sanitize_text_field(wp_unslash($_POST['occurred_at'])) : '';
-        $url = isset($_POST['url']) ? sanitize_text_field(wp_unslash($_POST['url'])) : '';
-
-        $api_key = $this->settings->getApiKey();
-
-        $response = $this->api->recordMembershipEvent($api_key, $type, $occurred_at, $url);
+        $response = $this->api->getMembershipSettings($api_key, $jwt, $redirectUrl, $gated);
 
         $this->passResponseCode($response);
     }
@@ -238,35 +230,44 @@ class PublicAjaxController
         $this->passResponseCode($response);
     }
 
-    public function getPostGatingOptions(): void
+    function fetchPostGatingOptions()
     {
-        check_ajax_referer('grocers_list_get_post_gating_options', 'security');
-
         if (!isset($_POST['postId'])) {
-            wp_send_json_error(['error' => 'Invalid post ID'], 400);
-            return;
+            return null;
         }
 
         $post_id_raw = sanitize_text_field(wp_unslash($_POST['postId']));
 
         if (!is_numeric($post_id_raw)) {
-            wp_send_json_error(['error' => 'Invalid post ID'], 400);
-            return;
+            return null;
         }
 
         $post_id = intval($post_id_raw);
 
         if (!get_post($post_id)) {
-            wp_send_json_error(['error' => 'Post not found'], 404);
-            return;
+            return null;
         }
 
         $post_gated = get_post_meta($post_id, 'grocers_list_post_gated', true) === '1';
         $recipe_card_gated = get_post_meta($post_id, 'grocers_list_recipe_card_gated', true) === '1';
 
-        wp_send_json_success([
+        return [
             'postGated' => $post_gated,
             'recipeCardGated' => $recipe_card_gated,
-        ]);
+        ];
+    }
+
+    public function getPostGatingOptions(): void
+    {
+        check_ajax_referer('grocers_list_get_post_gating_options', 'security');
+
+        $gating_options = $this->fetchPostGatingOptions();
+
+        if (!$gating_options) {
+            wp_send_json_error(['error' => 'Invalid post ID'], 400);
+            return;
+        }
+
+        wp_send_json_success($gating_options);
     }
 }
