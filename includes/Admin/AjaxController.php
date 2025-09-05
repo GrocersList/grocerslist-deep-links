@@ -39,6 +39,7 @@ class AjaxController
         $actions = [
             'grocers_list_get_state' => 'getState',
             'grocers_list_update_api_key' => 'updateApiKey',
+            'grocers_list_get_creator_settings' => 'getCreatorSettings',
             'grocers_list_update_auto_rewrite' => 'updateAutoRewrite',
             'grocers_list_update_use_linksta_links' => 'updateUseLinkstaLinks',
             'grocers_list_count_matched_links' => 'countMatchedLinks',
@@ -114,6 +115,18 @@ class AjaxController
 
         $this->settings->setApiKey($apiKey);
         wp_send_json_success(['message' => 'API key updated']);
+    }
+
+    public function getCreatorSettings(): void
+    {
+        check_ajax_referer('grocers_list_get_creator_settings', 'security');
+
+        $this->checkPermission('grocers_list_get_creator_settings');
+        $apiKey = isset($_POST['apiKey']) ? sanitize_text_field(wp_unslash($_POST['apiKey'])) : '';
+
+        $response = $this->api->getCreatorSettings($apiKey);
+
+        $this->api->passResponseCode($response);
     }
 
     public function updateAutoRewrite(): void

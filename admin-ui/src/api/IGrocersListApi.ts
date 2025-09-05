@@ -2,6 +2,7 @@ import type {GrocersListPluginState} from "./GrocersListApiMock.ts";
 
 export interface IGrocersListApi {
   updateApiKey(apiKey: string): Promise<void>
+  getCreatorSettings(apiKey: string): Promise<any> // TODO: type Promise resolution value
   getState(): Promise<GrocersListPluginState>
   markSetupComplete(): Promise<void>
   updateAutoRewrite(enabled: boolean): Promise<void>

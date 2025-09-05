@@ -9,6 +9,36 @@ use GrocersList\Settings\PluginSettings;
 
 class ApiClient implements IApiClient
 {
+    /**
+     * Helper method to pass through response code
+     *
+     * @param mixed $response The API response (string body or WP_Error)
+     * @return void
+     */
+    public function passResponseCode($response): void
+    {
+        // Handle WP_Error responses
+        if (is_wp_error($response)) {
+            wp_send_json_error([
+                'error' => $response->get_error_message(),
+            ], 500);
+            return;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        $_body = wp_remote_retrieve_body($response);
+        $body = is_string($_body) ? json_decode($_body, true) : $_body;
+
+        // Pass through non-2xx
+        if ($status < 200 || $status >= 300) {
+            wp_send_json_error($body, $status);
+            return;
+        }
+
+        // Response appears to be successful
+        wp_send_json_success($body);
+    }
+
     public function postAppLinks(array $urls): LinkResponse
     {
         // Use PluginSettings to get API key with proper prefix handling
@@ -72,6 +102,26 @@ class ApiClient implements IApiClient
     }
 
     /**
+     * Get creator settings for WordPress Plugin settings
+     *
+     * @param string $apiKey
+     * @return string|\WP_Error Returns the response body or WP_Error on failure
+     */
+    public function getCreatorSettings(string $apiKey)
+    {
+        if (!$apiKey) return false;
+
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings", [
+            'headers' => [
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+            ],
+        ]);
+
+        return $response;
+    }
+
+    /**
      * Get creator membership settings
      *
      * @param string $apiKey
@@ -99,7 +149,6 @@ class ApiClient implements IApiClient
 
         return $response;
     }
-
 
     /**
      * Signup a follower

@@ -48,6 +48,14 @@ export class GrocersListApiMock implements IGrocersListApi {
     this.setStateToStorage(state)
   }
 
+  async getCreatorSettings(apiKey: string) {
+    console.log('🔧 Mock getCreatorSettings', apiKey)
+    await this.delay(100)
+    return {
+      hasAppLinksAddon: true
+    }
+  }
+
   async getState() {
     console.log('🔧 Mock getState')
     await this.delay(1000)

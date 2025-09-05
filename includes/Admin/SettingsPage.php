@@ -44,6 +44,7 @@ class SettingsPage {
             'nonces' => [
                 'grocers_list_get_state' => wp_create_nonce('grocers_list_get_state'),
                 'grocers_list_update_api_key' => wp_create_nonce('grocers_list_update_api_key'),
+                'grocers_list_get_creator_settings' => wp_create_nonce('grocers_list_get_creator_settings'),
                 'grocers_list_update_auto_rewrite' => wp_create_nonce('grocers_list_update_auto_rewrite'),
                 'grocers_list_update_use_linksta_links' => wp_create_nonce('grocers_list_update_use_linksta_links'),
                 'grocers_list_count_matched_links' => wp_create_nonce('grocers_list_count_matched_links'),

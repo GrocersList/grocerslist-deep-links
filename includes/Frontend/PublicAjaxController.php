@@ -23,36 +23,6 @@ class PublicAjaxController
         $this->hooks = $hooks;
     }
 
-    /**
-     * Helper method to pass through response code
-     *
-     * @param mixed $response The API response (string body or WP_Error)
-     * @return void
-     */
-    private function passResponseCode($response): void
-    {
-        // Handle WP_Error responses
-        if (is_wp_error($response)) {
-            wp_send_json_error([
-                'error' => $response->get_error_message(),
-            ], 500);
-            return;
-        }
-
-        $status = wp_remote_retrieve_response_code($response);
-        $_body = wp_remote_retrieve_body($response);
-        $body = is_string($_body) ? json_decode($_body, true) : $_body;
-
-        // Pass through non-2xx
-        if ($status < 200 || $status >= 300) {
-            wp_send_json_error($body, $status);
-            return;
-        }
-
-        // Response appears to be successful
-        wp_send_json_success($body);
-    }
-
     public function register(): void
     {
         $actions = [
@@ -91,7 +61,7 @@ class PublicAjaxController
 
         $response = $this->api->getMembershipSettings($api_key, $jwt, $redirectUrl, $gated);
 
-        $this->passResponseCode($response);
+        $this->api->passResponseCode($response);
     }
 
     public function signupFollower(): void
@@ -116,7 +86,7 @@ class PublicAjaxController
 
         $response = $this->api->signupFollower($api_key, $email, $password, $url);
 
-        $this->passResponseCode($response);
+        $this->api->passResponseCode($response);
     }
 
     public function loginFollower(): void
@@ -140,7 +110,7 @@ class PublicAjaxController
 
         $response = $this->api->loginFollower($api_key, $email, $password);
 
-        $this->passResponseCode($response);
+        $this->api->passResponseCode($response);
     }
 
     public function forgotPassword(): void
@@ -163,7 +133,7 @@ class PublicAjaxController
 
         $response = $this->api->forgotPassword($api_key, $email);
 
-        $this->passResponseCode($response);
+        $this->api->passResponseCode($response);
     }
 
     public function resetPassword(): void
@@ -197,7 +167,7 @@ class PublicAjaxController
 
         $response = $this->api->resetPassword($api_key, $token, $password);
 
-        $this->passResponseCode($response);
+        $this->api->passResponseCode($response);
     }
 
     public function checkoutFollower(): void
@@ -214,7 +184,7 @@ class PublicAjaxController
         $redirectUrl = wp_get_referer();
         $response = $this->api->checkoutFollower($api_key, $jwt, $redirectUrl);
 
-        $this->passResponseCode($response);
+        $this->api->passResponseCode($response);
     }
 
     public function checkFollowerMembershipStatus(): void
@@ -227,7 +197,7 @@ class PublicAjaxController
         $redirectUrl = wp_get_referer();
         $response = $this->api->checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
-        $this->passResponseCode($response);
+        $this->api->passResponseCode($response);
     }
 
     function fetchPostGatingOptions()

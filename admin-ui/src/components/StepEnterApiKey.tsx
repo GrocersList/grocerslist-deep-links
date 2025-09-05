@@ -1,4 +1,4 @@
-import {useState, useRef} from 'preact/hooks'
+import {useState, useRef, useEffect} from 'preact/hooks'
 import {useSetupContext} from '../hooks/useSetupContext'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -40,6 +40,7 @@ export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
       setSnackbarMessage('✅ API Key Saved!')
       setSnackbarSuccess(true)
       setSnackbarOpen(true)
+
       onNext()
     } catch (err) {
       console.error('Failed to save API Key', err)
@@ -52,6 +53,18 @@ export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
     }
   }
 
+  // Example of requesting creator settings from client:
+  useEffect(() => {
+    const fetchCreatorSettings = async () => {
+      if (apiKey) {
+        const response = await api.getCreatorSettings(apiKey);
+        console.log('Creator settings:', response);
+      }
+    }
+
+    fetchCreatorSettings();
+  }, [api, apiKey]);
+
   return (
     <Box mt={2}>
       <Box mb={2}>
@@ -63,6 +76,7 @@ export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
                 traffic, capture more emails and drive more affiliate sales. For more information please
                 visit <a href="https://grocerslist.com">grocerslist.com</a>
               </p>
+
               <p>
                 Below we’ll walk through setup for our WP Plugin that automatically finds Amazon links on
                 your blog, and converts those into deep links.

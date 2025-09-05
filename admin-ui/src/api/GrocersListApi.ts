@@ -26,6 +26,11 @@ export class GrocersListApi implements IGrocersListApi {
     await this.post('grocers_list_update_api_key', { apiKey })
   }
 
+  async getCreatorSettings(apiKey: string) {
+    const res = await this.post('grocers_list_get_creator_settings', { apiKey });
+    return res.data;
+  }
+
   async getState() {
     const res = await this.post('grocers_list_get_state', {})
     return res.data
