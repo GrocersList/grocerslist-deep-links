@@ -143,7 +143,7 @@ class ApiClient implements IApiClient
                 'headers' => [
                     'x-api-key' => $apiKey,
                     'x-gl-plugin-version' => GROCERS_LIST_VERSION,
-                    'Authorization' => "Bearer " . $jwt,
+                    'Authorization' => $jwt ? "Bearer " . $jwt : null,
                 ],
             ]);
 
@@ -275,7 +275,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'x-api-key' => $apiKey,
                 'x-gl-plugin-version' => GROCERS_LIST_VERSION,
-                'Authorization' => "Bearer " . $jwt,
+                'Authorization' => $jwt ? "Bearer " . $jwt : null,
             ],
         ]);
 
@@ -298,7 +298,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'x-api-key' => $apiKey,
                 'x-gl-plugin-version' => GROCERS_LIST_VERSION,
-                'Authorization' => "Bearer " . $jwt,
+                'Authorization' => $jwt ? "Bearer " . $jwt : null,
             ],
         ]);
 
