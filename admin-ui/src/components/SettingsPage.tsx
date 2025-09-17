@@ -1,21 +1,22 @@
-import { useSetupContext } from '../hooks/useSetupContext'
-import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
-import Switch from '@mui/material/Switch'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Typography from '@mui/material/Typography'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import Container from '@mui/material/Container'
-import { useState } from 'preact/hooks'
-import LoadingButton from '@mui/lab/LoadingButton'
-import { Button } from '@mui/material'
+import LoadingButton from '@mui/lab/LoadingButton';
+import { Button } from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Container from '@mui/material/Container';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Snackbar from '@mui/material/Snackbar';
+import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import { useState } from 'preact/hooks';
+
+import { useSetupContext } from '../hooks/useSetupContext';
 
 interface Toast {
-  id: number
-  success: boolean
-  message: string
-  open: boolean
+  id: number;
+  success: boolean;
+  message: string;
+  open: boolean;
 }
 
 export const SettingsPage = () => {
@@ -28,23 +29,23 @@ export const SettingsPage = () => {
     setUseLinkstaLinks,
     api,
     clearSettings,
-  } = useSetupContext()
-  const [toasts, setToasts] = useState<Toast[]>([])
-  const [loading, setLoading] = useState(false)
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null)
+  } = useSetupContext();
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
   const handleClose = (id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   const handleSave = async () => {
     if (apiKey.trim().length < 10) {
-      setApiKeyError('API Key must be at least 10 characters')
-      return
+      setApiKeyError('API Key must be at least 10 characters');
+      return;
     }
 
-    setApiKeyError(null)
-    setLoading(true)
+    setApiKeyError(null);
+    setLoading(true);
 
     const ops = [
       {
@@ -62,27 +63,37 @@ export const SettingsPage = () => {
         successMsg: '✅ Linksta Links Setting Updated!',
         errorMsg: '❌ Failed to Update Linksta Links Setting',
       },
-    ]
+    ];
 
     ops.forEach(({ promise, successMsg, errorMsg }, idx) => {
       promise
         .then(() => {
-          setToasts((prev) => [
+          setToasts(prev => [
             ...prev,
-            { id: Date.now() + idx, success: true, message: successMsg, open: true },
-          ])
+            {
+              id: Date.now() + idx,
+              success: true,
+              message: successMsg,
+              open: true,
+            },
+          ]);
         })
         .catch(() => {
-          setToasts((prev) => [
+          setToasts(prev => [
             ...prev,
-            { id: Date.now() + idx, success: false, message: errorMsg, open: true },
-          ])
-        })
-    })
+            {
+              id: Date.now() + idx,
+              success: false,
+              message: errorMsg,
+              open: true,
+            },
+          ]);
+        });
+    });
 
-    await Promise.allSettled(ops.map((op) => op.promise))
-    setLoading(false)
-  }
+    await Promise.allSettled(ops.map(op => op.promise));
+    setLoading(false);
+  };
 
   return (
     <Container maxWidth="sm" sx={{ paddingY: 4 }}>
@@ -93,7 +104,9 @@ export const SettingsPage = () => {
           label="API Key"
           variant="standard"
           value={apiKey}
-          onChange={(e: { target: HTMLInputElement }) => setApiKey(e.target.value)}
+          onChange={(e: { target: { value: string } }) =>
+            setApiKey(e.target.value)
+          }
           error={!!apiKeyError}
           helperText={apiKeyError}
           fullWidth
@@ -103,7 +116,7 @@ export const SettingsPage = () => {
           control={
             <Switch
               checked={autoRewriteEnabled}
-              onChange={(e: { target: HTMLInputElement }) =>
+              onChange={(e: { target: { checked: boolean } }) =>
                 setAutoRewriteEnabled(e.target.checked)
               }
               color="primary"
@@ -116,7 +129,9 @@ export const SettingsPage = () => {
           control={
             <Switch
               checked={useLinkstaLinks}
-              onChange={(e: { target: HTMLInputElement }) => setUseLinkstaLinks(e.target.checked)}
+              onChange={(e: { target: { checked: boolean } }) =>
+                setUseLinkstaLinks(e.target.checked)
+              }
               color="primary"
             />
           }
@@ -151,7 +166,11 @@ export const SettingsPage = () => {
         {/*  </>*/}
         {/*)}*/}
 
-        <LoadingButton variant="contained" loading={loading} onClick={handleSave}>
+        <LoadingButton
+          variant="contained"
+          loading={loading}
+          onClick={handleSave}
+        >
           Save
         </LoadingButton>
         <Button variant={'outlined'} onClick={clearSettings}>
@@ -168,11 +187,14 @@ export const SettingsPage = () => {
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           sx={{ mb: `${index * 60}px` }}
         >
-          <Alert severity={toast.success ? 'success' : 'error'} sx={{ width: '100%' }}>
+          <Alert
+            severity={toast.success ? 'success' : 'error'}
+            sx={{ width: '100%' }}
+          >
             {toast.message}
           </Alert>
         </Snackbar>
       ))}
     </Container>
-  )
-}
+  );
+};

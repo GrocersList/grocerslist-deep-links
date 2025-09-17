@@ -1,10 +1,14 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
-import { useSetupContext } from './useSetupContext';
+import { useCallback, useEffect, useState } from 'react';
+
 import type { LinkCountInfo } from '../api/IGrocersListApi';
+
+import { useSetupContext } from './useSetupContext';
 
 export const useLinkCountPoll = (pollInterval = 5000) => {
   const { api } = useSetupContext();
-  const [linkCountInfo, setLinkCountInfo] = useState<LinkCountInfo | null>(null);
+  const [linkCountInfo, setLinkCountInfo] = useState<LinkCountInfo | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -36,7 +40,12 @@ export const useLinkCountPoll = (pollInterval = 5000) => {
     const interval = setInterval(fetchLinkCountInfo, pollInterval);
 
     return () => clearInterval(interval);
-  }, [linkCountInfo?.isRunning, linkCountInfo?.isComplete, fetchLinkCountInfo, pollInterval]);
+  }, [
+    linkCountInfo?.isRunning,
+    linkCountInfo?.isComplete,
+    fetchLinkCountInfo,
+    pollInterval,
+  ]);
 
   // Function to trigger a recount
   const triggerRecount = useCallback(async () => {
@@ -57,6 +66,6 @@ export const useLinkCountPoll = (pollInterval = 5000) => {
     loading,
     error,
     triggerRecount,
-    refreshLinkCountInfo: fetchLinkCountInfo
+    refreshLinkCountInfo: fetchLinkCountInfo,
   };
 };

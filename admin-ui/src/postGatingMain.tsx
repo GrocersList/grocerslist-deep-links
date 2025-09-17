@@ -1,6 +1,8 @@
-import * as ReactDOM from 'preact/compat/client';
-import { CacheProvider } from '@emotion/react';
+import ReactDOM from 'react-dom/client';
+
 import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+
 import { PostGatingMetaBox } from './components/PostGatingMetaBox';
 
 const root = document.getElementById('grocers-list-post-gating-root')!;
@@ -51,8 +53,12 @@ const cache = createCache({
 });
 
 const updateHiddenFields = (postGated: boolean, recipeCardGated: boolean) => {
-  const postGatedField = document.getElementById('grocers-list-post-gated-hidden') as HTMLInputElement;
-  const recipeCardGatedField = document.getElementById('grocers-list-recipe-card-gated-hidden') as HTMLInputElement;
+  const postGatedField = document.getElementById(
+    'grocers-list-post-gated-hidden'
+  ) as HTMLInputElement;
+  const recipeCardGatedField = document.getElementById(
+    'grocers-list-recipe-card-gated-hidden'
+  ) as HTMLInputElement;
 
   if (postGatedField) {
     postGatedField.value = postGated ? '1' : '0';
@@ -65,8 +71,6 @@ const updateHiddenFields = (postGated: boolean, recipeCardGated: boolean) => {
 
 ReactDOM.createRoot(container).render(
   <CacheProvider value={cache}>
-    <PostGatingMetaBox 
-      onUpdate={updateHiddenFields}
-    />
+    <PostGatingMetaBox onUpdate={updateHiddenFields} />
   </CacheProvider>
 );

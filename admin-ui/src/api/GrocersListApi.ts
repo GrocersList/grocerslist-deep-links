@@ -1,4 +1,9 @@
-import type { IGrocersListApi, MatchedLinks, LinkCountInfo, PostGatingOptions } from './IGrocersListApi'
+import type {
+  IGrocersListApi,
+  LinkCountInfo,
+  MatchedLinks,
+  PostGatingOptions,
+} from './IGrocersListApi';
 
 export class GrocersListApi implements IGrocersListApi {
   private async post(action: string, params: Record<string, string>) {
@@ -6,55 +11,61 @@ export class GrocersListApi implements IGrocersListApi {
       action,
       _ajax_nonce: window.grocersList.nonces[action],
       ...params,
-    })
+    });
 
     const res = await fetch(window.grocersList.ajaxUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
-    })
+    });
 
-    const json = await res.json()
+    const json = await res.json();
     if (!res.ok || !json.success) {
-      throw new Error(`Failed action: ${action}`)
+      throw new Error(`Failed action: ${action}`);
     }
 
-    return json
+    return json;
   }
 
   async updateApiKey(apiKey: string) {
-    await this.post('grocers_list_update_api_key', { apiKey })
+    await this.post('grocers_list_update_api_key', { apiKey });
   }
 
   async getCreatorSettings(apiKey: string) {
-    const res = await this.post('grocers_list_get_creator_settings', { apiKey });
+    const res = await this.post('grocers_list_get_creator_settings', {
+      apiKey,
+    });
     return res.data;
   }
 
   async getState() {
-    const res = await this.post('grocers_list_get_state', {})
-    return res.data
+    const res = await this.post('grocers_list_get_state', {});
+    return res.data;
   }
 
   async markSetupComplete() {
-    await this.post('grocers_list_mark_setup_complete', {})
+    await this.post('grocers_list_mark_setup_complete', {});
   }
 
   async updateAutoRewrite(enabled: boolean) {
-    await this.post('grocers_list_update_auto_rewrite', { autoRewriteEnabled: enabled ? '1' : '0' })
+    await this.post('grocers_list_update_auto_rewrite', {
+      autoRewriteEnabled: enabled ? '1' : '0',
+    });
   }
 
   async updateUseLinkstaLinks(enabled: boolean) {
-    await this.post('grocers_list_update_use_linksta_links', { useLinkstaLinks: enabled ? '1' : '0' })
+    await this.post('grocers_list_update_use_linksta_links', {
+      useLinkstaLinks: enabled ? '1' : '0',
+    });
   }
 
   async countMatchedLinks(): Promise<MatchedLinks> {
-    const res = await this.post('grocers_list_count_matched_links', {})
-    return res.data
+    const res = await this.post('grocers_list_count_matched_links', {});
+    return res.data;
   }
 
   async triggerMigrate() {
-    await this.post('grocers_list_trigger_migrate', {})
+    await this.post('grocers_list_trigger_migrate', {});
   }
 
   async clearSettings() {
@@ -76,15 +87,20 @@ export class GrocersListApi implements IGrocersListApi {
   }
 
   async getPostGatingOptions(postId: number): Promise<PostGatingOptions> {
-    const res = await this.post('grocers_list_get_post_gating_options', { postId: postId.toString() });
+    const res = await this.post('grocers_list_get_post_gating_options', {
+      postId: postId.toString(),
+    });
     return res.data;
   }
 
-  async updatePostGatingOptions(postId: number, options: PostGatingOptions): Promise<void> {
+  async updatePostGatingOptions(
+    postId: number,
+    options: PostGatingOptions
+  ): Promise<void> {
     await this.post('grocers_list_update_post_gating_options', {
       postId: postId.toString(),
       postGated: options.postGated ? '1' : '0',
-      recipeCardGated: options.recipeCardGated ? '1' : '0'
+      recipeCardGated: options.recipeCardGated ? '1' : '0',
     });
   }
 
@@ -104,7 +120,9 @@ export class GrocersListApi implements IGrocersListApi {
   }
 
   async getUrlMappings(limit = 100) {
-    const res = await this.post('grocerslist_get_url_mappings', { limit: limit.toString() });
+    const res = await this.post('grocerslist_get_url_mappings', {
+      limit: limit.toString(),
+    });
     return res.data;
   }
 }

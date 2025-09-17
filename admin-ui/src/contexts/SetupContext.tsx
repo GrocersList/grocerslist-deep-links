@@ -1,7 +1,20 @@
-import { createContext } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { createContext } from 'react';
+import { useEffect, useState } from 'react';
+
 import { getGrocersListApi } from '../api/apiFactory';
 import type { IGrocersListApi } from '../api/IGrocersListApi';
+
+export interface ICreatorSettings {
+  appLinks: {
+    hasAppLinksAddon: boolean;
+  };
+  memberships: {
+    isEnabled: boolean;
+    hasPriceIds: boolean;
+    hasProductId: boolean;
+    hasPaymentAccount: boolean;
+  };
+}
 
 export const SetupContext = createContext<{
   apiKey: string;
@@ -39,13 +52,15 @@ export const SetupProvider = ({ children }: { children: any }) => {
 
   useEffect(() => {
     const fetchState = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
         const state = await api.getState();
         console.log('Fetched state', state);
         setApiKey(state.apiKey);
         setAutoRewriteEnabled(state.autoRewriteEnabled);
-        setUseLinkstaLinks(state.useLinkstaLinks !== undefined ? state.useLinkstaLinks : true);
+        setUseLinkstaLinks(
+          state.useLinkstaLinks !== undefined ? state.useLinkstaLinks : true
+        );
         setSetupComplete(state.setupComplete);
       } finally {
         setLoading(false);
@@ -57,7 +72,7 @@ export const SetupProvider = ({ children }: { children: any }) => {
 
   const clearSettings = async () => {
     await api.clearSettings();
-    window.location.reload()
+    window.location.reload();
   };
 
   return (
@@ -73,7 +88,7 @@ export const SetupProvider = ({ children }: { children: any }) => {
         setSetupComplete,
         loading,
         api,
-        clearSettings
+        clearSettings,
       }}
     >
       {children}

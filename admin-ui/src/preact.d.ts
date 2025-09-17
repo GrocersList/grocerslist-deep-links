@@ -3,7 +3,7 @@ import * as preact from 'preact';
 
 declare global {
   namespace JSX {
-    interface IntrinsicElements extends preact.JSX.IntrinsicElements {}
+    type IntrinsicElements = preact.JSX.IntrinsicElements;
   }
 }
 
@@ -18,4 +18,13 @@ declare module 'react-dom' {
 declare module 'react-dom/client' {
   import * as reactDomClient from 'preact/compat/client';
   export = reactDomClient;
+}
+
+// Additional JSX runtime declarations for completeness
+declare module 'react/jsx-runtime' {
+  export * from 'preact/jsx-runtime';
+}
+
+declare module 'react/jsx-dev-runtime' {
+  export * from 'preact/jsx-dev-runtime';
 }

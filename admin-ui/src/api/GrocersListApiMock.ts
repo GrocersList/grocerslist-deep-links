@@ -1,22 +1,22 @@
 import type {
-  IGrocersListApi, 
-  MatchedLinks, 
-  MigrationStatus, 
-  LinkCountInfo, 
+  IGrocersListApi,
+  LinkCountInfo,
+  MatchedLinks,
+  MigrationStatus,
   PostGatingOptions,
-  QueueStats,
   ProcessQueueResult,
+  QueueStats,
   ResetFailedResult,
-  UrlMapping
-} from './IGrocersListApi'
+  UrlMapping,
+} from './IGrocersListApi';
 
-const STORAGE_KEY = 'grocers_list_mock_state'
+const STORAGE_KEY = 'grocers_list_mock_state';
 
 export interface GrocersListPluginState {
-  apiKey: string
-  autoRewriteEnabled: boolean
-  useLinkstaLinks: boolean
-  setupComplete: boolean
+  apiKey: string;
+  autoRewriteEnabled: boolean;
+  useLinkstaLinks: boolean;
+  setupComplete: boolean;
 }
 
 const getDefaultState = (): GrocersListPluginState => ({
@@ -24,87 +24,87 @@ const getDefaultState = (): GrocersListPluginState => ({
   autoRewriteEnabled: true,
   useLinkstaLinks: true,
   setupComplete: false,
-})
+});
 
 export class GrocersListApiMock implements IGrocersListApi {
   private delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms))
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private getStateFromStorage(): GrocersListPluginState {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : getDefaultState()
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : getDefaultState();
   }
 
   private setStateToStorage(state: GrocersListPluginState) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
   async updateApiKey(apiKey: string) {
-    console.log('🔧 Mock updateApiKey', apiKey)
-    await this.delay(1000)
-    const state = this.getStateFromStorage()
-    state.apiKey = apiKey
-    this.setStateToStorage(state)
+    console.log('🔧 Mock updateApiKey', apiKey);
+    await this.delay(1000);
+    const state = this.getStateFromStorage();
+    state.apiKey = apiKey;
+    this.setStateToStorage(state);
   }
 
   async getCreatorSettings(apiKey: string) {
-    console.log('🔧 Mock getCreatorSettings', apiKey)
-    await this.delay(100)
+    console.log('🔧 Mock getCreatorSettings', apiKey);
+    await this.delay(100);
     return {
-      hasAppLinksAddon: true
-    }
+      hasAppLinksAddon: true,
+    };
   }
 
   async getState() {
-    console.log('🔧 Mock getState')
-    await this.delay(1000)
-    return this.getStateFromStorage()
+    console.log('🔧 Mock getState');
+    await this.delay(1000);
+    return this.getStateFromStorage();
   }
 
   async markSetupComplete() {
-    console.log('🔧 Mock markSetupComplete')
-    await this.delay(1000)
-    const state = this.getStateFromStorage()
-    state.setupComplete = true
-    this.setStateToStorage(state)
+    console.log('🔧 Mock markSetupComplete');
+    await this.delay(1000);
+    const state = this.getStateFromStorage();
+    state.setupComplete = true;
+    this.setStateToStorage(state);
   }
 
   async updateAutoRewrite(enabled: boolean) {
-    console.log('🔧 Mock updateAutoRewrite', enabled)
-    await this.delay(1000)
-    const state = this.getStateFromStorage()
-    state.autoRewriteEnabled = enabled
-    this.setStateToStorage(state)
+    console.log('🔧 Mock updateAutoRewrite', enabled);
+    await this.delay(1000);
+    const state = this.getStateFromStorage();
+    state.autoRewriteEnabled = enabled;
+    this.setStateToStorage(state);
   }
 
   async updateUseLinkstaLinks(enabled: boolean) {
-    console.log('🔧 Mock updateUseLinkstaLinks', enabled)
-    await this.delay(1000)
-    const state = this.getStateFromStorage()
-    state.useLinkstaLinks = enabled
-    this.setStateToStorage(state)
+    console.log('🔧 Mock updateUseLinkstaLinks', enabled);
+    await this.delay(1000);
+    const state = this.getStateFromStorage();
+    state.useLinkstaLinks = enabled;
+    this.setStateToStorage(state);
   }
 
   async countMatchedLinks(): Promise<MatchedLinks> {
-    console.log('🔧 Mock countMatchedLinks')
-    await this.delay(1000)
+    console.log('🔧 Mock countMatchedLinks');
+    await this.delay(1000);
     return {
       postsWithLinks: 3,
       totalLinks: 42,
-    }
+    };
   }
 
   async triggerMigrate(): Promise<void> {
-    console.log('🔧 Mock triggerMigrate')
-    await this.delay(500)
-    localStorage.setItem('grocers_list_mock_migration_started', 'true')
+    console.log('🔧 Mock triggerMigrate');
+    await this.delay(500);
+    localStorage.setItem('grocers_list_mock_migration_started', 'true');
   }
 
   async triggerRecountLinks(): Promise<void> {
-    console.log('🔧 Mock triggerRecountLinks')
-    await this.delay(500)
-    localStorage.setItem('grocers_list_mock_recount_started', 'true')
+    console.log('🔧 Mock triggerRecountLinks');
+    await this.delay(500);
+    localStorage.setItem('grocers_list_mock_recount_started', 'true');
   }
 
   async clearSettings() {
@@ -128,7 +128,7 @@ export class GrocersListApiMock implements IGrocersListApi {
         total: 42,
         processed: 0,
         remaining: 42,
-        isComplete: false
+        isComplete: false,
       };
     }
 
@@ -136,7 +136,7 @@ export class GrocersListApiMock implements IGrocersListApi {
       total: 42,
       processed: isComplete ? 42 : randomProgress,
       remaining: isComplete ? 0 : 42 - randomProgress,
-      isComplete
+      isComplete,
     };
   }
 
@@ -157,7 +157,7 @@ export class GrocersListApiMock implements IGrocersListApi {
         lastCount: Date.now() - 7200000,
         isRunning: false,
         processedPosts: 0,
-        isComplete: false
+        isComplete: false,
       };
     }
 
@@ -168,7 +168,7 @@ export class GrocersListApiMock implements IGrocersListApi {
       lastCount: Date.now(),
       isRunning,
       processedPosts: isComplete ? 25 : randomProcessed,
-      isComplete
+      isComplete,
     };
   }
 
@@ -177,11 +177,14 @@ export class GrocersListApiMock implements IGrocersListApi {
     await this.delay(300);
     return {
       postGated: Math.random() > 0.5,
-      recipeCardGated: Math.random() > 0.7
+      recipeCardGated: Math.random() > 0.7,
     };
   }
 
-  async updatePostGatingOptions(postId: number, options: PostGatingOptions): Promise<void> {
+  async updatePostGatingOptions(
+    postId: number,
+    options: PostGatingOptions
+  ): Promise<void> {
     console.log('🔧 Mock updatePostGatingOptions', postId, options);
     await this.delay(500);
   }
@@ -189,7 +192,7 @@ export class GrocersListApiMock implements IGrocersListApi {
   async getQueueStats(): Promise<QueueStats> {
     console.log('🔧 Mock getQueueStats');
     await this.delay(400);
-    
+
     const total = 15;
     const completed = Math.floor(Math.random() * 8);
     const failed = Math.floor(Math.random() * 3);
@@ -202,44 +205,46 @@ export class GrocersListApiMock implements IGrocersListApi {
       processing,
       completed,
       failed,
-      nextScheduledRun: new Date(Date.now() + 180000).toISOString() // 3 minutes from now
+      nextScheduledRun: new Date(Date.now() + 180000).toISOString(), // 3 minutes from now
     };
   }
 
   async processQueue(): Promise<ProcessQueueResult> {
     console.log('🔧 Mock processQueue');
     await this.delay(2000); // Simulate processing time
-    
+
     const processed = Math.floor(Math.random() * 5) + 1;
     const errors = Math.random() > 0.8 ? 1 : 0;
-    
+
     return { processed, errors };
   }
 
   async resetFailedPosts(): Promise<ResetFailedResult> {
     console.log('🔧 Mock resetFailedPosts');
     await this.delay(800);
-    
+
     return { reset: Math.floor(Math.random() * 3) + 1 };
   }
 
   async getUrlMappings(limit = 100): Promise<UrlMapping[]> {
     console.log('🔧 Mock getUrlMappings', limit);
     await this.delay(600);
-    
+
     const mappings: UrlMapping[] = [];
     const count = Math.min(limit, Math.floor(Math.random() * 20) + 5);
-    
+
     for (let i = 0; i < count; i++) {
       mappings.push({
         id: i + 1,
         original_url: `https://amazon.com/dp/B${String(Math.random()).substr(2, 6)}`,
         linksta_url: `https://linksta.io/${String(Math.random()).substr(2, 8)}`,
         link_hash: String(Math.random()).substr(2, 8),
-        created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+        created_at: new Date(
+          Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+        ).toISOString(),
       });
     }
-    
+
     return mappings;
   }
 }

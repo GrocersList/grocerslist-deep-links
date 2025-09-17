@@ -1,7 +1,9 @@
-import * as ReactDOM from 'preact/compat/client';
-import { CacheProvider } from '@emotion/react';
+import ReactDOM from 'react-dom/client';
+
 import createCache from '@emotion/cache';
-import {App} from "./App.tsx";
+import { CacheProvider } from '@emotion/react';
+
+import { App } from './App.tsx';
 
 declare global {
   interface Window {

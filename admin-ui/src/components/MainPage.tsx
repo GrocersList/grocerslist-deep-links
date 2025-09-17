@@ -1,8 +1,11 @@
-import { useSetupContext } from '../hooks/useSetupContext'
+import { ClipLoader } from 'react-spinners';
+
+import Box from '@mui/material/Box';
+
+import { useSetupContext } from '../hooks/useSetupContext';
+
 import { SettingsPage } from './SettingsPage';
 import { SetupWizard } from './SetupWizard';
-import { ClipLoader } from 'react-spinners';
-import Box from '@mui/material/Box';
 
 export const GrocersListSettingsPage = () => {
   return <MainPage />;

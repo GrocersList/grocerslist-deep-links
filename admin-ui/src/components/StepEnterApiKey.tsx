@@ -1,57 +1,59 @@
-import {useState, useRef, useEffect} from 'preact/hooks'
-import {useSetupContext} from '../hooks/useSetupContext'
-import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import LoadingButton from '@mui/lab/LoadingButton'
-import Card from "@mui/material/Card";
+import { useEffect, useRef, useState } from 'react';
 
-export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
-  const {apiKey, setApiKey, api} = useSetupContext()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSuccess, setSnackbarSuccess] = useState(true)
-  const inputRef = useRef<HTMLInputElement>(null)
+import LoadingButton from '@mui/lab/LoadingButton';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Snackbar from '@mui/material/Snackbar';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+
+import { useSetupContext } from '../hooks/useSetupContext';
+
+export const StepEnterApiKey = ({ onNext }: { onNext: () => void }) => {
+  const { apiKey, setApiKey, api } = useSetupContext();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSuccess, setSnackbarSuccess] = useState(true);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const shakeInput = () => {
-    const input = inputRef.current
+    const input = inputRef.current;
     if (input) {
-      input.classList.remove('shake')
-      void input.offsetWidth
-      input.classList.add('shake')
+      input.classList.remove('shake');
+      void input.offsetWidth;
+      input.classList.add('shake');
     }
-  }
+  };
 
   const validate = async () => {
     if (apiKey.trim().length < 10) {
-      setError('API Key must be at least 10 characters')
-      shakeInput()
-      return
+      setError('API Key must be at least 10 characters');
+      shakeInput();
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      await api.updateApiKey(apiKey)
-      setSnackbarMessage('✅ API Key Saved!')
-      setSnackbarSuccess(true)
-      setSnackbarOpen(true)
+      await api.updateApiKey(apiKey);
+      setSnackbarMessage('✅ API Key Saved!');
+      setSnackbarSuccess(true);
+      setSnackbarOpen(true);
 
-      onNext()
+      onNext();
     } catch (err) {
-      console.error('Failed to save API Key', err)
-      shakeInput()
-      setSnackbarMessage('❌ Failed to Save API Key')
-      setSnackbarSuccess(false)
-      setSnackbarOpen(true)
+      console.error('Failed to save API Key', err);
+      shakeInput();
+      setSnackbarMessage('❌ Failed to Save API Key');
+      setSnackbarSuccess(false);
+      setSnackbarOpen(true);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Example of requesting creator settings from client:
   useEffect(() => {
@@ -60,7 +62,7 @@ export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
         const response = await api.getCreatorSettings(apiKey);
         console.log('Creator settings:', response);
       }
-    }
+    };
 
     fetchCreatorSettings();
   }, [api, apiKey]);
@@ -72,21 +74,24 @@ export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
           <Box padding={2}>
             <Typography>
               <p>
-                💡 Grocers List offers a suite of tools built for food bloggers to drive more website
-                traffic, capture more emails and drive more affiliate sales. For more information please
-                visit <a href="https://grocerslist.com">grocerslist.com</a>
+                💡 Grocers List offers a suite of tools built for food bloggers
+                to drive more website traffic, capture more emails and drive
+                more affiliate sales. For more information please visit{' '}
+                <a href="https://grocerslist.com">grocerslist.com</a>
               </p>
 
               <p>
-                Below we’ll walk through setup for our WP Plugin that automatically finds Amazon links on
-                your blog, and converts those into deep links.
+                Below we’ll walk through setup for our WP Plugin that
+                automatically finds Amazon links on your blog, and converts
+                those into deep links.
               </p>
 
               <p>
-                Deep links open the click into the Amazon app, and are 3-5X more likely to lead to a
-                purchase than opening an Amazon click into the browser. This is because the user is never
-                signed into Amazon on the browser, and they are always signed in to the Amazon app, with
-                1-click purchase ready to go.
+                Deep links open the click into the Amazon app, and are 3-5X more
+                likely to lead to a purchase than opening an Amazon click into
+                the browser. This is because the user is never signed into
+                Amazon on the browser, and they are always signed in to the
+                Amazon app, with 1-click purchase ready to go.
               </p>
               <p>Let’s start converting your Amazon links for you.</p>
             </Typography>
@@ -108,14 +113,21 @@ export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
         label="API Key"
         inputRef={inputRef}
         value={apiKey}
-        onChange={(e: { target: HTMLInputElement }) => setApiKey(e.target.value)}
+        onChange={(e: { target: { value: string } }) =>
+          setApiKey(e.target.value)
+        }
         fullWidth
         error={Boolean(error)}
         helperText={error}
-        sx={{mb: 2}}
+        sx={{ mb: 2 }}
       />
 
-      <LoadingButton variant="contained" onClick={validate} loading={loading} fullWidth>
+      <LoadingButton
+        variant="contained"
+        onClick={validate}
+        loading={loading}
+        fullWidth
+      >
         Continue
       </LoadingButton>
 
@@ -123,12 +135,15 @@ export const StepEnterApiKey = ({onNext}: { onNext: () => void }) => {
         open={snackbarOpen}
         autoHideDuration={3000}
         onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={snackbarSuccess ? 'success' : 'error'} sx={{width: '100%'}}>
+        <Alert
+          severity={snackbarSuccess ? 'success' : 'error'}
+          sx={{ width: '100%' }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>
     </Box>
-  )
-}
+  );
+};

@@ -1,4 +1,5 @@
-import { useContext } from "preact/hooks";
-import {SetupContext} from "../contexts/SetupContext.tsx";
+import { useContext } from 'react';
+
+import { SetupContext } from '../contexts/SetupContext.tsx';
 
 export const useSetupContext = () => useContext(SetupContext);

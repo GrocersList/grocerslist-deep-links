@@ -1,13 +1,14 @@
-import { isDev } from '../utils/env'
-import { GrocersListApi } from './GrocersListApi'
-import { GrocersListApiMock } from './GrocersListApiMock'
-import type { IGrocersListApi } from './IGrocersListApi'
+import { isDev } from '../utils/env';
 
-let instance: IGrocersListApi
+import { GrocersListApi } from './GrocersListApi';
+import { GrocersListApiMock } from './GrocersListApiMock';
+import type { IGrocersListApi } from './IGrocersListApi';
+
+let instance: IGrocersListApi;
 
 export const getGrocersListApi = (): IGrocersListApi => {
   if (!instance) {
-    instance = isDev() ? new GrocersListApiMock() : new GrocersListApi()
+    instance = isDev() ? new GrocersListApiMock() : new GrocersListApi();
   }
-  return instance
-}
+  return instance;
+};

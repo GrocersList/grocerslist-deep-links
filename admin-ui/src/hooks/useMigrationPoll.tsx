@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
-import { useSetupContext } from './useSetupContext';
+import { useCallback, useEffect, useState } from 'react';
+
 import type { MigrationStatus } from '../api/IGrocersListApi';
+
+import { useSetupContext } from './useSetupContext';
 
 export const useMigrationPoll = (pollInterval = 5000) => {
   const { api } = useSetupContext();
-  const [migrationStatus, setMigrationStatus] = useState<MigrationStatus | null>(null);
+  const [migrationStatus, setMigrationStatus] =
+    useState<MigrationStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -67,6 +70,6 @@ export const useMigrationPoll = (pollInterval = 5000) => {
     error,
     isRunning,
     triggerMigration,
-    refreshMigrationStatus: fetchMigrationStatus
+    refreshMigrationStatus: fetchMigrationStatus,
   };
 };
