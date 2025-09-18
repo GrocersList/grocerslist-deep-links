@@ -26,14 +26,13 @@ class PublicAjaxController
     public function register(): void
     {
         $actions = [
-            'grocers_list_get_membership_settings' => 'getMembershipSettings',
+            'grocers_list_get_init_memberships' => 'getInitMemberships',
             'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
             'grocers_list_forgot_password' => 'forgotPassword',
             'grocers_list_reset_password' => 'resetPassword',
             'grocers_list_checkout_follower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
-            'grocers_list_get_post_gating_options' => 'getPostGatingOptions',
         ];
 
         foreach ($actions as $hook => $method) {
@@ -42,9 +41,9 @@ class PublicAjaxController
         }
     }
 
-    public function getMembershipSettings(): void
+    public function getInitMemberships(): void
     {
-        check_ajax_referer('grocers_list_get_membership_settings', 'security');
+        check_ajax_referer('grocers_list_get_init_memberships', 'security');
 
         $api_key = $this->settings->getApiKey();
 
@@ -59,7 +58,7 @@ class PublicAjaxController
         $gating_options = $this->fetchPostGatingOptions();
         $gated = isset($gating_options) && ($gating_options['postGated'] || $gating_options['recipeCardGated']);
 
-        $response = $this->api->getMembershipSettings($api_key, $jwt, $redirectUrl, $gated);
+        $response = $this->api->getInitMemberships($api_key, $jwt, $redirectUrl, $gated);
 
         $this->api->passResponseCode($response);
     }
@@ -225,19 +224,5 @@ class PublicAjaxController
             'postGated' => $post_gated,
             'recipeCardGated' => $recipe_card_gated,
         ];
-    }
-
-    public function getPostGatingOptions(): void
-    {
-        check_ajax_referer('grocers_list_get_post_gating_options', 'security');
-
-        $gating_options = $this->fetchPostGatingOptions();
-
-        if (!$gating_options) {
-            wp_send_json_error(['error' => 'Invalid post ID'], 400);
-            return;
-        }
-
-        wp_send_json_success($gating_options);
     }
 }

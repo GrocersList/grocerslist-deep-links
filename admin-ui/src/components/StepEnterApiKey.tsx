@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import LoadingButton from '@mui/lab/LoadingButton';
 import Alert from '@mui/material/Alert';
@@ -54,18 +54,6 @@ export const StepEnterApiKey = ({ onNext }: { onNext: () => void }) => {
       setLoading(false);
     }
   };
-
-  // Example of requesting creator settings from client:
-  useEffect(() => {
-    const fetchCreatorSettings = async () => {
-      if (apiKey) {
-        const response = await api.getCreatorSettings(apiKey);
-        console.log('Creator settings:', response);
-      }
-    };
-
-    fetchCreatorSettings();
-  }, [api, apiKey]);
 
   return (
     <Box mt={2}>

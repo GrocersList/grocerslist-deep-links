@@ -55,9 +55,10 @@ class Plugin
         $urlMappingTable = new UrlMappingTable();
         $urlMappingService = new UrlMappingService($api, $extractor, $urlMappingTable);
 
-        $rewriter = new LinkRewriter($api, $extractor, $replacer, $this->hooks, $pluginSettings, $urlMappingService);
-        $settings = new SettingsPage($this->hooks, $api, $rewriter);
+        $settings = new SettingsPage($this->hooks, $api, $pluginSettings);
         $settings->register();
+
+        $rewriter = new LinkRewriter($api, $extractor, $replacer, $this->hooks, $pluginSettings, $urlMappingService);
         $rewriter->register();
 
         $migrationJob = new MigrationVisitor($rewriter, $urlMappingService, $extractor, $pluginSettings, $this->hooks, 50);
@@ -69,10 +70,10 @@ class Plugin
         $publicAjax = new PublicAjaxController($pluginSettings, $api, $this->hooks);
         $publicAjax->register();
 
-        $clientScripts = new ClientScripts($this->hooks);
+        $clientScripts = new ClientScripts($this->hooks, $api, $pluginSettings);
         $clientScripts->register();
 
-        $contentFilter = new ContentFilter($this->hooks, $pluginSettings, $urlMappingService);
+        $contentFilter = new ContentFilter($this->hooks, $pluginSettings, $urlMappingService, $api);
         $contentFilter->register();
 
         // Register post gating components

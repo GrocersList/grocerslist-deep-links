@@ -3,12 +3,14 @@
 namespace GrocersList\Service;
 
 use GrocersList\Model\LinkResponse;
+use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Config;
 use GrocersList\Support\Logger;
-use GrocersList\Settings\PluginSettings;
 
 class ApiClient implements IApiClient
 {
+    private $creatorSettings;
+
     /**
      * Helper method to pass through response code
      *
@@ -105,11 +107,14 @@ class ApiClient implements IApiClient
      * Get creator settings for WordPress Plugin settings
      *
      * @param string $apiKey
-     * @return string|\WP_Error Returns the response body or WP_Error on failure
+     * @return array|\WP_Error Returns the response body or WP_Error on failure
      */
     public function getCreatorSettings(string $apiKey)
     {
-        if (!$apiKey) return false;
+        if (!$apiKey) return [];
+
+        // we memoize and return creatorSettings if it has already been set to avoid duplicate requests
+        if ($this->creatorSettings) return $this->creatorSettings;
 
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings", [
             'headers' => [
@@ -118,7 +123,13 @@ class ApiClient implements IApiClient
             ],
         ]);
 
-        return $response;
+        if (is_wp_error($response)) {
+            return [];
+        }
+
+        $this->creatorSettings = json_decode($response['body']);
+
+        return $this->creatorSettings;
     }
 
     /**
@@ -130,13 +141,13 @@ class ApiClient implements IApiClient
      * @param boolean $gated
      * @return string|\WP_Error Returns the response body or WP_Error on failure
      */
-    public function getMembershipSettings(string $apiKey, string $jwt, string $redirectUrl, bool $gated = false)
+    public function getInitMemberships(string $apiKey, string $jwt, string $redirectUrl, bool $gated = false)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
         if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
 
         $response = wp_remote_get("https://" . Config::getApiBaseDomain()
-            . "/api/v1/creator-api/membership-settings" .
+            . "/api/v1/creator-api/init-memberships" .
             "?gated=" . $gated .
             "&redirect=" . urlencode($redirectUrl),
             [

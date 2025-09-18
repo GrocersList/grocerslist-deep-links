@@ -2,7 +2,6 @@ import type { GrocersListPluginState } from './GrocersListApiMock.ts';
 
 export interface IGrocersListApi {
   updateApiKey(apiKey: string): Promise<void>;
-  getCreatorSettings(apiKey: string): Promise<any>; // TODO: type Promise resolution value
   getState(): Promise<GrocersListPluginState>;
   markSetupComplete(): Promise<void>;
   updateAutoRewrite(enabled: boolean): Promise<void>;
@@ -13,7 +12,6 @@ export interface IGrocersListApi {
   getMigrationStatus(): Promise<MigrationStatus>;
   triggerRecountLinks(): Promise<void>;
   getLinkCountInfo(): Promise<LinkCountInfo>;
-  getPostGatingOptions(postId: number): Promise<PostGatingOptions>;
   updatePostGatingOptions(
     postId: number,
     options: PostGatingOptions

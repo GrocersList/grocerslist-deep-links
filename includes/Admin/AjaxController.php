@@ -39,7 +39,6 @@ class AjaxController
         $actions = [
             'grocers_list_get_state' => 'getState',
             'grocers_list_update_api_key' => 'updateApiKey',
-            'grocers_list_get_creator_settings' => 'getCreatorSettings',
             'grocers_list_update_auto_rewrite' => 'updateAutoRewrite',
             'grocers_list_update_use_linksta_links' => 'updateUseLinkstaLinks',
             'grocers_list_count_matched_links' => 'countMatchedLinks',
@@ -51,7 +50,6 @@ class AjaxController
             'grocers_list_get_link_count_info' => 'getLinkCountInfo',
             'grocers_list_trigger_migrate' => 'triggerMigrate',
             'grocers_list_trigger_recount_links' => 'triggerRecountLinks',
-            'grocers_list_get_post_gating_options' => 'getPostGatingOptions',
             'grocers_list_update_post_gating_options' => 'updatePostGatingOptions',
         ];
 
@@ -115,18 +113,6 @@ class AjaxController
 
         $this->settings->setApiKey($apiKey);
         wp_send_json_success(['message' => 'API key updated']);
-    }
-
-    public function getCreatorSettings(): void
-    {
-        check_ajax_referer('grocers_list_get_creator_settings', 'security');
-
-        $this->checkPermission('grocers_list_get_creator_settings');
-        $apiKey = isset($_POST['apiKey']) ? sanitize_text_field(wp_unslash($_POST['apiKey'])) : '';
-
-        $response = $this->api->getCreatorSettings($apiKey);
-
-        $this->api->passResponseCode($response);
     }
 
     public function updateAutoRewrite(): void
@@ -286,40 +272,6 @@ class AjaxController
             'success' => true,
             'message' => 'Link recount completed',
             'data' => $countInfo,
-        ]);
-    }
-
-    public function getPostGatingOptions(): void
-    {
-        check_ajax_referer('grocers_list_get_post_gating_options', 'security');
-
-        $this->checkPermission('grocers_list_get_post_gating_options');
-
-        if (!isset($_POST['postId'])) {
-            wp_send_json_error(['error' => 'Invalid post ID'], 400);
-            return;
-        }
-
-        $post_id_raw = sanitize_text_field(wp_unslash($_POST['postId']));
-
-        if (!is_numeric($post_id_raw)) {
-            wp_send_json_error(['error' => 'Invalid post ID'], 400);
-            return;
-        }
-
-        $post_id = intval($post_id_raw);
-
-        if (!get_post($post_id)) {
-            wp_send_json_error(['error' => 'Post not found'], 404);
-            return;
-        }
-
-        $post_gated = get_post_meta($post_id, 'grocers_list_post_gated', true) === '1';
-        $recipe_card_gated = get_post_meta($post_id, 'grocers_list_recipe_card_gated', true) === '1';
-
-        wp_send_json_success([
-            'postGated' => $post_gated,
-            'recipeCardGated' => $recipe_card_gated,
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace GrocersList\Support;
 
+use GrocersList\Service\IApiClient;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Logger;
 use GrocersList\Service\UrlMappingService;
@@ -11,12 +12,14 @@ class ContentFilter
     private Hooks $hooks;
     private PluginSettings $settings;
     private ?UrlMappingService $urlMappingService;
+    private IApiClient $api;
 
-    public function __construct(Hooks $hooks, PluginSettings $settings, ?UrlMappingService $urlMappingService = null)
+    public function __construct(Hooks $hooks, PluginSettings $settings, ?UrlMappingService $urlMappingService = null, IApiClient $api)
     {
         $this->hooks = $hooks;
         $this->settings = $settings;
         $this->urlMappingService = $urlMappingService;
+        $this->api = $api;
     }
 
     public function register(): void
@@ -40,6 +43,13 @@ class ContentFilter
     public function filterContent(string $content): string
     {
         Logger::debug("ContentFilter::filterContent() called");
+
+        $creatorSettings = $this->api->getCreatorSettings($this->settings->getApiKey());
+
+        if (!$creatorSettings->provisioning->appLinks->hasAppLinksAddon) {
+            Logger::debug("ContentFilter::filterContent() => hasAppLinksAddon FALSE");
+            return $this->removeDataAttributes($content);
+        }
 
         if (!$this->settings->isUseLinkstaLinksEnabled()) {
             Logger::debug("ContentFilter::filterContent() => use_linksta_links DISABLED");

@@ -48,14 +48,6 @@ export class GrocersListApiMock implements IGrocersListApi {
     this.setStateToStorage(state);
   }
 
-  async getCreatorSettings(apiKey: string) {
-    console.log('🔧 Mock getCreatorSettings', apiKey);
-    await this.delay(100);
-    return {
-      hasAppLinksAddon: true,
-    };
-  }
-
   async getState() {
     console.log('🔧 Mock getState');
     await this.delay(1000);
@@ -169,15 +161,6 @@ export class GrocersListApiMock implements IGrocersListApi {
       isRunning,
       processedPosts: isComplete ? 25 : randomProcessed,
       isComplete,
-    };
-  }
-
-  async getPostGatingOptions(postId: number): Promise<PostGatingOptions> {
-    console.log('🔧 Mock getPostGatingOptions', postId);
-    await this.delay(300);
-    return {
-      postGated: Math.random() > 0.5,
-      recipeCardGated: Math.random() > 0.7,
     };
   }
 

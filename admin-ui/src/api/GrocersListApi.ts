@@ -31,13 +31,6 @@ export class GrocersListApi implements IGrocersListApi {
     await this.post('grocers_list_update_api_key', { apiKey });
   }
 
-  async getCreatorSettings(apiKey: string) {
-    const res = await this.post('grocers_list_get_creator_settings', {
-      apiKey,
-    });
-    return res.data;
-  }
-
   async getState() {
     const res = await this.post('grocers_list_get_state', {});
     return res.data;
@@ -83,13 +76,6 @@ export class GrocersListApi implements IGrocersListApi {
 
   async getLinkCountInfo(): Promise<LinkCountInfo> {
     const res = await this.post('grocers_list_get_link_count_info', {});
-    return res.data;
-  }
-
-  async getPostGatingOptions(postId: number): Promise<PostGatingOptions> {
-    const res = await this.post('grocers_list_get_post_gating_options', {
-      postId: postId.toString(),
-    });
     return res.data;
   }
 

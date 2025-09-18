@@ -5,10 +5,24 @@ import { CacheProvider } from '@emotion/react';
 
 import { App } from './App.tsx';
 
+export interface ICreatorSettings {
+  appLinks: {
+    hasAppLinksAddon: boolean;
+  };
+  memberships: {
+    isEnabled: boolean;
+    hasPriceIds: boolean;
+    hasProductId: boolean;
+    hasPaymentAccount: boolean;
+  };
+}
+
 declare global {
   interface Window {
     grocersList: {
       ajaxUrl: string;
+      settings: any; // passed through to widget, type info not needed in plugin
+      provisioning: ICreatorSettings;
       nonces: Record<string, string>;
     };
     wp: {

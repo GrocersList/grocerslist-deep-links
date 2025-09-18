@@ -3,14 +3,18 @@
 namespace GrocersList\Admin;
 
 use GrocersList\Service\IApiClient;
-use GrocersList\Service\LinkRewriter;
+use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Hooks;
 
 class SettingsPage {
     private Hooks $hooks;
+    private IApiClient $api;
+    private PluginSettings $settings;
 
-    public function __construct(Hooks $hooks, IApiClient $apiClient, LinkRewriter $rewriter) {
+    public function __construct(Hooks $hooks, IApiClient $api, PluginSettings $pluginSettings) {
         $this->hooks = $hooks;
+        $this->api = $api;
+        $this->settings = $pluginSettings;
     }
 
     public function register(): void {
@@ -37,14 +41,15 @@ class SettingsPage {
 
         $assetBase = plugin_dir_url(__FILE__) . '../../admin-ui/dist/';
         $version = GROCERS_LIST_VERSION;
-        wp_enqueue_script('grocers-list-ui', $assetBase . 'bundle.js', [], $version, true);
+        wp_enqueue_script('grocers-list-admin-ui', $assetBase . 'bundle.js', [], $version, true);
 
-        wp_localize_script('grocers-list-ui', 'grocersList', [
+        $creatorSettings = $this->api->getCreatorSettings($this->settings->getApiKey());
+
+        $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonces' => [
                 'grocers_list_get_state' => wp_create_nonce('grocers_list_get_state'),
                 'grocers_list_update_api_key' => wp_create_nonce('grocers_list_update_api_key'),
-                'grocers_list_get_creator_settings' => wp_create_nonce('grocers_list_get_creator_settings'),
                 'grocers_list_update_auto_rewrite' => wp_create_nonce('grocers_list_update_auto_rewrite'),
                 'grocers_list_update_use_linksta_links' => wp_create_nonce('grocers_list_update_use_linksta_links'),
                 'grocers_list_count_matched_links' => wp_create_nonce('grocers_list_count_matched_links'),
@@ -56,11 +61,14 @@ class SettingsPage {
                 'grocers_list_get_link_count_info' => wp_create_nonce('grocers_list_get_link_count_info'),
                 'grocers_list_trigger_migrate' => wp_create_nonce('grocers_list_trigger_migrate'),
                 'grocers_list_trigger_recount_links' => wp_create_nonce('grocers_list_trigger_recount_links'),
-                'grocers_list_get_post_gating_options' => wp_create_nonce('grocers_list_get_post_gating_options'),
                 'grocers_list_update_post_gating_options' => wp_create_nonce('grocers_list_update_post_gating_options'),
                 'grocers_list_process_next_count_batch' => wp_create_nonce('grocers_list_process_next_count_batch'),
             ],
-        ]);
+            'settings' => $creatorSettings->settings,
+            'provisioning' => $creatorSettings->provisioning
+        ];
+
+        wp_localize_script('grocers-list-admin-ui', 'grocersList', $window_grocersList);
 
         echo '<div id="root"></div>';
     }
