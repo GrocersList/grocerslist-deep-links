@@ -1,10 +1,13 @@
-import preact from '@preact/preset-vite'
-import path from 'path'
-import { defineConfig } from 'vite'
+import preact from '@preact/preset-vite';
+import path from 'path';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
-    outDir: path.resolve(process.cwd(), '../../build/grocerslist/admin-ui/dist'),
+    outDir: path.resolve(
+      process.cwd(),
+      '../../build/grocerslist/admin-ui/dist'
+    ),
     emptyOutDir: true,
     manifest: false,
 
@@ -28,4 +31,4 @@ export default defineConfig({
       'react/jsx-dev-runtime': 'preact/jsx-dev-runtime',
     },
   },
-})
+});
