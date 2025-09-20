@@ -16,14 +16,12 @@ export interface GrocersListPluginState {
   apiKey: string;
   autoRewriteEnabled: boolean;
   useLinkstaLinks: boolean;
-  setupComplete: boolean;
 }
 
 const getDefaultState = (): GrocersListPluginState => ({
   apiKey: 'mock-api-key-1234567890',
   autoRewriteEnabled: true,
   useLinkstaLinks: true,
-  setupComplete: false,
 });
 
 export class GrocersListApiMock implements IGrocersListApi {
@@ -52,14 +50,6 @@ export class GrocersListApiMock implements IGrocersListApi {
     console.log('🔧 Mock getState');
     await this.delay(1000);
     return this.getStateFromStorage();
-  }
-
-  async markSetupComplete() {
-    console.log('🔧 Mock markSetupComplete');
-    await this.delay(1000);
-    const state = this.getStateFromStorage();
-    state.setupComplete = true;
-    this.setStateToStorage(state);
   }
 
   async updateAutoRewrite(enabled: boolean) {
@@ -117,18 +107,26 @@ export class GrocersListApiMock implements IGrocersListApi {
 
     if (!started) {
       return {
-        total: 42,
-        processed: 0,
-        remaining: 42,
+        totalPosts: 42,
+        processedPosts: 0,
         isComplete: false,
+        isRunning: false,
+        lastMigrationStartedAt: 0,
+        lastMigrationCompletedAt: 0,
+        migratedPosts: 0,
+        totalMappings: 0,
       };
     }
 
     return {
-      total: 42,
-      processed: isComplete ? 42 : randomProgress,
-      remaining: isComplete ? 0 : 42 - randomProgress,
+      totalPosts: 42,
+      processedPosts: isComplete ? 42 : randomProgress,
       isComplete,
+      isRunning: false,
+      lastMigrationStartedAt: 0,
+      lastMigrationCompletedAt: 0,
+      migratedPosts: 0,
+      totalMappings: 0,
     };
   }
 
@@ -143,6 +141,7 @@ export class GrocersListApiMock implements IGrocersListApi {
 
     if (!started) {
       return {
+        unmappedLinks: 0,
         postsWithLinks: 0,
         totalLinks: 0,
         totalPosts: 25,
@@ -154,6 +153,7 @@ export class GrocersListApiMock implements IGrocersListApi {
     }
 
     return {
+      unmappedLinks: 0,
       postsWithLinks: 5,
       totalLinks: 50,
       totalPosts: 25,
@@ -229,5 +229,10 @@ export class GrocersListApiMock implements IGrocersListApi {
     }
 
     return mappings;
+  }
+
+  async updateMembershipsEnabled(enabled: boolean) {
+    console.log('🔧 Mock updateMembershipsEnabled', enabled);
+    await this.delay(500);
   }
 }

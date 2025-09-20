@@ -2,24 +2,24 @@
 
 namespace GrocersList;
 
-use GrocersList\Admin\SettingsPage;
+use GrocersList\Admin\AjaxController;
 use GrocersList\Admin\PostGating;
+use GrocersList\Admin\SettingsPage;
+use GrocersList\Database\UrlMappingTable;
+use GrocersList\Frontend\ClientScripts;
+use GrocersList\Frontend\PublicAjaxController;
+use GrocersList\Jobs\LinkCountVisitor;
+use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Service\ApiClient;
 use GrocersList\Service\LinkRewriter;
 use GrocersList\Service\UrlMappingService;
-use GrocersList\Database\UrlMappingTable;
+use GrocersList\Settings\PluginSettings;
+use GrocersList\Support\ContentFilter;
 use GrocersList\Support\Hooks;
 use GrocersList\Support\LinkExtractor;
 use GrocersList\Support\LinkReplacer;
-use GrocersList\Support\WordPressHooks;
-use GrocersList\Support\ContentFilter;
-use GrocersList\Admin\AjaxController;
-use GrocersList\Frontend\PublicAjaxController;
-use GrocersList\Frontend\ClientScripts;
-use GrocersList\Settings\PluginSettings;
-use GrocersList\Jobs\MigrationVisitor;
-use GrocersList\Jobs\LinkCountVisitor;
 use GrocersList\Support\Logger;
+use GrocersList\Support\WordPressHooks;
 
 class Plugin
 {
@@ -61,10 +61,10 @@ class Plugin
         $rewriter = new LinkRewriter($api, $extractor, $replacer, $this->hooks, $pluginSettings, $urlMappingService);
         $rewriter->register();
 
-        $migrationJob = new MigrationVisitor($rewriter, $urlMappingService, $extractor, $pluginSettings, $this->hooks, 50);
-        $linkCountJob = new LinkCountVisitor($pluginSettings, $this->hooks, $extractor, 500, $urlMappingTable);
+        $migrationJob = new MigrationVisitor($rewriter, $urlMappingService, $extractor, $this->hooks, 50);
+        $linkCountJob = new LinkCountVisitor($this->hooks, $extractor, 500, $urlMappingTable);
 
-        $ajax = new AjaxController($pluginSettings, $api, $migrationJob, $linkCountJob, $this->hooks);
+        $ajax = new AjaxController($pluginSettings, $api, $migrationJob, $linkCountJob, $this->hooks, $urlMappingTable);
         $ajax->register();
 
         $publicAjax = new PublicAjaxController($pluginSettings, $api, $this->hooks);

@@ -3,27 +3,23 @@
 
 namespace GrocersList\Jobs;
 
+use GrocersList\Database\UrlMappingTable;
 use GrocersList\Support\Hooks;
 use GrocersList\Support\ILinkExtractor;
-use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Logger;
-use GrocersList\Database\UrlMappingTable;
 
 class LinkCountVisitor extends PostVisitor
 {
     private ILinkExtractor $extractor;
-    private PluginSettings $settings;
     private ?UrlMappingTable $urlMappingTable;
 
     private int $postsWithLinks = 0;
     private int $totalLinks = 0;
-    private int $lastCountTime = 0;
 
     // Buffer for batch updates
     private array $metaUpdates = [];
 
     public function __construct(
-        PluginSettings $settings,
         Hooks          $hooks,
         ILinkExtractor $extractor,
         int            $batchSize = 500,
@@ -31,7 +27,6 @@ class LinkCountVisitor extends PostVisitor
     )
     {
         parent::__construct($hooks, $batchSize);
-        $this->settings = $settings;
         $this->extractor = $extractor;
         $this->urlMappingTable = $urlMappingTable;
     }
@@ -75,7 +70,7 @@ class LinkCountVisitor extends PostVisitor
     {
         $content = $post->post_content;
         $amazonLinks = $this->extractor->extractUnrewrittenLinks($content);
-        
+
         // If we have the mapping table, only count links without mappings
         if ($this->urlMappingTable !== null && !empty($amazonLinks)) {
             $existingMappings = $this->urlMappingTable->get_mappings_by_urls($amazonLinks);
@@ -124,7 +119,6 @@ class LinkCountVisitor extends PostVisitor
 
     protected function onJobCompleted(): void
     {
-        $this->lastCountTime = time();
         // No longer storing results - counts are calculated in real-time
         wp_cache_delete('grocers_list_link_count_total_count');
     }
@@ -134,14 +128,15 @@ class LinkCountVisitor extends PostVisitor
         // Calculate counts in real-time
         return $this->getRealtimeCount();
     }
-    
+
     public function getRealtimeCount(): array
     {
         global $wpdb;
-        
+
         $postsWithLinks = 0;
         $totalLinks = 0;
-        
+        $linkCount = 0;
+
         // Get all published posts with content
         $posts = $wpdb->get_results(
             "SELECT ID, post_content
@@ -151,10 +146,10 @@ class LinkCountVisitor extends PostVisitor
                AND post_content IS NOT NULL
                AND post_content != ''"
         );
-        
+
         foreach ($posts as $post) {
             $amazonLinks = $this->extractor->extractUnrewrittenLinks($post->post_content);
-            
+
             if (!empty($amazonLinks)) {
                 // Check which links don't have mappings
                 if ($this->urlMappingTable !== null) {
@@ -164,21 +159,22 @@ class LinkCountVisitor extends PostVisitor
                 } else {
                     $linkCount = count($amazonLinks);
                 }
-                
+
                 if ($linkCount > 0) {
                     $postsWithLinks++;
                     $totalLinks += $linkCount;
                 }
             }
         }
-        
+
         return [
+            'unmappedLinks' => $linkCount,
             'postsWithLinks' => $postsWithLinks,
             'totalLinks' => $totalLinks,
             'totalPosts' => count($posts),
             'processedPosts' => count($posts),
-            'isComplete' => true,
-            'isRunning' => false,
+            'isComplete' => $this->complete,
+            'isRunning' => $this->running,
             'lastCount' => time(),
         ];
     }
@@ -187,7 +183,6 @@ class LinkCountVisitor extends PostVisitor
     {
         $this->postsWithLinks = 0;
         $this->totalLinks = 0;
-        $this->lastCountTime = 0;
         $this->metaUpdates = [];
     }
 }

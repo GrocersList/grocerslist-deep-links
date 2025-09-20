@@ -52,6 +52,12 @@ class UrlMappingTable
         return $this->table_name;
     }
 
+    public function truncate_table(): void
+    {
+        global $wpdb;
+        $wpdb->query("TRUNCATE TABLE {$this->table_name}");
+    }
+
     public function table_exists(): bool
     {
         global $wpdb;

@@ -4,6 +4,7 @@ namespace GrocersList\Admin;
 
 use GrocersList\Service\IApiClient;
 use GrocersList\Settings\PluginSettings;
+use GrocersList\Support\Config;
 use GrocersList\Support\Hooks;
 
 class SettingsPage {
@@ -39,8 +40,17 @@ class SettingsPage {
     public function renderPage(): void {
         if (!current_user_can('manage_options')) return;
 
+        // Set cache control headers for 1 hour
+        if (!headers_sent()) {
+            header('Cache-Control: public, max-age=3600');
+            header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
+        }
+
         $assetBase = plugin_dir_url(__FILE__) . '../../admin-ui/dist/';
-        $version = GROCERS_LIST_VERSION;
+        
+        // Use WordPress's built-in versioning system
+        $version = Config::getPluginVersion();
+        
         wp_enqueue_script('grocers-list-admin-ui', $assetBase . 'bundle.js', [], $version, true);
 
         $creatorSettings = $this->api->getCreatorSettings($this->settings->getApiKey());
@@ -63,6 +73,7 @@ class SettingsPage {
                 'grocers_list_trigger_recount_links' => wp_create_nonce('grocers_list_trigger_recount_links'),
                 'grocers_list_update_post_gating_options' => wp_create_nonce('grocers_list_update_post_gating_options'),
                 'grocers_list_process_next_count_batch' => wp_create_nonce('grocers_list_process_next_count_batch'),
+                'grocers_list_update_memberships_enabled' => wp_create_nonce('grocers_list_update_memberships_enabled'),
             ],
             'settings' => $creatorSettings->settings,
             'provisioning' => $creatorSettings->provisioning

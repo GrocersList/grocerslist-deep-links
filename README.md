@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -36,6 +36,8 @@ An overview of our features:
 #### - 8/14/2025 - v1.0.6 - fixed a bug which broke third-party advertising plugins
 
 #### - 9/02/2025 - v1.1.0 - introduced memberships feature
+
+#### - 09/19/2025 v1.2.0 - UI overhaul and performance optimizations
 
 ### Resources:
 

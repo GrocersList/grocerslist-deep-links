@@ -9,10 +9,11 @@ abstract class PostVisitor
 {
     protected Hooks $hooks;
     protected int $batchSize;
+    protected bool $running = false;
+    protected bool $complete = false;
 
     private int $total = 0;
     private int $processed = 0;
-    private bool $running = false;
 
     public function __construct(
         Hooks $hooks,
@@ -40,6 +41,7 @@ abstract class PostVisitor
         $this->processPosts();
 
         $this->running = false;
+        $this->complete = true;
         $this->log("Synchronous job completed.");
         $this->onJobCompleted();
 
@@ -74,7 +76,7 @@ abstract class PostVisitor
             'processed' => $this->processed,
             'remaining' => $this->total - $this->processed,
             'isRunning' => $this->running,
-            'isComplete' => !$this->running,
+            'isComplete' => $this->complete,
         ];
     }
 
@@ -83,6 +85,7 @@ abstract class PostVisitor
         $this->total = 0;
         $this->processed = 0;
         $this->running = false;
+        $this->complete = false;
     }
 
     abstract protected function getPostsForBatch(int $lastId): array;
@@ -104,7 +107,7 @@ abstract class PostVisitor
         return $this->processed;
     }
 
-    private function log(string $message): void
+    protected function log(string $message): void
     {
         Logger::debug("[PostVisitor] [" . static::class . "] $message");
     }

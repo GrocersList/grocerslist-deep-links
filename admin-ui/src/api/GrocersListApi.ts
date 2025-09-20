@@ -36,10 +36,6 @@ export class GrocersListApi implements IGrocersListApi {
     return res.data;
   }
 
-  async markSetupComplete() {
-    await this.post('grocers_list_mark_setup_complete', {});
-  }
-
   async updateAutoRewrite(enabled: boolean) {
     await this.post('grocers_list_update_auto_rewrite', {
       autoRewriteEnabled: enabled ? '1' : '0',
@@ -110,5 +106,12 @@ export class GrocersListApi implements IGrocersListApi {
       limit: limit.toString(),
     });
     return res.data;
+  }
+
+  async updateMembershipsEnabled(enabled: boolean) {
+    console.log('🔧 updateMembershipsEnabled', enabled);
+    await this.post('grocers_list_update_memberships_enabled', {
+      enabled: enabled ? '1' : '0',
+    });
   }
 }

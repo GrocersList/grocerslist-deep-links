@@ -3,7 +3,6 @@ import type { GrocersListPluginState } from './GrocersListApiMock.ts';
 export interface IGrocersListApi {
   updateApiKey(apiKey: string): Promise<void>;
   getState(): Promise<GrocersListPluginState>;
-  markSetupComplete(): Promise<void>;
   updateAutoRewrite(enabled: boolean): Promise<void>;
   updateUseLinkstaLinks(enabled: boolean): Promise<void>;
   countMatchedLinks(): Promise<MatchedLinks>;
@@ -20,6 +19,7 @@ export interface IGrocersListApi {
   processQueue(): Promise<ProcessQueueResult>;
   resetFailedPosts(): Promise<ResetFailedResult>;
   getUrlMappings(limit?: number): Promise<UrlMapping[]>;
+  updateMembershipsEnabled(enabled: boolean): Promise<void>;
 }
 
 export type MatchedLinks = {
@@ -28,13 +28,18 @@ export type MatchedLinks = {
 };
 
 export type MigrationStatus = {
-  total: number;
-  processed: number;
-  remaining: number;
   isComplete: boolean;
+  isRunning: boolean;
+  lastMigrationStartedAt: number;
+  lastMigrationCompletedAt: number;
+  migratedPosts: number;
+  processedPosts: number;
+  totalMappings: number;
+  totalPosts: number;
 };
 
 export type LinkCountInfo = {
+  unmappedLinks: number;
   postsWithLinks: number;
   totalLinks: number;
   totalPosts: number;

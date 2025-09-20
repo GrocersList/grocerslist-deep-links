@@ -4,15 +4,10 @@ import Box from '@mui/material/Box';
 
 import { useSetupContext } from '../hooks/useSetupContext';
 
-import { SettingsPage } from './SettingsPage';
-import { SetupWizard } from './SetupWizard';
+import SettingsPage from './Settings';
 
-export const GrocersListSettingsPage = () => {
-  return <MainPage />;
-};
-
-const MainPage = () => {
-  const { loading, setupComplete } = useSetupContext();
+export const MainPage = () => {
+  const { loading } = useSetupContext();
 
   if (loading) {
     return (
@@ -29,5 +24,5 @@ const MainPage = () => {
     );
   }
 
-  return setupComplete ? <SettingsPage /> : <SetupWizard />;
+  return <SettingsPage />;
 };

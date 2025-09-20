@@ -11,7 +11,6 @@ class PluginSettings {
     private const KEY_API = 'api_key';
     private const KEY_AUTO = 'auto_rewrite';
     private const KEY_LINKSTA = 'use_linksta_links';
-    private const KEY_SETUP = 'setup_complete';
 
     private function key(string $suffix): string {
         return self::PREFIX . $suffix;
@@ -82,39 +81,17 @@ class PluginSettings {
         Logger::debug("PluginSettings::setUseLinkstaLinks() => " . ($enabled ? 'true' : 'false'));
     }
 
-    public function isSetupComplete(): bool {
-        // Check new key first, fall back to old key
-        $option = get_option($this->key(self::KEY_SETUP), null);
-        if ($option === null) {
-            $option = get_option($this->oldKey(self::KEY_SETUP), false);
-            // Migrate if found under old key
-            if (get_option($this->oldKey(self::KEY_SETUP), null) !== null) {
-                $this->migrateOption(self::KEY_SETUP);
-            }
-        }
-        $val = (bool) $option;
-        Logger::debug("PluginSettings::isSetupComplete() => " . ($val ? 'true' : 'false'));
-        return $val;
-    }
-
-    public function markSetupComplete(): void {
-        update_option($this->key(self::KEY_SETUP), true);
-        Logger::debug("PluginSettings::markSetupComplete() called");
-    }
-
     public function reset(): void {
         // Delete both old and new keys
         delete_option($this->key(self::KEY_API));
         delete_option($this->key(self::KEY_AUTO));
         delete_option($this->key(self::KEY_LINKSTA));
-        delete_option($this->key(self::KEY_SETUP));
-        
+
         // Also delete old keys if they exist
         delete_option($this->oldKey(self::KEY_API));
         delete_option($this->oldKey(self::KEY_AUTO));
         delete_option($this->oldKey(self::KEY_LINKSTA));
-        delete_option($this->oldKey(self::KEY_SETUP));
-        
+
         Logger::debug("PluginSettings::reset() all options deleted");
     }
     
@@ -134,7 +111,7 @@ class PluginSettings {
      * Migrate all options from old to new prefix
      */
     public function migrateAllOptions(): void {
-        $keys = [self::KEY_API, self::KEY_AUTO, self::KEY_LINKSTA, self::KEY_SETUP];
+        $keys = [self::KEY_API, self::KEY_AUTO, self::KEY_LINKSTA];
         foreach ($keys as $key) {
             $this->migrateOption($key);
         }

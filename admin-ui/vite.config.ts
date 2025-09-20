@@ -24,6 +24,7 @@ export default defineConfig({
   plugins: [preact()],
   resolve: {
     alias: {
+      '@': path.resolve(__dirname, './src'),
       react: 'preact/compat',
       'react-dom/client': 'preact/compat/client',
       'react-dom': 'preact/compat',

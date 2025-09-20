@@ -55,7 +55,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $api_key,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
             ],
             'body' => json_encode(['urls' => $urls]),
         ]);
@@ -85,7 +85,7 @@ class ApiClient implements IApiClient
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/validate-api-key", [
             'headers' => [
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
             ],
         ]);
 
@@ -119,7 +119,7 @@ class ApiClient implements IApiClient
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings", [
             'headers' => [
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
             ],
         ]);
 
@@ -153,7 +153,7 @@ class ApiClient implements IApiClient
             [
                 'headers' => [
                     'x-api-key' => $apiKey,
-                    'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                    'x-gl-plugin-version' => Config::getPluginVersion(),
                     'Authorization' => $jwt ? "Bearer " . $jwt : null,
                 ],
             ]);
@@ -178,7 +178,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
             ],
             'body' => json_encode([
                 'username' => $email,
@@ -206,7 +206,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
             ],
             'body' => json_encode([
                 'username' => $email,
@@ -232,7 +232,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
             ],
             'body' => json_encode([
                 'email' => $email,
@@ -258,7 +258,7 @@ class ApiClient implements IApiClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
             ],
             'body' => json_encode([
                 'token' => $token,
@@ -285,7 +285,7 @@ class ApiClient implements IApiClient
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/checkout?redirect=" . urlencode($redirectUrl), [
             'headers' => [
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
                 'Authorization' => $jwt ? "Bearer " . $jwt : null,
             ],
         ]);
@@ -308,9 +308,29 @@ class ApiClient implements IApiClient
         $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/me?redirect=" . urlencode($redirectUrl), [
             'headers' => [
                 'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => GROCERS_LIST_VERSION,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
                 'Authorization' => $jwt ? "Bearer " . $jwt : null,
             ],
+        ]);
+
+        return $response;
+    }
+
+    public function updateMembershipsEnabled(string $apiKey, string $enabled)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+        if ($enabled === '') return new \WP_Error('missing_param', 'Missing enabled parameter');;
+        if (!in_array($enabled, ['0', '1'], true)) return new \WP_Error('invalid_param', 'Invalid enabled parameter - must be "0" or "1"');;
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/membership-settings", [
+            'headers' => [
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode([
+                'enabled' => !!$enabled
+            ])
         ]);
 
         return $response;

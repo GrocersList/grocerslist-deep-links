@@ -4,7 +4,6 @@ namespace GrocersList\Jobs;
 
 use GrocersList\Service\LinkRewriter;
 use GrocersList\Service\UrlMappingService;
-use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Hooks;
 use GrocersList\Support\ILinkExtractor;
 use GrocersList\Support\Logger;
@@ -14,16 +13,13 @@ class MigrationVisitor extends PostVisitor
     private LinkRewriter $rewriter;
     private ?UrlMappingService $urlMappingService;
     private ILinkExtractor $linkExtractor;
-    private PluginSettings $settings;
     private int $migratedPosts = 0;
-    private int $lastMigrationTime = 0;
     private int $totalMappingsCreated = 0;
 
     public function __construct(
         LinkRewriter   $rewriter,
         ?UrlMappingService $urlMappingService,
         ILinkExtractor $linkExtractor,
-        PluginSettings $settings,
         Hooks          $hooks,
         int            $batchSize = 10
     )
@@ -32,14 +28,15 @@ class MigrationVisitor extends PostVisitor
         $this->rewriter = $rewriter;
         $this->urlMappingService = $urlMappingService;
         $this->linkExtractor = $linkExtractor;
-        $this->settings = $settings;
     }
 
     public function startMigration(): array
     {
         Logger::debug("MigrationVisitor::startMigration()");
+        update_option('grocers_list_migration_last_started_at', time());
         $this->resetCounters();
-        return $this->start();
+        $this->start();
+        return $this->getMigrationInfo();
     }
 
     protected function getPostsForBatch(int $lastId): array
@@ -77,15 +74,15 @@ class MigrationVisitor extends PostVisitor
             $content = $post->post_content;
             $normalized = html_entity_decode(stripslashes($content));
             $urls = $this->linkExtractor->extract($normalized);
-            
+
             Logger::debug("MigrationVisitor: Post {$post->ID} has " . count($urls) . " URLs to process");
-            
+
             if (!empty($urls)) {
                 // Create URL mappings in the database
                 $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post->ID);
-                
+
                 Logger::debug("MigrationVisitor: create_url_mappings_batch returned " . count($mappings) . " mappings");
-                
+
                 if (!empty($mappings)) {
                     $this->migratedPosts++;
                     $this->totalMappingsCreated += count($mappings);
@@ -138,7 +135,6 @@ class MigrationVisitor extends PostVisitor
 
     protected function onJobCompleted(): void
     {
-        $this->lastMigrationTime = time();
         $this->saveResults();
 
         wp_cache_delete('grocers_list_migration_total_count');
@@ -148,35 +144,32 @@ class MigrationVisitor extends PostVisitor
     {
         update_option('grocers_list_migration_migrated_posts', $this->migratedPosts);
         update_option('grocers_list_migration_total_posts', $this->getTotalPosts());
-        update_option('grocers_list_migration_last_time', $this->lastMigrationTime);
+        update_option('grocers_list_migration_last_completed_at', time());
         update_option('grocers_list_migration_total_mappings', $this->totalMappingsCreated);
     }
 
     private function resetCounters(): void
     {
         $this->migratedPosts = 0;
-        $this->lastMigrationTime = 0;
         $this->totalMappingsCreated = 0;
     }
 
     public function getMigrationInfo(): array
     {
+        $started_at = (int)get_option('grocers_list_migration_last_started_at', 0) * 1000;
+        $completed_at = (int)get_option('grocers_list_migration_last_completed_at', 0) * 1000;
+
+        $isRunning = !!$started_at && $completed_at < $started_at;
+
         return [
             'migratedPosts' => (int)get_option('grocers_list_migration_migrated_posts', 0),
             'totalPosts' => (int)get_option('grocers_list_migration_total_posts', 0),
             'totalMappings' => (int)get_option('grocers_list_migration_total_mappings', 0),
             'processedPosts' => $this->getProcessedPosts(),
-            'isComplete' => true,
-            'isRunning' => false,
-            'lastMigration' => (int)get_option('grocers_list_migration_last_time', 0),
+            'isComplete' => !!$completed_at && !$isRunning,
+            'isRunning' => $isRunning,
+            'lastMigrationStartedAt' => $started_at,
+            'lastMigrationCompletedAt' => $completed_at,
         ];
-    }
-    
-    /**
-     * Public method to migrate a single post
-     */
-    public function migratePost($post): bool
-    {
-        return $this->visitPost($post);
     }
 }

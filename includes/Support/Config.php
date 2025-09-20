@@ -22,4 +22,27 @@ class Config {
         }
         return GROCERSLIST_EXTERNAL_JS_URL;
     }
+
+    /**
+     * Get plugin version using WordPress's built-in versioning system
+     * Falls back to the constant if plugin data is not available
+     */
+    public static function getPluginVersion(): string {
+        static $version = null;
+        
+        if ($version === null) {
+            if (!function_exists('get_plugin_data')) {
+                require_once ABSPATH . 'wp-admin/includes/plugin.php';
+            }
+            
+            if (defined('GROCERS_LIST_PLUGIN_FILE') && file_exists(GROCERS_LIST_PLUGIN_FILE)) {
+                $plugin_data = get_plugin_data(GROCERS_LIST_PLUGIN_FILE);
+                $version = $plugin_data['Version'] ?? GROCERS_LIST_VERSION;
+            } else {
+                $version = GROCERS_LIST_VERSION;
+            }
+        }
+        
+        return $version;
+    }
 }

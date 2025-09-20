@@ -2,14 +2,14 @@
 
 namespace GrocersList\Admin;
 
+use GrocersList\Database\UrlMappingTable;
+use GrocersList\Jobs\LinkCountVisitor;
+use GrocersList\Jobs\MigrationVisitor;
+use GrocersList\Scanner\PostScanner;
 use GrocersList\Service\ApiClient;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Hooks;
-use GrocersList\Support\Regex;
-use GrocersList\Jobs\MigrationVisitor;
-use GrocersList\Jobs\LinkCountVisitor;
 use GrocersList\Support\Logger;
-use GrocersList\Scanner\PostScanner;
 
 class AjaxController
 {
@@ -24,7 +24,8 @@ class AjaxController
         ApiClient        $api,
         MigrationVisitor $migrationJob,
         LinkCountVisitor $linkCountJob,
-        Hooks            $hooks
+        Hooks            $hooks,
+        UrlMappingTable  $urlMappingTable
     )
     {
         $this->settings = $settings;
@@ -32,6 +33,7 @@ class AjaxController
         $this->migrationJob = $migrationJob;
         $this->linkCountJob = $linkCountJob;
         $this->hooks = $hooks;
+        $this->urlMappingTable = $urlMappingTable;
     }
 
     public function register(): void
@@ -43,7 +45,6 @@ class AjaxController
             'grocers_list_update_use_linksta_links' => 'updateUseLinkstaLinks',
             'grocers_list_count_matched_links' => 'countMatchedLinks',
             'grocers_list_find_matched_links' => 'findMatchedLinks',
-            'grocers_list_mark_setup_complete' => 'markSetupComplete',
             'grocers_list_clear_settings' => 'clearSettings',
             'grocers_list_get_migration_status' => 'getMigrationStatus',
             'grocers_list_recount_links' => 'recountLinks',
@@ -51,6 +52,7 @@ class AjaxController
             'grocers_list_trigger_migrate' => 'triggerMigrate',
             'grocers_list_trigger_recount_links' => 'triggerRecountLinks',
             'grocers_list_update_post_gating_options' => 'updatePostGatingOptions',
+            'grocers_list_update_memberships_enabled' => 'updateMembershipsEnabled',
         ];
 
         foreach ($actions as $hook => $method) {
@@ -64,19 +66,38 @@ class AjaxController
 
         $this->checkPermission('grocers_list_clear_settings');
         // Clean up any legacy stored counts (both old and new prefixes)
+
+        // link count
         delete_option('grocers_list_link_count_posts_with_links');
         delete_option('grocers_list_link_count_total_links');
         delete_option('grocers_list_link_count_total_posts');
         delete_option('grocers_list_link_count_processed_posts');
         delete_option('grocers_list_link_count_last_time');
-        
+        // migration options
+        delete_option('grocers_list_migration_migrated_posts');
+        delete_option('grocers_list_migration_total_posts');
+        delete_option('grocers_list_migration_last_started_at');
+        delete_option('grocers_list_migration_last_completed_at');
+        delete_option('grocers_list_migration_total_mappings');
+
         // Also delete with new prefix if they exist
+
+        // link count
         delete_option('grocerslist_link_count_posts_with_links');
         delete_option('grocerslist_link_count_total_links');
         delete_option('grocerslist_link_count_total_posts');
         delete_option('grocerslist_link_count_processed_posts');
         delete_option('grocerslist_link_count_last_time');
-        
+        // migration options
+        delete_option('grocerslist_migration_migrated_posts');
+        delete_option('grocerslist_migration_total_posts');
+        delete_option('grocerslist_migration_last_started_at');
+        delete_option('grocerslist_migration_last_completed_at');
+        delete_option('grocerslist_migration_total_mappings');
+
+        // undo migration:
+        $this->urlMappingTable->truncate_table();
+
         $this->settings->reset();
         wp_send_json_success(['message' => 'All settings cleared']);
     }
@@ -92,7 +113,6 @@ class AjaxController
             'apiKey' => $this->settings->getApiKey(),
             'autoRewriteEnabled' => $this->settings->isAutoRewriteEnabled(),
             'useLinkstaLinks' => $this->settings->isUseLinkstaLinksEnabled(),
-            'setupComplete' => $this->settings->isSetupComplete(),
         ]);
     }
 
@@ -162,16 +182,6 @@ class AjaxController
         
         $summary = PostScanner::getSummary();
         wp_send_json_success($summary['data']);
-    }
-
-    public function markSetupComplete(): void
-    {
-        check_ajax_referer('grocers_list_mark_setup_complete', 'security');
-
-        $this->checkPermission('grocers_list_mark_setup_complete');
-        Logger::debug("markSetupComplete: starting");
-        $this->settings->markSetupComplete();
-        wp_send_json_success(['message' => 'Marked setup complete']);
     }
 
     private function checkPermission(string $nonceAction): void
@@ -312,5 +322,30 @@ class AjaxController
         update_post_meta($post_id, 'grocers_list_recipe_card_gated', $recipe_card_gated);
 
         wp_send_json_success(['message' => 'Gating options updated']);
+    }
+
+    public function updateMembershipsEnabled(): void
+    {
+        check_ajax_referer('grocers_list_update_memberships_enabled', 'security');
+
+        $this->checkPermission('grocers_list_update_memberships_enabled');
+
+        $enabled = isset($_POST['enabled']) ? sanitize_text_field(wp_unslash($_POST['enabled'])) : '';
+
+        if (!in_array($enabled, ['0', '1'], true)) {
+            wp_send_json_error(['error' => 'Invalid enabled parameter - must be "0" or "1"'], 400);
+            return;
+        }
+
+        $api_key = $this->settings->getApiKey();
+
+        $response = $this->api->updateMembershipsEnabled($api_key, $enabled);
+
+        if (is_wp_error($response)) {
+            wp_send_json_error(['error' => 'Failed to update memberships enabled setting. Please check your API Key or contact support for help.'], 500);
+            return;
+        }
+    
+        wp_send_json_success(['data' => $enabled, 'message' => 'Memberships enabled setting updated']);
     }
 }

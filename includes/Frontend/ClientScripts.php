@@ -22,12 +22,22 @@ class ClientScripts
     public function register(): void
     {
         $this->hooks->addAction('wp_enqueue_scripts', [$this, 'enqueueScripts']);
+        $this->hooks->addAction('wp_head', [$this, 'addPreloadHints']);
     }
 
     public function enqueueScripts(): void
     {
+        // Set cache control headers for 1 hour
+        if (!headers_sent()) {
+            header('Cache-Control: public, max-age=3600');
+            header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
+        }
+
         $assetBase = plugin_dir_url(__FILE__) . '../../client-ui/dist/';
-        $version = GROCERS_LIST_VERSION;
+        
+        // Use WordPress's built-in versioning system
+        $version = Config::getPluginVersion();
+        
         wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $version, true);
 
         $creatorSettings = $this->api->getCreatorSettings($this->settings->getApiKey());
@@ -62,7 +72,24 @@ class ClientScripts
 
         $externalJsUrl = Config::getExternalJsUrl();
         if (!empty($externalJsUrl)) {
-            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $version, true);
+            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $version, false);
+        }
+    }
+    /**
+     * Summary of addPreloadHints
+     * Adds preload hints for the external JS file
+     * to improve the loading performance
+     * Note this will not load the external JS file, it will only hint to the browser that it should preload it
+     * so the browser can start downloading it early and have it ready when needed
+     * @return void
+     */
+    public function addPreloadHints(): void
+    {
+        $externalJsUrl = Config::getExternalJsUrl();
+        if (!empty($externalJsUrl)) {
+            $version = Config::getPluginVersion();
+            $versionedUrl = add_query_arg('ver', $version, $externalJsUrl);
+            echo '<link rel="preload" href="' . esc_url($versionedUrl) . '" as="script">' . "\n";
         }
     }
 }
