@@ -53,12 +53,11 @@ class PublicAjaxController
         }
 
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
-        $redirectUrl = wp_get_referer();
 
         $gating_options = $this->fetchPostGatingOptions();
         $gated = isset($gating_options) && ($gating_options['postGated'] || $gating_options['recipeCardGated']);
 
-        $response = $this->api->getInitMemberships($api_key, $jwt, $redirectUrl, $gated);
+        $response = $this->api->getInitMemberships($api_key, $jwt, $gated);
 
         $this->api->passResponseCode($response);
     }

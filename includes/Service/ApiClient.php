@@ -137,19 +137,16 @@ class ApiClient implements IApiClient
      *
      * @param string $apiKey
      * @param string $jwt
-     * @param string $redirectUrl
      * @param boolean $gated
      * @return string|\WP_Error Returns the response body or WP_Error on failure
      */
-    public function getInitMemberships(string $apiKey, string $jwt, string $redirectUrl, bool $gated = false)
+    public function getInitMemberships(string $apiKey, string $jwt, bool $gated = false)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
-        if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
 
         $response = wp_remote_get("https://" . Config::getApiBaseDomain()
             . "/api/v1/creator-api/init-memberships" .
-            "?gated=" . $gated .
-            "&redirect=" . urlencode($redirectUrl),
+            "?gated=" . $gated,
             [
                 'headers' => [
                     'x-api-key' => $apiKey,
