@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { Key, Visibility, VisibilityOff } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import {
+  Alert,
   Box,
   IconButton,
   InputAdornment,
@@ -20,6 +21,7 @@ export const ApiKeySection = ({
   addToast: (success: boolean, message: string) => void;
 }) => {
   const { api, apiKey, setApiKey, loading: setupLoading } = useSetupContext();
+  const initialApiKey = useMemo(() => apiKey, []);
 
   // UI state
   const [showApiKey, setShowApiKey] = useState(false);
@@ -77,7 +79,6 @@ export const ApiKeySection = ({
           </Box>
           .
         </Typography>
-
         <TextField
           fullWidth
           label="API Key"
@@ -100,13 +101,17 @@ export const ApiKeySection = ({
             ),
           }}
         />
-
+        {/* presence of window.grocersList.settings indicates successful use of api key to GET /creator-settings */}
+        {apiKey === initialApiKey && !window.grocersList?.settings && (
+          <Alert severity="warning">Invalid API key</Alert>
+        )}
         <LoadingButton
           variant="contained"
           onClick={validateAndSaveApiKey}
           loading={loading}
           fullWidth
           size="small"
+          disabled={!apiKey || apiKey === initialApiKey}
         >
           Save and Validate
         </LoadingButton>
