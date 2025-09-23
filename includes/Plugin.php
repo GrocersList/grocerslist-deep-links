@@ -61,8 +61,8 @@ class Plugin
         $rewriter = new LinkRewriter($api, $extractor, $replacer, $this->hooks, $pluginSettings, $urlMappingService);
         $rewriter->register();
 
-        $migrationJob = new MigrationVisitor($rewriter, $urlMappingService, $extractor, $this->hooks, 50);
-        $linkCountJob = new LinkCountVisitor($this->hooks, $extractor, 500, $urlMappingTable);
+        $migrationJob = new MigrationVisitor($rewriter, $pluginSettings, $urlMappingService, $extractor, $this->hooks, 50);
+        $linkCountJob = new LinkCountVisitor($this->hooks, $urlMappingTable, $extractor, 500);
 
         $ajax = new AjaxController($pluginSettings, $api, $migrationJob, $linkCountJob, $this->hooks, $urlMappingTable);
         $ajax->register();

@@ -2,6 +2,7 @@
 
 namespace GrocersList\Database;
 
+use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Logger;
 
 class Installer
@@ -47,8 +48,6 @@ class Installer
      */
     private static function create_tables(): void
     {
-        global $wpdb;
-        
         // Include upgrade functions only if dbDelta is not already defined
         if (!function_exists('dbDelta')) {
             $upgrade_file = ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -56,36 +55,9 @@ class Installer
                 require_once($upgrade_file);
             }
         }
-        
-        $charset_collate = $wpdb->get_charset_collate();
-        
-        // Create URL mappings table
-        $url_table = $wpdb->prefix . 'grocerslist_url_mappings';
-        $sql = "CREATE TABLE $url_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            post_id bigint(20) unsigned NOT NULL,
-            original_url text NOT NULL,
-            original_url_hash varchar(64) NOT NULL,
-            linksta_url varchar(255) NOT NULL,
-            link_hash varchar(255) NOT NULL,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY unique_original_url (original_url_hash),
-            KEY idx_post_id (post_id),
-            KEY idx_link_hash (link_hash),
-            KEY idx_created_at (created_at)
-        ) $charset_collate;";
-        
-        dbDelta($sql);
-        
-        // Verify table was created
-        if ($wpdb->get_var("SHOW TABLES LIKE '$url_table'") !== $url_table) {
-            Logger::debug('Failed to create URL mappings table');
-            error_log('GrocersList: Failed to create URL mappings table');
-        } else {
-            Logger::debug('GrocersList URL mappings table created successfully');
-        }
+
+        $urlMappingTable = new UrlMappingTable();
+        $urlMappingTable->create_table();
     }
 
     /**
@@ -93,10 +65,8 @@ class Installer
      */
     private static function set_default_options(): void
     {
-        // Use new prefix for new installations
-        add_option('grocerslist_auto_rewrite', true);
-        add_option('grocerslist_use_linksta_links', true);
-        add_option('grocerslist_setup_complete', false);
+        $pluginSettings = new PluginSettings();
+        $pluginSettings->set_defaults();
     }
     
     /**
@@ -104,32 +74,9 @@ class Installer
      */
     private static function migrate_option_prefixes(): void
     {
-        $options_to_migrate = [
-            'grocers_list_api_key' => 'grocerslist_api_key',
-            'grocers_list_auto_rewrite' => 'grocerslist_auto_rewrite',
-            'grocers_list_use_linksta_links' => 'grocerslist_use_linksta_links',
-            'grocers_list_setup_complete' => 'grocerslist_setup_complete',
-            // Also migrate any count options that may exist
-            'grocers_list_link_count_posts_with_links' => 'grocerslist_link_count_posts_with_links',
-            'grocers_list_link_count_total_links' => 'grocerslist_link_count_total_links',
-            'grocers_list_link_count_total_posts' => 'grocerslist_link_count_total_posts',
-            'grocers_list_link_count_processed_posts' => 'grocerslist_link_count_processed_posts',
-            'grocers_list_link_count_last_time' => 'grocerslist_link_count_last_time',
-        ];
-        
-        foreach ($options_to_migrate as $old_key => $new_key) {
-            $value = get_option($old_key, null);
-            if ($value !== null) {
-                // Only migrate if new key doesn't exist
-                if (get_option($new_key, null) === null) {
-                    update_option($new_key, $value);
-                }
-                // Delete old option after migration
-                delete_option($old_key);
-                Logger::debug("Migrated option from $old_key to $new_key");
-            }
-        }
-        
+        $pluginSettings = new PluginSettings();
+        $pluginSettings->migrateAllOptions();
+
         Logger::debug('Option prefix migration completed');
     }
 
@@ -145,29 +92,15 @@ class Installer
         global $wpdb;
         
         // Drop tables
-        $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}grocerslist_url_mappings");
-        
+        $urlMappingTable = new UrlMappingTable();
+        $urlMappingTable->drop_table();
+
         // Remove options (both old and new prefixes)
         delete_option(self::DB_VERSION_OPTION);
         delete_option(self::OLD_DB_VERSION_OPTION);
         
-        // Delete all plugin options with both prefixes
-        $all_options = [
-            'grocers_list_api_key', 'grocerslist_api_key',
-            'grocers_list_auto_rewrite', 'grocerslist_auto_rewrite',
-            'grocers_list_use_linksta_links', 'grocerslist_use_linksta_links',
-            'grocers_list_setup_complete', 'grocerslist_setup_complete',
-            'grocers_list_link_count_posts_with_links', 'grocerslist_link_count_posts_with_links',
-            'grocers_list_link_count_total_links', 'grocerslist_link_count_total_links',
-            'grocers_list_link_count_total_posts', 'grocerslist_link_count_total_posts',
-            'grocers_list_link_count_processed_posts', 'grocerslist_link_count_processed_posts',
-            'grocers_list_link_count_last_time', 'grocerslist_link_count_last_time',
-            'grocerslist_settings'
-        ];
-        
-        foreach ($all_options as $option) {
-            delete_option($option);
-        }
+        $pluginSettings = new PluginSettings();
+        $pluginSettings->reset();
         
         Logger::debug('GrocersList plugin uninstalled');
     }

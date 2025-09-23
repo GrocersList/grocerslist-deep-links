@@ -4,6 +4,7 @@ namespace GrocersList\Jobs;
 
 use GrocersList\Service\LinkRewriter;
 use GrocersList\Service\UrlMappingService;
+use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Hooks;
 use GrocersList\Support\ILinkExtractor;
 use GrocersList\Support\Logger;
@@ -11,14 +12,16 @@ use GrocersList\Support\Logger;
 class MigrationVisitor extends PostVisitor
 {
     private LinkRewriter $rewriter;
-    private ?UrlMappingService $urlMappingService;
+    private PluginSettings $settings;
+    private UrlMappingService $urlMappingService;
     private ILinkExtractor $linkExtractor;
     private int $migratedPosts = 0;
     private int $totalMappingsCreated = 0;
 
     public function __construct(
         LinkRewriter   $rewriter,
-        ?UrlMappingService $urlMappingService,
+        PluginSettings $settings,
+        UrlMappingService $urlMappingService,
         ILinkExtractor $linkExtractor,
         Hooks          $hooks,
         int            $batchSize = 10
@@ -26,6 +29,7 @@ class MigrationVisitor extends PostVisitor
     {
         parent::__construct($hooks, $batchSize);
         $this->rewriter = $rewriter;
+        $this->settings = $settings;
         $this->urlMappingService = $urlMappingService;
         $this->linkExtractor = $linkExtractor;
     }
@@ -33,7 +37,7 @@ class MigrationVisitor extends PostVisitor
     public function startMigration(): array
     {
         Logger::debug("MigrationVisitor::startMigration()");
-        update_option('grocers_list_migration_last_started_at', time());
+        $this->settings->update_option('migration_last_started_at', time());
         $this->resetCounters();
         $this->start();
         return $this->getMigrationInfo();
@@ -69,38 +73,24 @@ class MigrationVisitor extends PostVisitor
 
     protected function visitPost($post): bool
     {
-        // Use NEW mode: create database mappings instead of modifying content
-        if ($this->urlMappingService !== null) {
-            $content = $post->post_content;
-            $normalized = html_entity_decode(stripslashes($content));
-            $urls = $this->linkExtractor->extract($normalized);
+        $content = $post->post_content;
+        $normalized = html_entity_decode(stripslashes($content));
+        $urls = $this->linkExtractor->extract($normalized);
 
-            Logger::debug("MigrationVisitor: Post {$post->ID} has " . count($urls) . " URLs to process");
+        Logger::debug("MigrationVisitor: Post {$post->ID} has " . count($urls) . " URLs to process");
 
-            if (!empty($urls)) {
-                // Create URL mappings in the database
-                $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post->ID);
+        if (!empty($urls)) {
+            // Create URL mappings in the database
+            $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post->ID);
 
-                Logger::debug("MigrationVisitor: create_url_mappings_batch returned " . count($mappings) . " mappings");
+            Logger::debug("MigrationVisitor: create_url_mappings_batch returned " . count($mappings) . " mappings");
 
-                if (!empty($mappings)) {
-                    $this->migratedPosts++;
-                    $this->totalMappingsCreated += count($mappings);
-                    Logger::debug("MigrationVisitor: Created " . count($mappings) . " mappings for post {$post->ID}");
-                } else {
-                    Logger::debug("MigrationVisitor: No mappings created for post {$post->ID}");
-                }
-            }
-        } else {
-            // Fallback to OLD mode if UrlMappingService not available
-            $result = $this->rewriter->rewrite($post->post_content);
-
-            if ($result->rewritten) {
-                wp_update_post([
-                    'ID' => $post->ID,
-                    'post_content' => $result->content,
-                ]);
+            if (!empty($mappings)) {
                 $this->migratedPosts++;
+                $this->totalMappingsCreated += count($mappings);
+                Logger::debug("MigrationVisitor: Created " . count($mappings) . " mappings for post {$post->ID}");
+            } else {
+                Logger::debug("MigrationVisitor: No mappings created for post {$post->ID}");
             }
         }
 
@@ -142,10 +132,10 @@ class MigrationVisitor extends PostVisitor
 
     private function saveResults(): void
     {
-        update_option('grocers_list_migration_migrated_posts', $this->migratedPosts);
-        update_option('grocers_list_migration_total_posts', $this->getTotalPosts());
-        update_option('grocers_list_migration_last_completed_at', time());
-        update_option('grocers_list_migration_total_mappings', $this->totalMappingsCreated);
+        $this->settings->update_option('migration_migrated_posts', $this->migratedPosts);
+        $this->settings->update_option('migration_total_posts', $this->getTotalPosts());
+        $this->settings->update_option('migration_last_completed_at', time());
+        $this->settings->update_option('migration_total_mappings', $this->totalMappingsCreated);
     }
 
     private function resetCounters(): void
@@ -156,15 +146,15 @@ class MigrationVisitor extends PostVisitor
 
     public function getMigrationInfo(): array
     {
-        $started_at = (int)get_option('grocers_list_migration_last_started_at', 0) * 1000;
-        $completed_at = (int)get_option('grocers_list_migration_last_completed_at', 0) * 1000;
+        $started_at = (int)$this->settings->get_option('migration_last_started_at', 0) * 1000;
+        $completed_at = (int)$this->settings->get_option('migration_last_completed_at', 0) * 1000;
 
         $isRunning = !!$started_at && $completed_at < $started_at;
 
         return [
-            'migratedPosts' => (int)get_option('grocers_list_migration_migrated_posts', 0),
-            'totalPosts' => (int)get_option('grocers_list_migration_total_posts', 0),
-            'totalMappings' => (int)get_option('grocers_list_migration_total_mappings', 0),
+            'migratedPosts' => (int)$this->settings->get_option('migration_migrated_posts', 0),
+            'totalPosts' => (int)$this->settings->get_option('migration_total_posts', 0),
+            'totalMappings' => (int)$this->settings->get_option('migration_total_mappings', 0),
             'processedPosts' => $this->getProcessedPosts(),
             'isComplete' => !!$completed_at && !$isRunning,
             'isRunning' => $isRunning,

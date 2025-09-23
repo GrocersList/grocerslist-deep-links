@@ -2,6 +2,8 @@
 
 namespace GrocersList\Database;
 
+use GrocersList\Support\Logger;
+
 class UrlMappingTable
 {
     private $table_name;
@@ -20,21 +22,30 @@ class UrlMappingTable
 
         $sql = "CREATE TABLE {$this->table_name} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            post_id bigint(20) unsigned NOT NULL,
             original_url text NOT NULL,
             original_url_hash varchar(64) NOT NULL,
             linksta_url varchar(255) NOT NULL,
             link_hash varchar(255) NOT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY  (id),
+            PRIMARY KEY (id),
             UNIQUE KEY unique_original_url (original_url_hash),
+            KEY idx_post_id (post_id),
             KEY idx_link_hash (link_hash),
             KEY idx_created_at (created_at)
         ) $charset_collate;";
 
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         $result = dbDelta($sql);
-        
+
+        // Verify table was created
+        if ($wpdb->get_var("SHOW TABLES LIKE '$this->table_name'") !== $this->table_name) {
+            Logger::debug('Failed to create URL mappings table');
+            error_log('GrocersList: Failed to create URL mappings table');
+        } else {
+            Logger::debug('GrocersList URL mappings table created successfully');
+        }
+
         // Log the result for debugging
         if (defined('WP_DEBUG') && WP_DEBUG && function_exists('error_log')) {
             error_log('GrocersList: dbDelta result for URL mappings table: ' . print_r($result, true));
@@ -45,11 +56,6 @@ class UrlMappingTable
     {
         global $wpdb;
         $wpdb->query("DROP TABLE IF EXISTS {$this->table_name}");
-    }
-
-    public function get_table_name(): string
-    {
-        return $this->table_name;
     }
 
     public function truncate_table(): void
@@ -69,48 +75,6 @@ class UrlMappingTable
         ));
         
         return $table_name === $this->table_name;
-    }
-
-    public function insert_mapping(string $original_url, string $linksta_url, string $link_hash): bool
-    {
-        // Check if table exists before trying to insert
-        if (!$this->table_exists()) {
-            return false;
-        }
-
-        global $wpdb;
-
-        $original_url_hash = hash('sha256', $original_url);
-
-        return $wpdb->insert(
-            $this->table_name,
-            [
-                'original_url' => $original_url,
-                'original_url_hash' => $original_url_hash,
-                'linksta_url' => $linksta_url,
-                'link_hash' => $link_hash,
-            ],
-            ['%s', '%s', '%s', '%s']
-        ) !== false;
-    }
-
-    public function get_mapping(string $original_url): ?object
-    {
-        // Check if table exists before trying to query it
-        if (!$this->table_exists()) {
-            return null;
-        }
-
-        global $wpdb;
-
-        $original_url_hash = hash('sha256', $original_url);
-
-        return $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT * FROM {$this->table_name} WHERE original_url_hash = %s",
-                $original_url_hash
-            )
-        );
     }
 
     public function get_mappings_by_urls(array $original_urls): array

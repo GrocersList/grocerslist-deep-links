@@ -3,18 +3,17 @@
 namespace GrocersList\Support;
 
 use GrocersList\Service\IApiClient;
-use GrocersList\Settings\PluginSettings;
-use GrocersList\Support\Logger;
 use GrocersList\Service\UrlMappingService;
+use GrocersList\Settings\PluginSettings;
 
 class ContentFilter
 {
     private Hooks $hooks;
     private PluginSettings $settings;
-    private ?UrlMappingService $urlMappingService;
+    private UrlMappingService $urlMappingService;
     private IApiClient $api;
 
-    public function __construct(Hooks $hooks, PluginSettings $settings, ?UrlMappingService $urlMappingService = null, IApiClient $api)
+    public function __construct(Hooks $hooks, PluginSettings $settings, UrlMappingService $urlMappingService, IApiClient $api)
     {
         $this->hooks = $hooks;
         $this->settings = $settings;
@@ -56,15 +55,8 @@ class ContentFilter
             return $this->removeDataAttributes($content);
         }
 
-        // Use new database-driven approach if available
-        if ($this->urlMappingService !== null) {
-            Logger::debug("ContentFilter::filterContent() => using database mappings");
-            return $this->filterContentWithDatabaseMappings($content);
-        }
-
-        // Fallback to old data attribute approach
-        Logger::debug("ContentFilter::filterContent() => using data attributes (fallback)");
-        return $this->filterContentWithDataAttributes($content);
+        Logger::debug("ContentFilter::filterContent() => using database mappings");
+        return $this->filterContentWithDatabaseMappings($content);
     }
 
     private function filterContentWithDatabaseMappings(string $content): string

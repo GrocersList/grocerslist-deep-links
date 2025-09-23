@@ -11,7 +11,7 @@ use GrocersList\Support\Logger;
 class LinkCountVisitor extends PostVisitor
 {
     private ILinkExtractor $extractor;
-    private ?UrlMappingTable $urlMappingTable;
+    private UrlMappingTable $urlMappingTable;
 
     private int $postsWithLinks = 0;
     private int $totalLinks = 0;
@@ -21,14 +21,14 @@ class LinkCountVisitor extends PostVisitor
 
     public function __construct(
         Hooks          $hooks,
+        UrlMappingTable $urlMappingTable,
         ILinkExtractor $extractor,
         int            $batchSize = 500,
-        ?UrlMappingTable $urlMappingTable = null
     )
     {
         parent::__construct($hooks, $batchSize);
-        $this->extractor = $extractor;
         $this->urlMappingTable = $urlMappingTable;
+        $this->extractor = $extractor;
     }
 
     public function startCounting(): array
@@ -71,15 +71,9 @@ class LinkCountVisitor extends PostVisitor
         $content = $post->post_content;
         $amazonLinks = $this->extractor->extractUnrewrittenLinks($content);
 
-        // If we have the mapping table, only count links without mappings
-        if ($this->urlMappingTable !== null && !empty($amazonLinks)) {
-            $existingMappings = $this->urlMappingTable->get_mappings_by_urls($amazonLinks);
-            $unmappedLinks = array_diff($amazonLinks, array_keys($existingMappings));
-            $linkCount = count($unmappedLinks);
-        } else {
-            // Fallback to counting all Amazon links
-            $linkCount = count($amazonLinks);
-        }
+        $existingMappings = $this->urlMappingTable->get_mappings_by_urls($amazonLinks);
+        $unmappedLinks = array_diff($amazonLinks, array_keys($existingMappings));
+        $linkCount = count($unmappedLinks);
 
         if ($linkCount > 0) {
             $this->postsWithLinks++;
@@ -151,14 +145,12 @@ class LinkCountVisitor extends PostVisitor
             $amazonLinks = $this->extractor->extractUnrewrittenLinks($post->post_content);
 
             if (!empty($amazonLinks)) {
-                // Check which links don't have mappings
-                if ($this->urlMappingTable !== null) {
-                    $existingMappings = $this->urlMappingTable->get_mappings_by_urls($amazonLinks);
-                    $unmappedLinks = array_diff($amazonLinks, array_keys($existingMappings));
-                    $linkCount = count($unmappedLinks);
-                } else {
-                    $linkCount = count($amazonLinks);
-                }
+                // original // TODO: remove comment
+                $existingMappings = $this->urlMappingTable->get_mappings_by_urls($amazonLinks);
+                // testing // TODO: remove comment and one approach
+//                $unmappedLinks = array_diff($amazonLinks, array_keys($existingMappings));
+                $unmappedLinks  = array_values(array_diff($amazonLinks, array_keys($existingMappings)));
+                $linkCount = count($unmappedLinks);
 
                 if ($linkCount > 0) {
                     $postsWithLinks++;

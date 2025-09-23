@@ -12,85 +12,82 @@ class PluginSettings {
     private const KEY_AUTO = 'auto_rewrite';
     private const KEY_LINKSTA = 'use_linksta_links';
 
-    private function key(string $suffix): string {
-        return self::PREFIX . $suffix;
-    }
-    
-    private function oldKey(string $suffix): string {
-        return self::OLD_PREFIX . $suffix;
+    private function all_keys() {
+        return [
+            // settings:
+            self::KEY_API,
+            self::KEY_AUTO,
+            self::KEY_LINKSTA,
+            // migration:
+            'migration_migrated_posts',
+            'migration_total_posts',
+            'migration_last_started_at',
+            'migration_last_completed_at',
+            'migration_total_mappings',
+        ];
     }
 
-    public function getApiKey(): string {
+    public function set_defaults(): void {
+        add_option(self::PREFIX . self::KEY_AUTO, true);
+        add_option(self::PREFIX . self::KEY_LINKSTA, true);
+    }
+
+    // pass through to WP update_option, uses modern prefix
+    public static function update_option(string $key, $value): bool {
+        return update_option(self::PREFIX . $key, $value);
+    }
+
+    // same as WP get_option, but will check legacy prefix and migrate if needed
+    public function get_option(string $key, $default): string {
         // Check new key first, fall back to old key
-        $key = (string) get_option($this->key(self::KEY_API), '');
-        if (empty($key)) {
-            $key = (string) get_option($this->oldKey(self::KEY_API), '');
+        $val = (string) get_option(self::PREFIX . $key, $default);
+
+        if (empty($val)) {
+            $val = (string) get_option(self::OLD_PREFIX . $key, $default);
+
             // Migrate if found under old key
-            if (!empty($key)) {
-                $this->migrateOption(self::KEY_API);
+            if (!empty($val)) {
+                $this->migrateOption($key);
             }
         }
-        Logger::debug("PluginSettings::getApiKey() => " . ($key ? '[REDACTED]' : '(empty)'));
-        return $key;
-    }
 
-    public function setApiKey(string $key): void {
-        $sanitized = sanitize_text_field($key);
-        update_option($this->key(self::KEY_API), $sanitized);
-        Logger::debug("PluginSettings::setApiKey() updated");
-    }
-
-    public function isAutoRewriteEnabled(): bool {
-        // Check new key first, fall back to old key
-        $option = get_option($this->key(self::KEY_AUTO), null);
-        if ($option === null) {
-            $option = get_option($this->oldKey(self::KEY_AUTO), true);
-            // Migrate if found under old key
-            if (get_option($this->oldKey(self::KEY_AUTO), null) !== null) {
-                $this->migrateOption(self::KEY_AUTO);
-            }
-        }
-        $val = (bool) $option;
-        Logger::debug("PluginSettings::isAutoRewriteEnabled() => " . ($val ? 'true' : 'false'));
         return $val;
     }
 
-    public function setAutoRewrite(bool $enabled): void {
-        update_option($this->key(self::KEY_AUTO), $enabled);
-        Logger::debug("PluginSettings::setAutoRewrite() => " . ($enabled ? 'true' : 'false'));
+    public function getApiKey(): string {
+        return $this->get_option(self::KEY_API, '');
+    }
+
+    public function setApiKey(string $key): bool {
+        $sanitized = sanitize_text_field($key);
+        return $this->update_option(self::KEY_API, $sanitized);
+    }
+
+    // TODO: move these to be set in GL Mongo DB
+    public function isAutoRewriteEnabled(): bool {
+        return (bool) $this->get_option(self::KEY_AUTO, null);
+    }
+
+    public function setAutoRewrite(bool $enabled): bool {
+        return $this->update_option(self::KEY_AUTO, $enabled);
     }
 
     public function isUseLinkstaLinksEnabled(): bool {
-        // Check new key first, fall back to old key
-        $val = get_option($this->key(self::KEY_LINKSTA), null);
-        if ($val === null) {
-            $val = get_option($this->oldKey(self::KEY_LINKSTA), true);
-            // Migrate if found under old key
-            if (get_option($this->oldKey(self::KEY_LINKSTA), null) !== null) {
-                $this->migrateOption(self::KEY_LINKSTA);
-            }
-        }
-        $enabled = filter_var($val, FILTER_VALIDATE_BOOLEAN);
-        Logger::debug("PluginSettings::isUseLinkstaLinksEnabled() => " . ($enabled ? 'true' : 'false'));
-        return $enabled;
+        return (bool) $this->get_option(self::KEY_LINKSTA, null);
     }
 
-    public function setUseLinkstaLinks(bool $enabled): void {
+    public function setUseLinkstaLinks(bool $enabled): bool {
         $boolVal = $enabled ? '1' : '0';
-        update_option($this->key(self::KEY_LINKSTA), $boolVal);
-        Logger::debug("PluginSettings::setUseLinkstaLinks() => " . ($enabled ? 'true' : 'false'));
+        return $this->update_option(self::KEY_LINKSTA, $boolVal);
     }
 
     public function reset(): void {
-        // Delete both old and new keys
-        delete_option($this->key(self::KEY_API));
-        delete_option($this->key(self::KEY_AUTO));
-        delete_option($this->key(self::KEY_LINKSTA));
+        foreach ($this->all_keys() as $key) {
+            delete_option(self::PREFIX . $key);
+            delete_option(self::OLD_PREFIX . $key);
+        }
 
-        // Also delete old keys if they exist
-        delete_option($this->oldKey(self::KEY_API));
-        delete_option($this->oldKey(self::KEY_AUTO));
-        delete_option($this->oldKey(self::KEY_LINKSTA));
+        $this->set_defaults();
 
         Logger::debug("PluginSettings::reset() all options deleted");
     }
@@ -99,11 +96,13 @@ class PluginSettings {
      * Migrate a single option from old to new prefix
      */
     private function migrateOption(string $key): void {
-        $oldValue = get_option($this->oldKey($key), null);
-        if ($oldValue !== null) {
-            update_option($this->key($key), $oldValue);
-            delete_option($this->oldKey($key));
-            Logger::debug("Migrated option from {$this->oldKey($key)} to {$this->key($key)}");
+        $oldVal = (string) get_option(self::OLD_PREFIX . $key, null);
+        $newVal = (string) get_option(self::PREFIX . $key, null);
+
+        if ($newVal == null && $oldVal != null) {
+            $this->update_option($key, $oldVal);
+            delete_option(self::OLD_PREFIX . $key);
+            Logger::debug("Migrated option {$key} from {$oldVal} to {$newVal}");
         }
     }
     
@@ -111,8 +110,7 @@ class PluginSettings {
      * Migrate all options from old to new prefix
      */
     public function migrateAllOptions(): void {
-        $keys = [self::KEY_API, self::KEY_AUTO, self::KEY_LINKSTA];
-        foreach ($keys as $key) {
+        foreach ($this->all_keys() as $key) {
             $this->migrateOption($key);
         }
         Logger::debug("PluginSettings::migrateAllOptions() completed");

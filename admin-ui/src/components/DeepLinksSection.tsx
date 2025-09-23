@@ -146,9 +146,9 @@ export const DeepLinksSection = ({
             </Stack>
           </Box>
 
-          {/* TODO: uncomment when linkCountInfo.unmappedLinks is accurate */}
+          {/* TODO: uncomment once unmappedLinks is accurate */}
           {/*{linkCountInfo &&*/}
-          {/*  (needsMigration ? (*/}
+          {/*  (linkCountInfo.unmappedLinks > 0 ? (*/}
           {/*    <Alert severity="info">*/}
           {/*      {linkCountInfo.unmappedLinks} out of {linkCountInfo.totalLinks}{' '}*/}
           {/*      Amazon links have not been migrated to Grocers List Deep Links*/}

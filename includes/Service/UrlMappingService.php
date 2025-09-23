@@ -32,6 +32,7 @@ class UrlMappingService
         // Check which URLs we already have mappings for
         $existing_mappings = $this->table->get_mappings_by_urls($urls);
         // Use array_values to reset keys after array_diff
+        // TODO: this looks accurate:
         $missing_urls = array_values(array_diff($urls, array_keys($existing_mappings)));
 
         Logger::debug("Found " . count($existing_mappings) . " existing mappings, " . count($missing_urls) . " missing");

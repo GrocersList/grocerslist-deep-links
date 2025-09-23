@@ -2,11 +2,11 @@
 
 namespace GrocersList\Service;
 
+use GrocersList\Model\LinkRewriteResult;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Hooks;
 use GrocersList\Support\ILinkExtractor;
 use GrocersList\Support\ILinkReplacer;
-use GrocersList\Model\LinkRewriteResult;
 use GrocersList\Support\LinkUtils;
 use GrocersList\Support\Logger;
 
@@ -17,7 +17,7 @@ class LinkRewriter
     private ILinkReplacer $replacer;
     private Hooks $hooks;
     private PluginSettings $settings;
-    private ?UrlMappingService $urlMappingService;
+    private UrlMappingService $urlMappingService;
 
     public function __construct(
         IApiClient     $api,
@@ -25,7 +25,7 @@ class LinkRewriter
         ILinkReplacer  $replacer,
         Hooks          $hooks,
         PluginSettings $settings,
-        ?UrlMappingService $urlMappingService = null
+        UrlMappingService $urlMappingService
     )
     {
         $this->hooks = $hooks;
@@ -55,43 +55,25 @@ class LinkRewriter
             return $data;
         }
 
-        // Process links synchronously with URL mapping service
-        if ($this->urlMappingService !== null) {
-            $content = $data['post_content'];
-            $normalized = html_entity_decode(stripslashes($content));
-            $urls = $this->extractor->extract($normalized);
-            
-            if (!empty($urls)) {
-                // Get post ID from postarr or data
-                $post_id = isset($postarr['ID']) ? $postarr['ID'] : (isset($data['ID']) ? $data['ID'] : 0);
-                
-                // Create URL mappings in the database but don't modify content
-                $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post_id);
-                
-                if (!empty($mappings)) {
-                    $this->hooks->addFilter('redirect_post_location', function($loc) {
-                        return add_query_arg('adl_mapped', '1', $loc);
-                    });
-                }
+        $content = $data['post_content'];
+        $normalized = html_entity_decode(stripslashes($content));
+        $urls = $this->extractor->extract($normalized);
+
+        if (!empty($urls)) {
+            // Get post ID from postarr or data
+            $post_id = isset($postarr['ID']) ? $postarr['ID'] : (isset($data['ID']) ? $data['ID'] : 0);
+
+            // Create URL mappings in the database but don't modify content
+            $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post_id);
+
+            if (!empty($mappings)) {
+                $this->hooks->addFilter('redirect_post_location', function($loc) {
+                    return add_query_arg('adl_mapped', '1', $loc);
+                });
             }
-            
-            // Return unmodified content - URL replacement happens at render time
-            return $data;
         }
 
-        // Fallback to direct API rewrite approach
-        $result = $this->rewrite($data['post_content']);
-        $data['post_content'] = $result->content;
-
-        if ($result->rewritten) {
-            Logger::debug("LinkRewriter::onPostSave() content rewritten, adding redirect hook");
-            $this->hooks->addFilter('redirect_post_location', function($loc) {
-                return add_query_arg('adl_rewritten', '1', $loc);
-            });
-        } else {
-            Logger::debug("LinkRewriter::onPostSave() nothing rewritten");
-        }
-
+        // Return unmodified content - URL replacement happens at render time
         return $data;
     }
 

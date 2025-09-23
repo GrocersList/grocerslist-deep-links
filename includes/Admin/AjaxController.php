@@ -18,6 +18,7 @@ class AjaxController
     private MigrationVisitor $migrationJob;
     private LinkCountVisitor $linkCountJob;
     private Hooks $hooks;
+    private UrlMappingTable $urlMappingTable;
 
     public function __construct(
         PluginSettings   $settings,
@@ -67,33 +68,7 @@ class AjaxController
         $this->checkPermission('grocers_list_clear_settings');
         // Clean up any legacy stored counts (both old and new prefixes)
 
-        // link count
-        delete_option('grocers_list_link_count_posts_with_links');
-        delete_option('grocers_list_link_count_total_links');
-        delete_option('grocers_list_link_count_total_posts');
-        delete_option('grocers_list_link_count_processed_posts');
-        delete_option('grocers_list_link_count_last_time');
-        // migration options
-        delete_option('grocers_list_migration_migrated_posts');
-        delete_option('grocers_list_migration_total_posts');
-        delete_option('grocers_list_migration_last_started_at');
-        delete_option('grocers_list_migration_last_completed_at');
-        delete_option('grocers_list_migration_total_mappings');
-
-        // Also delete with new prefix if they exist
-
-        // link count
-        delete_option('grocerslist_link_count_posts_with_links');
-        delete_option('grocerslist_link_count_total_links');
-        delete_option('grocerslist_link_count_total_posts');
-        delete_option('grocerslist_link_count_processed_posts');
-        delete_option('grocerslist_link_count_last_time');
-        // migration options
-        delete_option('grocerslist_migration_migrated_posts');
-        delete_option('grocerslist_migration_total_posts');
-        delete_option('grocerslist_migration_last_started_at');
-        delete_option('grocerslist_migration_last_completed_at');
-        delete_option('grocerslist_migration_total_mappings');
+        $this->settings->reset();
 
         // undo migration:
         $this->urlMappingTable->truncate_table();
@@ -107,7 +82,6 @@ class AjaxController
         check_ajax_referer('grocers_list_get_state', 'security');
 
         $this->checkPermission('grocers_list_get_state');
-        Logger::debug('getState called');
 
         wp_send_json_success([
             'apiKey' => $this->settings->getApiKey(),
