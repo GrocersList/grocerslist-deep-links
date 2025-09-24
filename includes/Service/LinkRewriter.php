@@ -8,7 +8,6 @@ use GrocersList\Support\Hooks;
 use GrocersList\Support\ILinkExtractor;
 use GrocersList\Support\ILinkReplacer;
 use GrocersList\Support\LinkUtils;
-use GrocersList\Support\Logger;
 
 class LinkRewriter
 {
@@ -79,16 +78,10 @@ class LinkRewriter
 
     public function rewrite(string $content): LinkRewriteResult
     {
-        Logger::debug("LinkRewriter::rewrite() called");
-
         $normalized = html_entity_decode(stripslashes($content));
-        Logger::debug("Normalized content: $normalized");
-
         $urls = $this->extractor->extract($normalized);
-        Logger::debug("Extracted URLs: " . json_encode($urls));
 
         if (empty($urls)) {
-            Logger::debug("No URLs found");
             return new LinkRewriteResult($content, false);
         }
 
@@ -101,7 +94,6 @@ class LinkRewriter
             // This ensures the LinkReplacer will always add the data-original-url attribute
             $rewritten = LinkUtils::buildLinkstaUrl($item->hash);
             $urlMap[$original] = $rewritten;
-            Logger::debug("Mapped: $original -> $rewritten (always using linksta for rewriting)");
         }
 
         $result = $this->replacer->replace($normalized, $urlMap);

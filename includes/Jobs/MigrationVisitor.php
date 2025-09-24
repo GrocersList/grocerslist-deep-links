@@ -51,6 +51,7 @@ class MigrationVisitor extends PostVisitor
         $ids = wp_cache_get($cache_key);
 
         if ($ids === false) {
+            // TODO: do we want to run for unpublished posts too?
             $ids = $wpdb->get_col(
                 $wpdb->prepare(
                     "SELECT p.ID
@@ -77,20 +78,13 @@ class MigrationVisitor extends PostVisitor
         $normalized = html_entity_decode(stripslashes($content));
         $urls = $this->linkExtractor->extract($normalized);
 
-        Logger::debug("MigrationVisitor: Post {$post->ID} has " . count($urls) . " URLs to process");
-
         if (!empty($urls)) {
             // Create URL mappings in the database
             $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post->ID);
 
-            Logger::debug("MigrationVisitor: create_url_mappings_batch returned " . count($mappings) . " mappings");
-
             if (!empty($mappings)) {
                 $this->migratedPosts++;
                 $this->totalMappingsCreated += count($mappings);
-                Logger::debug("MigrationVisitor: Created " . count($mappings) . " mappings for post {$post->ID}");
-            } else {
-                Logger::debug("MigrationVisitor: No mappings created for post {$post->ID}");
             }
         }
 

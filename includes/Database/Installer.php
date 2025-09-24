@@ -76,8 +76,6 @@ class Installer
     {
         $pluginSettings = new PluginSettings();
         $pluginSettings->migrateAllOptions();
-
-        Logger::debug('Option prefix migration completed');
     }
 
     /**

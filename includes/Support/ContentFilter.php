@@ -41,21 +41,16 @@ class ContentFilter
 
     public function filterContent(string $content): string
     {
-        Logger::debug("ContentFilter::filterContent() called");
-
         $creatorSettings = $this->api->getCreatorSettings($this->settings->getApiKey());
 
-        if (!$creatorSettings->provisioning->appLinks->hasAppLinksAddon) {
-            Logger::debug("ContentFilter::filterContent() => hasAppLinksAddon FALSE");
+        if (!$creatorSettings?->provisioning?->appLinks?->hasAppLinksAddon) {
             return $this->removeDataAttributes($content);
         }
 
         if (!$this->settings->isUseLinkstaLinksEnabled()) {
-            Logger::debug("ContentFilter::filterContent() => use_linksta_links DISABLED");
             return $this->removeDataAttributes($content);
         }
 
-        Logger::debug("ContentFilter::filterContent() => using database mappings");
         return $this->filterContentWithDatabaseMappings($content);
     }
 
@@ -64,7 +59,6 @@ class ContentFilter
         $mappings = $this->urlMappingService->get_url_mappings_for_content($content);
         
         if (empty($mappings)) {
-            Logger::debug("ContentFilter::filterContentWithDatabaseMappings() no mappings found");
             // Check if content has old-style data attributes and handle them
             if (strpos($content, 'data-grocerslist-rewritten-link') !== false) {
                 Logger::debug("ContentFilter::filterContentWithDatabaseMappings() found old-style data attributes, using fallback");
@@ -72,8 +66,6 @@ class ContentFilter
             }
             return $content;
         }
-
-        Logger::debug("ContentFilter::filterContentWithDatabaseMappings() found " . count($mappings) . " mappings");
 
         return preg_replace_callback(
             '/<a\s+[^>]*href="([^"]*)"[^>]*>/i',
@@ -85,12 +77,8 @@ class ContentFilter
                     $token_param = $this->create_timestamp_token($mapping->link_hash);
                     $linksta_url_with_token = $mapping->linksta_url . '?token=' . $token_param;
 
-                    Logger::debug("ContentFilter::filterContentWithDatabaseMappings() replacing: {$original_url} -> {$mapping->linksta_url}");
-                    
                     $tag = str_replace('href="' . $matches[1] . '"', 'href="' . $linksta_url_with_token . '"', $matches[0]);
                     return str_replace('<a ', '<a data-grocers-list-rewritten="true" ', $tag);
-                } else {
-                    Logger::debug("ContentFilter::filterContentWithDatabaseMappings() no mapping found for: {$original_url}");
                 }
 
                 return $matches[0];

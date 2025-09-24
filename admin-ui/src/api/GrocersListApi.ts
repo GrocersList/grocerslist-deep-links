@@ -66,10 +66,6 @@ export class GrocersListApi implements IGrocersListApi {
     return res.data;
   }
 
-  async triggerRecountLinks() {
-    await this.post('grocers_list_trigger_recount_links', {});
-  }
-
   async getLinkCountInfo(): Promise<LinkCountInfo> {
     const res = await this.post('grocers_list_get_link_count_info', {});
     return res.data;

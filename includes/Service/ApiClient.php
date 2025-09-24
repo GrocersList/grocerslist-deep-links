@@ -127,7 +127,7 @@ class ApiClient implements IApiClient
             return [];
         }
 
-        $this->creatorSettings = json_decode($response['body']);
+        $this->creatorSettings = json_decode($response['body'], false);
 
         return $this->creatorSettings;
     }

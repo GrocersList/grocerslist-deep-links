@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 
 import { Link } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Alert, Box, Stack, Typography } from '@mui/material';
+import { Alert, Box, LinearProgress, Stack, Typography } from '@mui/material';
 
 import { AppLinksZeroState } from './AppLinksZeroState';
 import { Section } from './Section';
 import { ToggleInput } from './ToggleInput';
 import type { MigrationStatus } from '@/api/IGrocersListApi';
-// import { useLinkCountPoll } from '@/hooks/useLinkCountPoll'; // TODO: add back
+import { useLinkCount } from '@/hooks/useLinkCount';
 import { useSetupContext } from '@/hooks/useSetupContext';
 
 export const DeepLinksSection = ({
@@ -41,9 +41,19 @@ export const DeepLinksSection = ({
   const [migrationStatus, setMigrationStatus] =
     useState<MigrationStatus | null>(null);
 
-  // const { linkCountInfo } = useLinkCountPoll(); // TODO: add back
+  const {
+    linkCountInfo,
+    loading: linkCountLoading,
+    fetchLinkCountInfo,
+  } = useLinkCount();
 
   // ==================== EFFECTS ====================
+
+  useEffect(() => {
+    if (migrationStatus?.isComplete) {
+      fetchLinkCountInfo();
+    }
+  }, [migrationStatus?.isComplete, fetchLinkCountInfo]);
 
   useEffect(() => {
     // Load migration status on mount
@@ -146,19 +156,25 @@ export const DeepLinksSection = ({
             </Stack>
           </Box>
 
-          {/* TODO: uncomment once unmappedLinks is accurate */}
-          {/*{linkCountInfo &&*/}
-          {/*  (linkCountInfo.unmappedLinks > 0 ? (*/}
-          {/*    <Alert severity="info">*/}
-          {/*      {linkCountInfo.unmappedLinks} out of {linkCountInfo.totalLinks}{' '}*/}
-          {/*      Amazon links have not been migrated to Grocers List Deep Links*/}
-          {/*    </Alert>*/}
-          {/*  ) : (*/}
-          {/*    <Alert severity="info">*/}
-          {/*      All {linkCountInfo.totalLinks} Amazon links have been migrated*/}
-          {/*      to Grocers List Deep Links*/}
-          {/*    </Alert>*/}
-          {/*  ))}*/}
+          {linkCountLoading && (
+            <Alert severity="info">
+              <LinearProgress />
+            </Alert>
+          )}
+
+          {linkCountInfo &&
+            (linkCountInfo.totalUnmappedLinks > 0 ? (
+              <Alert severity="warning">
+                {linkCountInfo.totalUnmappedLinks} out of{' '}
+                {linkCountInfo.totalAmazonLinks} Amazon links have not been
+                mapped to Grocers List Deep Links.
+              </Alert>
+            ) : (
+              <Alert severity="info">
+                All {linkCountInfo.totalAmazonLinks} Amazon links have been
+                mapped to Grocers List Deep Links
+              </Alert>
+            ))}
 
           <LoadingButton
             variant="outlined"

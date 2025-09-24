@@ -88,8 +88,6 @@ class PluginSettings {
         }
 
         $this->set_defaults();
-
-        Logger::debug("PluginSettings::reset() all options deleted");
     }
     
     /**
@@ -102,7 +100,6 @@ class PluginSettings {
         if ($newVal == null && $oldVal != null) {
             $this->update_option($key, $oldVal);
             delete_option(self::OLD_PREFIX . $key);
-            Logger::debug("Migrated option {$key} from {$oldVal} to {$newVal}");
         }
     }
     

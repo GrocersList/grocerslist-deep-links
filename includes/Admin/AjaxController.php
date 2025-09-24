@@ -2,39 +2,34 @@
 
 namespace GrocersList\Admin;
 
-use GrocersList\Database\UrlMappingTable;
-use GrocersList\Jobs\LinkCountVisitor;
 use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Scanner\PostScanner;
 use GrocersList\Service\ApiClient;
+use GrocersList\Service\UrlMappingService;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Hooks;
-use GrocersList\Support\Logger;
 
 class AjaxController
 {
     private PluginSettings $settings;
     private ApiClient $api;
     private MigrationVisitor $migrationJob;
-    private LinkCountVisitor $linkCountJob;
     private Hooks $hooks;
-    private UrlMappingTable $urlMappingTable;
+    private UrlMappingService $urlMappingService;
 
     public function __construct(
         PluginSettings   $settings,
         ApiClient        $api,
         MigrationVisitor $migrationJob,
-        LinkCountVisitor $linkCountJob,
         Hooks            $hooks,
-        UrlMappingTable  $urlMappingTable
+        UrlMappingService  $urlMappingService
     )
     {
         $this->settings = $settings;
         $this->api = $api;
         $this->migrationJob = $migrationJob;
-        $this->linkCountJob = $linkCountJob;
         $this->hooks = $hooks;
-        $this->urlMappingTable = $urlMappingTable;
+        $this->urlMappingService = $urlMappingService;
     }
 
     public function register(): void
@@ -48,10 +43,8 @@ class AjaxController
             'grocers_list_find_matched_links' => 'findMatchedLinks',
             'grocers_list_clear_settings' => 'clearSettings',
             'grocers_list_get_migration_status' => 'getMigrationStatus',
-            'grocers_list_recount_links' => 'recountLinks',
             'grocers_list_get_link_count_info' => 'getLinkCountInfo',
             'grocers_list_trigger_migrate' => 'triggerMigrate',
-            'grocers_list_trigger_recount_links' => 'triggerRecountLinks',
             'grocers_list_update_post_gating_options' => 'updatePostGatingOptions',
             'grocers_list_update_memberships_enabled' => 'updateMembershipsEnabled',
         ];
@@ -70,8 +63,8 @@ class AjaxController
 
         $this->settings->reset();
 
-        // undo migration:
-        $this->urlMappingTable->truncate_table();
+        // remove all mappings (effectively undo-ing migration):
+        $this->urlMappingService->reset_mappings();
 
         $this->settings->reset();
         wp_send_json_success(['message' => 'All settings cleared']);
@@ -181,22 +174,6 @@ class AjaxController
         wp_send_json_success($migrationInfo);
     }
 
-    public function recountLinks(): void
-    {
-        check_ajax_referer('grocers_list_recount_links', 'security');
-
-        $this->checkPermission('grocers_list_recount_links');
-
-        if (!$this->linkCountJob) {
-            wp_send_json_error(['error' => 'Link count job not available'], 500);
-            return;
-        }
-
-        $countInfo = $this->linkCountJob->startCounting();
-
-        wp_send_json_success($countInfo);
-    }
-
     public function processNextCountBatch(): void
     {
         // No-op - batches are now scheduled automatically by the visitor pattern
@@ -208,12 +185,7 @@ class AjaxController
 
         $this->checkPermission('grocers_list_get_link_count_info');
 
-        if (!$this->linkCountJob) {
-            wp_send_json_error(['error' => 'Link count job not available'], 500);
-            return;
-        }
-
-        $countInfo = $this->linkCountJob->getCountInfo();
+        $countInfo = $this->urlMappingService->get_link_count_info();
         wp_send_json_success($countInfo);
     }
 
@@ -222,7 +194,6 @@ class AjaxController
         check_ajax_referer('grocers_list_trigger_migrate', 'security');
 
         $this->checkPermission('grocers_list_trigger_migrate');
-        Logger::debug("triggerMigrate: starting");
 
         if (!$this->migrationJob) {
             wp_send_json_error(['error' => 'Migration job not available'], 500);
@@ -235,27 +206,6 @@ class AjaxController
             'success' => true,
             'message' => 'Migration completed',
             'data' => $migrationInfo,
-        ]);
-    }
-
-    public function triggerRecountLinks(): void
-    {
-        check_ajax_referer('grocers_list_trigger_recount_links', 'security');
-
-        $this->checkPermission('grocers_list_trigger_recount_links');
-        Logger::debug("triggerRecountLinks: starting");
-
-        if (!$this->linkCountJob) {
-            wp_send_json_error(['error' => 'Link count job not available'], 500);
-            return;
-        }
-
-        $countInfo = $this->linkCountJob->startCounting();
-
-        wp_send_json_success([
-            'success' => true,
-            'message' => 'Link recount completed',
-            'data' => $countInfo,
         ]);
     }
 

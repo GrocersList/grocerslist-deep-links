@@ -8,7 +8,6 @@ use GrocersList\Admin\SettingsPage;
 use GrocersList\Database\UrlMappingTable;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\PublicAjaxController;
-use GrocersList\Jobs\LinkCountVisitor;
 use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Service\ApiClient;
 use GrocersList\Service\LinkRewriter;
@@ -62,9 +61,8 @@ class Plugin
         $rewriter->register();
 
         $migrationJob = new MigrationVisitor($rewriter, $pluginSettings, $urlMappingService, $extractor, $this->hooks, 50);
-        $linkCountJob = new LinkCountVisitor($this->hooks, $urlMappingTable, $extractor, 500);
 
-        $ajax = new AjaxController($pluginSettings, $api, $migrationJob, $linkCountJob, $this->hooks, $urlMappingTable);
+        $ajax = new AjaxController($pluginSettings, $api, $migrationJob, $this->hooks, $urlMappingService);
         $ajax->register();
 
         $publicAjax = new PublicAjaxController($pluginSettings, $api, $this->hooks);

@@ -67,13 +67,13 @@ class UrlMappingTable
     public function table_exists(): bool
     {
         global $wpdb;
-        
+
         $table_name = $wpdb->get_var($wpdb->prepare(
             "SELECT table_name FROM information_schema.tables WHERE table_schema = %s AND table_name = %s",
             $wpdb->dbname,
             $this->table_name
         ));
-        
+
         return $table_name === $this->table_name;
     }
 
@@ -95,7 +95,6 @@ class UrlMappingTable
         }, $original_urls);
 
         $placeholders = implode(',', array_fill(0, count($url_hashes), '%s'));
-        
         $results = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$this->table_name} WHERE original_url_hash IN ($placeholders)",

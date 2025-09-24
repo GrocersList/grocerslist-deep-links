@@ -5,7 +5,6 @@ namespace GrocersList\Service;
 use GrocersList\Database\UrlMappingTable;
 use GrocersList\Support\ILinkExtractor;
 use GrocersList\Support\LinkUtils;
-use GrocersList\Support\Logger;
 
 class UrlMappingService
 {
@@ -23,6 +22,63 @@ class UrlMappingService
         $this->table = $table;
     }
 
+    public function reset_mappings(): void
+    {
+        $this->table->truncate_table();
+    }
+
+    public function get_link_count_info(): array
+    {
+        global $wpdb;
+
+        $posts_with_links = 0;
+        $total_amazon_links = 0;
+        $total_mapped_links = 0;
+        $total_unmapped_links = 0;
+
+        // Get all published posts with content // TODO: do we want to run for unpublished posts too?
+        $posts = $wpdb->get_results(
+            "SELECT ID, post_content
+             FROM {$wpdb->posts}
+             WHERE post_status = 'publish'
+               AND post_type IN ('post', 'page')
+               AND post_content IS NOT NULL
+               AND post_content != ''"
+        );
+
+        foreach ($posts as $post) {
+            $content = $post->post_content;
+            $normalized = html_entity_decode(stripslashes($content)); // *CRITICAL - hash will not match DB row if url is not normalized first
+            $amazon_links = $this->extractor->extractUnrewrittenLinks($normalized);
+
+            if (!empty($amazon_links)) {
+                $total_amazon_links += count($amazon_links);;
+
+                $existing_mappings = $this->table->get_mappings_by_urls($amazon_links);
+                $total_mapped_links += count($existing_mappings);
+
+                $unmapped_links = array_values(array_diff($amazon_links, array_keys($existing_mappings)));
+                $unmapped_links_count = count($unmapped_links);
+
+                if ($unmapped_links_count > 0) {
+                    $posts_with_links++;
+                    // $total_amazon_links is NOT unique, so we cannot simply subtract mapped links from the total:
+                    $total_unmapped_links += $unmapped_links_count;
+                }
+            }
+        }
+
+        return [
+            // posts
+            'totalPosts' => count($posts),
+            'postsWithLinks' => $posts_with_links,
+            // links
+            'totalAmazonLinks' => $total_amazon_links,
+            'totalMappedLinks' => $total_mapped_links,
+            'totalUnmappedLinks' => $total_unmapped_links,
+        ];
+    }
+
     public function create_url_mappings_batch(array $urls, int $post_id = 0): array
     {
         if (empty($urls)) {
@@ -32,17 +88,12 @@ class UrlMappingService
         // Check which URLs we already have mappings for
         $existing_mappings = $this->table->get_mappings_by_urls($urls);
         // Use array_values to reset keys after array_diff
-        // TODO: this looks accurate:
         $missing_urls = array_values(array_diff($urls, array_keys($existing_mappings)));
-
-        Logger::debug("Found " . count($existing_mappings) . " existing mappings, " . count($missing_urls) . " missing");
 
         // Fetch new mappings for missing URLs
         if (!empty($missing_urls)) {
-            Logger::debug("Calling API with " . count($missing_urls) . " URLs: " . json_encode($missing_urls));
             $response = $this->api->postAppLinks($missing_urls);
-            Logger::debug("API returned " . count($response->successes) . " successes");
-            
+
             $new_mappings = [];
 
             foreach ($response->successes as $item) {
@@ -54,16 +105,11 @@ class UrlMappingService
                     'link_hash' => $item->hash,
                     'post_id' => $post_id
                 ];
-
-                Logger::debug("New mapping: $original_url -> $linksta_url (post_id: $post_id)");
             }
 
             // Store new mappings in database
             if (!empty($new_mappings)) {
-                Logger::debug("Storing " . count($new_mappings) . " new mappings in database");
                 $this->table->upsert_mappings($new_mappings);
-            } else {
-                Logger::debug("No new mappings to store - API returned no successes for URLs: " . json_encode($missing_urls));
             }
 
             // Merge with existing mappings

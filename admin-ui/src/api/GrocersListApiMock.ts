@@ -83,18 +83,11 @@ export class GrocersListApiMock implements IGrocersListApi {
     localStorage.setItem('grocers_list_mock_migration_started', 'true');
   }
 
-  async triggerRecountLinks(): Promise<void> {
-    console.log('🔧 Mock triggerRecountLinks');
-    await this.delay(500);
-    localStorage.setItem('grocers_list_mock_recount_started', 'true');
-  }
-
   async clearSettings() {
     console.log('🔧 Mock clearSettings');
     await this.delay(500);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem('grocers_list_mock_migration_started');
-    localStorage.removeItem('grocers_list_mock_recount_started');
   }
 
   async getMigrationStatus(): Promise<MigrationStatus> {
@@ -134,33 +127,12 @@ export class GrocersListApiMock implements IGrocersListApi {
     console.log('🔧 Mock getLinkCountInfo');
     await this.delay(500);
 
-    const started = localStorage.getItem('grocers_list_mock_recount_started');
-    const isRunning = Math.random() > 0.3; // Randomly decide if still running
-    const randomProcessed = Math.floor(Math.random() * 25) + 5;
-    const isComplete = !isRunning && randomProcessed >= 25;
-
-    if (!started) {
-      return {
-        unmappedLinks: 0,
-        postsWithLinks: 0,
-        totalLinks: 0,
-        totalPosts: 25,
-        lastCount: Date.now() - 7200000,
-        isRunning: false,
-        processedPosts: 0,
-        isComplete: false,
-      };
-    }
-
     return {
-      unmappedLinks: 0,
       postsWithLinks: 5,
-      totalLinks: 50,
       totalPosts: 25,
-      lastCount: Date.now(),
-      isRunning,
-      processedPosts: isComplete ? 25 : randomProcessed,
-      isComplete,
+      totalAmazonLinks: 50,
+      totalMappedLinks: 0,
+      totalUnmappedLinks: 0,
     };
   }
 

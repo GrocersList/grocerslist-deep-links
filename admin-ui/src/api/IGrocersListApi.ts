@@ -9,7 +9,6 @@ export interface IGrocersListApi {
   triggerMigrate(): Promise<void>;
   clearSettings(): Promise<void>;
   getMigrationStatus(): Promise<MigrationStatus>;
-  triggerRecountLinks(): Promise<void>;
   getLinkCountInfo(): Promise<LinkCountInfo>;
   updatePostGatingOptions(
     postId: number,
@@ -39,14 +38,11 @@ export type MigrationStatus = {
 };
 
 export type LinkCountInfo = {
-  unmappedLinks: number;
-  postsWithLinks: number;
-  totalLinks: number;
   totalPosts: number;
-  lastCount: number;
-  isRunning: boolean;
-  processedPosts: number;
-  isComplete: boolean;
+  postsWithLinks: number;
+  totalAmazonLinks: number;
+  totalMappedLinks: number;
+  totalUnmappedLinks: number;
 };
 
 export type MigrationResponse = {
