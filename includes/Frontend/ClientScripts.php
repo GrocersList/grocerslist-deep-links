@@ -25,13 +25,28 @@ class ClientScripts
         $this->hooks->addAction('wp_head', [$this, 'addPreloadHints']);
     }
 
+    /**
+     * Set no-cache headers to prevent caching by browsers, proxies, and 3rd party widgets
+     *
+     * @return void
+     */
+    private function setNoCacheHeaders(): void
+    {
+        if (!headers_sent()) {
+            header('Cache-Control: no-cache, no-store, must-revalidate, private');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+            header('ETag: "' . md5(uniqid()) . '"');
+            header('X-Response-Time: ' . date('Y-m-d H:i:s'));
+            header('X-Request-ID: ' . uniqid());
+        }
+    }
+
     public function enqueueScripts(): void
     {
-        // Set cache control headers for 1 hour
-        if (!headers_sent()) {
-            header('Cache-Control: public, max-age=3600');
-            header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
-        }
+        // Set comprehensive no-cache headers to prevent any caching
+        $this->setNoCacheHeaders();
 
         $assetBase = plugin_dir_url(__FILE__) . '../../client-ui/dist/';
         
