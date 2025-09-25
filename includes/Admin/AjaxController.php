@@ -37,7 +37,6 @@ class AjaxController
         $actions = [
             'grocers_list_get_state' => 'getState',
             'grocers_list_update_api_key' => 'updateApiKey',
-            'grocers_list_update_auto_rewrite' => 'updateAutoRewrite',
             'grocers_list_update_use_linksta_links' => 'updateUseLinkstaLinks',
             'grocers_list_count_matched_links' => 'countMatchedLinks',
             'grocers_list_find_matched_links' => 'findMatchedLinks',
@@ -78,7 +77,6 @@ class AjaxController
 
         wp_send_json_success([
             'apiKey' => $this->settings->getApiKey(),
-            'autoRewriteEnabled' => $this->settings->isAutoRewriteEnabled(),
             'useLinkstaLinks' => $this->settings->isUseLinkstaLinksEnabled(),
         ]);
     }
@@ -100,16 +98,6 @@ class AjaxController
 
         $this->settings->setApiKey($apiKey);
         wp_send_json_success(['message' => 'API key updated']);
-    }
-
-    public function updateAutoRewrite(): void
-    {
-        check_ajax_referer('grocers_list_update_auto_rewrite', 'security');
-
-        $this->checkPermission('grocers_list_update_auto_rewrite');
-        $enabled = isset($_POST['autoRewriteEnabled'])
-            && sanitize_text_field(wp_unslash($_POST['autoRewriteEnabled'])) === '1';        $this->settings->setAutoRewrite($enabled);
-        wp_send_json_success(['message' => 'Auto Rewrite setting updated']);
     }
 
     public function updateUseLinkstaLinks(): void

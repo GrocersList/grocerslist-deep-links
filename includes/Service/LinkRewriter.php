@@ -50,7 +50,7 @@ class LinkRewriter
             return $data;
         }
 
-        if (!$this->settings->isAutoRewriteEnabled()) {
+        if (!$this->settings->isUseLinkstaLinksEnabled()) {
             return $data;
         }
 

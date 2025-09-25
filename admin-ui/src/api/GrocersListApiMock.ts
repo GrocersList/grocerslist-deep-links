@@ -14,13 +14,11 @@ const STORAGE_KEY = 'grocers_list_mock_state';
 
 export interface GrocersListPluginState {
   apiKey: string;
-  autoRewriteEnabled: boolean;
   useLinkstaLinks: boolean;
 }
 
 const getDefaultState = (): GrocersListPluginState => ({
   apiKey: 'mock-api-key-1234567890',
-  autoRewriteEnabled: true,
   useLinkstaLinks: true,
 });
 
@@ -50,14 +48,6 @@ export class GrocersListApiMock implements IGrocersListApi {
     console.log('🔧 Mock getState');
     await this.delay(1000);
     return this.getStateFromStorage();
-  }
-
-  async updateAutoRewrite(enabled: boolean) {
-    console.log('🔧 Mock updateAutoRewrite', enabled);
-    await this.delay(1000);
-    const state = this.getStateFromStorage();
-    state.autoRewriteEnabled = enabled;
-    this.setStateToStorage(state);
   }
 
   async updateUseLinkstaLinks(enabled: boolean) {

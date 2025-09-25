@@ -9,14 +9,12 @@ class PluginSettings {
     private const OLD_PREFIX = 'grocers_list_';
 
     private const KEY_API = 'api_key';
-    private const KEY_AUTO = 'auto_rewrite';
     private const KEY_LINKSTA = 'use_linksta_links';
 
     private function all_keys() {
         return [
             // settings:
             self::KEY_API,
-            self::KEY_AUTO,
             self::KEY_LINKSTA,
             // migration:
             'migration_migrated_posts',
@@ -28,7 +26,6 @@ class PluginSettings {
     }
 
     public function set_defaults(): void {
-        add_option(self::PREFIX . self::KEY_AUTO, true);
         add_option(self::PREFIX . self::KEY_LINKSTA, true);
     }
 
@@ -61,15 +58,6 @@ class PluginSettings {
     public function setApiKey(string $key): bool {
         $sanitized = sanitize_text_field($key);
         return $this->update_option(self::KEY_API, $sanitized);
-    }
-
-    // TODO: move these to be set in GL Mongo DB
-    public function isAutoRewriteEnabled(): bool {
-        return (bool) $this->get_option(self::KEY_AUTO, null);
-    }
-
-    public function setAutoRewrite(bool $enabled): bool {
-        return $this->update_option(self::KEY_AUTO, $enabled);
     }
 
     public function isUseLinkstaLinksEnabled(): bool {

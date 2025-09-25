@@ -48,8 +48,6 @@ export interface ICreatorProvisioningSettings {
 export const SetupContext = createContext<{
   apiKey: string;
   setApiKey: (key: string) => void;
-  autoRewriteEnabled: boolean;
-  setAutoRewriteEnabled: (v: boolean) => void;
   useLinkstaLinks: boolean;
   setUseLinkstaLinks: (v: boolean) => void;
   loading: boolean;
@@ -60,8 +58,6 @@ export const SetupContext = createContext<{
 }>({
   apiKey: '',
   setApiKey: () => {},
-  autoRewriteEnabled: false,
-  setAutoRewriteEnabled: () => {},
   useLinkstaLinks: true,
   setUseLinkstaLinks: () => {},
   loading: true,
@@ -111,7 +107,6 @@ export const SetupContext = createContext<{
 
 export const SetupProvider = ({ children }: { children: any }) => {
   const [apiKey, setApiKey] = useState('');
-  const [autoRewriteEnabled, setAutoRewriteEnabled] = useState<boolean>(false);
   const [useLinkstaLinks, setUseLinkstaLinks] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(true);
   const api = getGrocersListApi();
@@ -122,7 +117,6 @@ export const SetupProvider = ({ children }: { children: any }) => {
       try {
         const state = await api.getState();
         setApiKey(state.apiKey);
-        setAutoRewriteEnabled(state.autoRewriteEnabled);
         setUseLinkstaLinks(
           state.useLinkstaLinks !== undefined ? state.useLinkstaLinks : true
         );
@@ -144,8 +138,6 @@ export const SetupProvider = ({ children }: { children: any }) => {
       value={{
         apiKey,
         setApiKey,
-        autoRewriteEnabled,
-        setAutoRewriteEnabled,
         useLinkstaLinks,
         setUseLinkstaLinks,
         loading,

@@ -3,7 +3,6 @@ import type { GrocersListPluginState } from './GrocersListApiMock.ts';
 export interface IGrocersListApi {
   updateApiKey(apiKey: string): Promise<void>;
   getState(): Promise<GrocersListPluginState>;
-  updateAutoRewrite(enabled: boolean): Promise<void>;
   updateUseLinkstaLinks(enabled: boolean): Promise<void>;
   countMatchedLinks(): Promise<MatchedLinks>;
   triggerMigrate(): Promise<void>;

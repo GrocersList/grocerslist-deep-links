@@ -36,12 +36,6 @@ export class GrocersListApi implements IGrocersListApi {
     return res.data;
   }
 
-  async updateAutoRewrite(enabled: boolean) {
-    await this.post('grocers_list_update_auto_rewrite', {
-      autoRewriteEnabled: enabled ? '1' : '0',
-    });
-  }
-
   async updateUseLinkstaLinks(enabled: boolean) {
     await this.post('grocers_list_update_use_linksta_links', {
       useLinkstaLinks: enabled ? '1' : '0',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Link } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -18,8 +18,6 @@ export const DeepLinksSection = ({
 }) => {
   const {
     api,
-    autoRewriteEnabled,
-    setAutoRewriteEnabled,
     useLinkstaLinks,
     setUseLinkstaLinks,
     creatorProvisioningSettings,
@@ -31,8 +29,6 @@ export const DeepLinksSection = ({
 
   // UI state
   const [serveLinkstaLinks, setServeLinkstaLinks] = useState(useLinkstaLinks);
-  const [isAutoRewriteEnabled, setIsAutoRewriteEnabled] =
-    useState(autoRewriteEnabled);
 
   // Migration state
   const [migrationStartedAt, setMigrationStartedAt] = useState<number | null>(
@@ -46,6 +42,11 @@ export const DeepLinksSection = ({
     loading: linkCountLoading,
     fetchLinkCountInfo,
   } = useLinkCount();
+
+  const needsMigration = useMemo(
+    () => (linkCountInfo?.totalUnmappedLinks || 0) > 0,
+    [linkCountInfo?.totalUnmappedLinks]
+  );
 
   // ==================== EFFECTS ====================
 
@@ -103,12 +104,6 @@ export const DeepLinksSection = ({
     }
   };
 
-  const handleSetIsAutoRewriteEnabled = async (enabled: boolean) => {
-    await api.updateAutoRewrite(enabled);
-    setIsAutoRewriteEnabled(enabled);
-    setAutoRewriteEnabled(enabled);
-  };
-
   const handleSetUseLinkstaLinks = async (enabled: boolean) => {
     await api.updateUseLinkstaLinks(enabled);
     setServeLinkstaLinks(enabled);
@@ -120,41 +115,13 @@ export const DeepLinksSection = ({
       {!hasAppLinksAddon ? (
         <AppLinksZeroState />
       ) : (
-        <Stack spacing={2}>
+        <Stack spacing={1}>
           <ToggleInput
-            label="Auto-generate Grocers List deep links"
-            description="Generate GrocersList deep links for all Amazon links when saving a post"
-            checked={isAutoRewriteEnabled}
-            onChange={handleSetIsAutoRewriteEnabled}
-          />
-
-          <ToggleInput
-            label="Serve Grocers List deep links"
-            description="Display GrocersList deep links to site visitors"
+            label="Enable Grocers List Deep Links"
+            description="Convert Amazon links to GrocersList Deep Links"
             checked={serveLinkstaLinks}
             onChange={handleSetUseLinkstaLinks}
           />
-
-          <Box>
-            <Stack spacing={1}>
-              <Typography variant="body1">Migration</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Scan existing posts and generate Grocers List Deep Links for all
-                Amazon links.
-              </Typography>
-
-              {!!migrationStatus?.lastMigrationCompletedAt && (
-                <Typography variant="caption" color="text.secondary">
-                  Last migrated:{' '}
-                  {migrationStatus?.lastMigrationCompletedAt
-                    ? new Date(
-                        migrationStatus.lastMigrationCompletedAt
-                      ).toString()
-                    : 'never'}
-                </Typography>
-              )}
-            </Stack>
-          </Box>
 
           {linkCountLoading && (
             <Alert severity="info">
@@ -163,24 +130,38 @@ export const DeepLinksSection = ({
           )}
 
           {linkCountInfo &&
-            (linkCountInfo.totalUnmappedLinks > 0 ? (
+            (needsMigration ? (
               <Alert severity="warning">
-                {linkCountInfo.totalUnmappedLinks} out of{' '}
-                {linkCountInfo.totalAmazonLinks} Amazon links have not been
-                mapped to Grocers List Deep Links.
+                {linkCountInfo.totalUnmappedLinks} of{' '}
+                {linkCountInfo.totalAmazonLinks} Amazon links need to be mapped
+                to Grocers List Deep Links. Click "Run Migration" below to map
+                all existing Amazon links to Grocers List Deep Links.
               </Alert>
             ) : (
               <Alert severity="info">
                 All {linkCountInfo.totalAmazonLinks} Amazon links have been
-                mapped to Grocers List Deep Links
+                mapped to Grocers List Deep Links.
               </Alert>
             ))}
+
+          <Box>
+            {!!migrationStatus?.lastMigrationCompletedAt && (
+              <Typography variant="caption" color="text.secondary">
+                Last migrated:{' '}
+                {migrationStatus?.lastMigrationCompletedAt
+                  ? new Date(
+                      migrationStatus.lastMigrationCompletedAt
+                    ).toString()
+                  : 'never'}
+              </Typography>
+            )}
+          </Box>
 
           <LoadingButton
             variant="outlined"
             onClick={startMigration}
             loading={migrationStatus?.isRunning}
-            disabled={migrationStatus?.isRunning}
+            disabled={migrationStatus?.isRunning || !needsMigration}
           >
             Run Migration
           </LoadingButton>

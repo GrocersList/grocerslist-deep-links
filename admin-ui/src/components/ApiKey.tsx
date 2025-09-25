@@ -102,9 +102,11 @@ export const ApiKeySection = ({
           }}
         />
         {/* presence of window.grocersList.settings indicates successful use of api key to GET /creator-settings */}
-        {apiKey === initialApiKey && !window.grocersList?.settings && (
-          <Alert severity="warning">Invalid API key</Alert>
-        )}
+        {apiKey &&
+          apiKey === initialApiKey &&
+          !window.grocersList?.settings && (
+            <Alert severity="warning">Invalid API key</Alert>
+          )}
         <LoadingButton
           variant="contained"
           onClick={validateAndSaveApiKey}
