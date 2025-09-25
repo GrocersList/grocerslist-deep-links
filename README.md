@@ -39,6 +39,8 @@ An overview of our features:
 
 #### - 09/19/2025 1.2.0-beta.1 - Membership beta testing features (FOR EARLY TESTERS ONLY)
 
+#### - 09/25/2025 - 1.2.0-beta.2 - Caching optimizations (FOR EARLY TESTERS ONLY)
+
 ### Resources:
 
 - [How we use external services and what data we collect](https://github.com/GrocersList/grocerslist-deep-links/blob/main/docs/EXTERNAL_SERVICES.md)
