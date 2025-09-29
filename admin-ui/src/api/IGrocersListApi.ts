@@ -4,15 +4,10 @@ export interface IGrocersListApi {
   updateApiKey(apiKey: string): Promise<void>;
   getState(): Promise<GrocersListPluginState>;
   updateUseLinkstaLinks(enabled: boolean): Promise<void>;
-  countMatchedLinks(): Promise<MatchedLinks>;
   triggerMigrate(): Promise<void>;
   clearSettings(): Promise<void>;
   getMigrationStatus(): Promise<MigrationStatus>;
   getLinkCountInfo(): Promise<LinkCountInfo>;
-  updatePostGatingOptions(
-    postId: number,
-    options: PostGatingOptions
-  ): Promise<void>;
   getQueueStats(): Promise<QueueStats>;
   processQueue(): Promise<ProcessQueueResult>;
   resetFailedPosts(): Promise<ResetFailedResult>;
@@ -30,10 +25,6 @@ export type MigrationStatus = {
   isRunning: boolean;
   lastMigrationStartedAt: number;
   lastMigrationCompletedAt: number;
-  migratedPosts: number;
-  processedPosts: number;
-  totalMappings: number;
-  totalPosts: number;
 };
 
 export type LinkCountInfo = {

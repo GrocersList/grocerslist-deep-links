@@ -1,9 +1,7 @@
 import type {
   IGrocersListApi,
   LinkCountInfo,
-  MatchedLinks,
   MigrationStatus,
-  PostGatingOptions,
   ProcessQueueResult,
   QueueStats,
   ResetFailedResult,
@@ -58,15 +56,6 @@ export class GrocersListApiMock implements IGrocersListApi {
     this.setStateToStorage(state);
   }
 
-  async countMatchedLinks(): Promise<MatchedLinks> {
-    console.log('🔧 Mock countMatchedLinks');
-    await this.delay(1000);
-    return {
-      postsWithLinks: 3,
-      totalLinks: 42,
-    };
-  }
-
   async triggerMigrate(): Promise<void> {
     console.log('🔧 Mock triggerMigrate');
     await this.delay(500);
@@ -90,26 +79,18 @@ export class GrocersListApiMock implements IGrocersListApi {
 
     if (!started) {
       return {
-        totalPosts: 42,
-        processedPosts: 0,
         isComplete: false,
         isRunning: false,
         lastMigrationStartedAt: 0,
         lastMigrationCompletedAt: 0,
-        migratedPosts: 0,
-        totalMappings: 0,
       };
     }
 
     return {
-      totalPosts: 42,
-      processedPosts: isComplete ? 42 : randomProgress,
       isComplete,
       isRunning: false,
       lastMigrationStartedAt: 0,
       lastMigrationCompletedAt: 0,
-      migratedPosts: 0,
-      totalMappings: 0,
     };
   }
 
@@ -124,14 +105,6 @@ export class GrocersListApiMock implements IGrocersListApi {
       totalMappedLinks: 0,
       totalUnmappedLinks: 0,
     };
-  }
-
-  async updatePostGatingOptions(
-    postId: number,
-    options: PostGatingOptions
-  ): Promise<void> {
-    console.log('🔧 Mock updatePostGatingOptions', postId, options);
-    await this.delay(500);
   }
 
   async getQueueStats(): Promise<QueueStats> {

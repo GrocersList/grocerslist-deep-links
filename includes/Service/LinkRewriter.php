@@ -4,40 +4,15 @@ namespace GrocersList\Service;
 
 use GrocersList\Model\LinkRewriteResult;
 use GrocersList\Settings\PluginSettings;
-use GrocersList\Support\Hooks;
-use GrocersList\Support\ILinkExtractor;
-use GrocersList\Support\ILinkReplacer;
+use GrocersList\Support\LinkExtractor;
+use GrocersList\Support\LinkReplacer;
 use GrocersList\Support\LinkUtils;
 
 class LinkRewriter
 {
-    private IApiClient $api;
-    private ILinkExtractor $extractor;
-    private ILinkReplacer $replacer;
-    private Hooks $hooks;
-    private PluginSettings $settings;
-    private UrlMappingService $urlMappingService;
-
-    public function __construct(
-        IApiClient     $api,
-        ILinkExtractor $extractor,
-        ILinkReplacer  $replacer,
-        Hooks          $hooks,
-        PluginSettings $settings,
-        UrlMappingService $urlMappingService
-    )
-    {
-        $this->hooks = $hooks;
-        $this->replacer = $replacer;
-        $this->extractor = $extractor;
-        $this->api = $api;
-        $this->settings = $settings;
-        $this->urlMappingService = $urlMappingService;
-    }
-
     public function register(): void
     {
-        $this->hooks->addFilter('wp_insert_post_data', [$this, 'onPostSave'], 10, 2);
+        add_filter('wp_insert_post_data', [$this, 'onPostSave'], 10, 2);
     }
 
     public function onPostSave($data, $postarr)
@@ -50,23 +25,23 @@ class LinkRewriter
             return $data;
         }
 
-        if (!$this->settings->isUseLinkstaLinksEnabled()) {
+        if (!PluginSettings::isUseLinkstaLinksEnabled()) {
             return $data;
         }
 
         $content = $data['post_content'];
         $normalized = html_entity_decode(stripslashes($content));
-        $urls = $this->extractor->extract($normalized);
+        $urls = LinkExtractor::extract($normalized);
 
         if (!empty($urls)) {
             // Get post ID from postarr or data
             $post_id = isset($postarr['ID']) ? $postarr['ID'] : (isset($data['ID']) ? $data['ID'] : 0);
 
             // Create URL mappings in the database but don't modify content
-            $mappings = $this->urlMappingService->create_url_mappings_batch($urls, $post_id);
+            $mappings = UrlMappingService::create_url_mappings_batch($urls, $post_id);
 
             if (!empty($mappings)) {
-                $this->hooks->addFilter('redirect_post_location', function($loc) {
+                add_filter('redirect_post_location', function($loc) {
                     return add_query_arg('adl_mapped', '1', $loc);
                 });
             }
@@ -79,13 +54,13 @@ class LinkRewriter
     public function rewrite(string $content): LinkRewriteResult
     {
         $normalized = html_entity_decode(stripslashes($content));
-        $urls = $this->extractor->extract($normalized);
+        $urls = LinkExtractor::extract($normalized);
 
         if (empty($urls)) {
             return new LinkRewriteResult($content, false);
         }
 
-        $response = $this->api->postAppLinks($urls);
+        $response = ApiClient::postAppLinks($urls);
         $urlMap = [];
 
         foreach ($response->successes as $item) {
@@ -96,7 +71,7 @@ class LinkRewriter
             $urlMap[$original] = $rewritten;
         }
 
-        $result = $this->replacer->replace($normalized, $urlMap);
+        $result = LinkReplacer::replace($normalized, $urlMap);
         return new LinkRewriteResult($result->content, $result->rewritten);
     }
 }

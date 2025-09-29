@@ -5,9 +5,9 @@ namespace GrocersList\Support;
 use GrocersList\Model\LinkRewriteResult;
 
 
-class LinkReplacer implements ILinkReplacer
+class LinkReplacer
 {
-    public function replace(string $content, array $urlMap): LinkRewriteResult
+    static function replace(string $content, array $urlMap): LinkRewriteResult
     {
         $rewritten = false;
 

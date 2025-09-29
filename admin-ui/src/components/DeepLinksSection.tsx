@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Link } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Alert, Box, LinearProgress, Stack, Typography } from '@mui/material';
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
 
 import { AppLinksZeroState } from './AppLinksZeroState';
 import { Section } from './Section';
@@ -26,9 +33,6 @@ export const DeepLinksSection = ({
   const { hasAppLinksAddon } = creatorProvisioningSettings?.appLinks || {};
 
   // ==================== STATE MANAGEMENT ====================
-
-  // UI state
-  const [serveLinkstaLinks, setServeLinkstaLinks] = useState(useLinkstaLinks);
 
   // Migration state
   const [migrationStartedAt, setMigrationStartedAt] = useState<number | null>(
@@ -86,7 +90,7 @@ export const DeepLinksSection = ({
       }
     };
 
-    migrationPollingInterval = setInterval(poll, 5000);
+    migrationPollingInterval = setInterval(poll, 2000);
     return () => clearInterval(migrationPollingInterval);
   }, [migrationStatus, api]);
 
@@ -106,8 +110,11 @@ export const DeepLinksSection = ({
 
   const handleSetUseLinkstaLinks = async (enabled: boolean) => {
     await api.updateUseLinkstaLinks(enabled);
-    setServeLinkstaLinks(enabled);
     setUseLinkstaLinks(enabled);
+
+    if (enabled && needsMigration) {
+      await startMigration();
+    }
   };
 
   return (
@@ -119,7 +126,7 @@ export const DeepLinksSection = ({
           <ToggleInput
             label="Enable Grocers List Deep Links"
             description="Convert Amazon links to GrocersList Deep Links"
-            checked={serveLinkstaLinks}
+            checked={useLinkstaLinks}
             onChange={handleSetUseLinkstaLinks}
           />
 
@@ -150,7 +157,7 @@ export const DeepLinksSection = ({
                 Last migrated:{' '}
                 {migrationStatus?.lastMigrationCompletedAt
                   ? new Date(
-                      migrationStatus.lastMigrationCompletedAt
+                      migrationStatus.lastMigrationCompletedAt * 1000
                     ).toString()
                   : 'never'}
               </Typography>
@@ -166,12 +173,14 @@ export const DeepLinksSection = ({
             Run Migration
           </LoadingButton>
 
-          {((migrationStartedAt && migrationStatus?.isComplete) ||
-            migrationStatus?.isRunning) && (
-            <Alert severity={migrationStatus?.isRunning ? 'info' : 'success'}>
-              {migrationStatus?.isRunning
-                ? `Migrating: ${migrationStatus?.migratedPosts || 0} / ${migrationStatus?.totalPosts || 0} posts`
-                : `Migration complete! Migrated ${migrationStatus?.migratedPosts || 0} posts.`}
+          {migrationStartedAt && migrationStatus?.isComplete && (
+            <Alert severity="success">Migration complete!</Alert>
+          )}
+
+          {migrationStatus?.isRunning && (
+            <Alert severity="info">
+              <AlertTitle>Migrating...</AlertTitle>
+              <LinearProgress />
             </Alert>
           )}
         </Stack>

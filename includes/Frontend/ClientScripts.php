@@ -2,27 +2,21 @@
 
 namespace GrocersList\Frontend;
 
-use GrocersList\Service\IApiClient;
-use GrocersList\Settings\PluginSettings;
+use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Support\Config;
-use GrocersList\Support\Hooks;
 
 class ClientScripts
 {
-    private Hooks $hooks;
-    private IApiClient $api;
-    private PluginSettings $settings;
+    private CreatorSettingsFetcher $creatorSettingsFetcher;
 
-    public function __construct(Hooks $hooks, IApiClient $api, PluginSettings $pluginSettings) {
-        $this->hooks = $hooks;
-        $this->api = $api;
-        $this->settings = $pluginSettings;
+    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher) {
+        $this->creatorSettingsFetcher = $creatorSettingsFetcher;
     }
 
     public function register(): void
     {
-        $this->hooks->addAction('wp_enqueue_scripts', [$this, 'enqueueScripts']);
-        $this->hooks->addAction('wp_head', [$this, 'addPreloadHints']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
+        add_action('wp_head', [$this, 'addPreloadHints']);
     }
 
     /**
@@ -55,7 +49,7 @@ class ClientScripts
         
         wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $version, true);
 
-        $creatorSettings = $this->api->getCreatorSettings($this->settings->getApiKey());
+        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
 
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -69,8 +63,8 @@ class ClientScripts
                 'grocers_list_checkout_follower' => wp_create_nonce('grocers_list_checkout_follower'),
                 'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
             ],
-            'settings' => $creatorSettings->settings,
-            'provisioning' => $creatorSettings->provisioning
+            'settings' => $creatorSettings->settings ?? null,
+            'provisioning' => $creatorSettings->provisioning ?? null
         ];
 
         if (is_singular('post')) {
@@ -86,7 +80,9 @@ class ClientScripts
         wp_localize_script('grocers-list-client', 'grocersList', $window_grocersList);
 
         $externalJsUrl = Config::getExternalJsUrl();
-        if (!empty($externalJsUrl)) {
+        $membershipsEnabled = $creatorSettings?->settings?->memberships?->enabled;
+
+        if (!empty($externalJsUrl) && $membershipsEnabled) {
             wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $version, false);
         }
     }
@@ -100,8 +96,11 @@ class ClientScripts
      */
     public function addPreloadHints(): void
     {
+        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+        $membershipsEnabled = $creatorSettings?->settings?->memberships?->enabled;
+
         $externalJsUrl = Config::getExternalJsUrl();
-        if (!empty($externalJsUrl)) {
+        if (!empty($externalJsUrl) && $membershipsEnabled) {
             $version = Config::getPluginVersion();
             $versionedUrl = add_query_arg('ver', $version, $externalJsUrl);
             echo '<link rel="preload" href="' . esc_url($versionedUrl) . '" as="script">' . "\n";

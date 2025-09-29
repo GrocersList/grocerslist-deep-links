@@ -4,25 +4,9 @@ namespace GrocersList\Frontend;
 
 use GrocersList\Service\ApiClient;
 use GrocersList\Settings\PluginSettings;
-use GrocersList\Support\Hooks;
 
 class PublicAjaxController
 {
-    private PluginSettings $settings;
-    private ApiClient $api;
-    private Hooks $hooks;
-
-    public function __construct(
-        PluginSettings $settings,
-        ApiClient      $api,
-        Hooks          $hooks
-    )
-    {
-        $this->settings = $settings;
-        $this->api = $api;
-        $this->hooks = $hooks;
-    }
-
     public function register(): void
     {
         $actions = [
@@ -45,7 +29,7 @@ class PublicAjaxController
     {
         check_ajax_referer('grocers_list_get_init_memberships', 'security');
 
-        $api_key = $this->settings->getApiKey();
+        $api_key = PluginSettings::getApiKey();
 
         if (empty($api_key)) {
             wp_send_json_error(['error' => 'No API key configured in plugin settings'], 401);
@@ -57,9 +41,9 @@ class PublicAjaxController
         $gating_options = $this->fetchPostGatingOptions();
         $gated = isset($gating_options) && ($gating_options['postGated'] || $gating_options['recipeCardGated']);
 
-        $response = $this->api->getInitMemberships($api_key, $jwt, $gated);
+        $response = ApiClient::getInitMemberships($api_key, $jwt, $gated);
 
-        $this->api->passResponseCode($response);
+        ApiClient::passResponseCode($response);
     }
 
     public function signupFollower(): void
@@ -80,11 +64,11 @@ class PublicAjaxController
             return;
         }
 
-        $api_key = $this->settings->getApiKey();
+        $api_key = PluginSettings::getApiKey();
 
-        $response = $this->api->signupFollower($api_key, $email, $password, $url);
+        $response = ApiClient::signupFollower($api_key, $email, $password, $url);
 
-        $this->api->passResponseCode($response);
+        ApiClient::passResponseCode($response);
     }
 
     public function loginFollower(): void
@@ -104,11 +88,11 @@ class PublicAjaxController
             return;
         }
 
-        $api_key = $this->settings->getApiKey();
+        $api_key = PluginSettings::getApiKey();
 
-        $response = $this->api->loginFollower($api_key, $email, $password);
+        $response = ApiClient::loginFollower($api_key, $email, $password);
 
-        $this->api->passResponseCode($response);
+        ApiClient::passResponseCode($response);
     }
 
     public function forgotPassword(): void
@@ -127,11 +111,11 @@ class PublicAjaxController
             return;
         }
 
-        $api_key = $this->settings->getApiKey();
+        $api_key = PluginSettings::getApiKey();
 
-        $response = $this->api->forgotPassword($api_key, $email);
+        $response = ApiClient::forgotPassword($api_key, $email);
 
-        $this->api->passResponseCode($response);
+        ApiClient::passResponseCode($response);
     }
 
     public function resetPassword(): void
@@ -161,11 +145,11 @@ class PublicAjaxController
             return;
         }
 
-        $api_key = $this->settings->getApiKey();
+        $api_key = PluginSettings::getApiKey();
 
-        $response = $this->api->resetPassword($api_key, $token, $password);
+        $response = ApiClient::resetPassword($api_key, $token, $password);
 
-        $this->api->passResponseCode($response);
+        ApiClient::passResponseCode($response);
     }
 
     public function checkoutFollower(): void
@@ -173,16 +157,16 @@ class PublicAjaxController
         check_ajax_referer('grocers_list_checkout_follower', 'security');
 
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
-        $api_key = $this->settings->getApiKey();
+        $api_key = PluginSettings::getApiKey();
 
         // TODO:
         //  - account for removing url parameters that grocerslist sends like ?failure=
         //  - switch "?failure= for something less likely to collide with 3rd party params
         //      like ?gl-failure= or don't use url params
         $redirectUrl = wp_get_referer();
-        $response = $this->api->checkoutFollower($api_key, $jwt, $redirectUrl);
+        $response = ApiClient::checkoutFollower($api_key, $jwt, $redirectUrl);
 
-        $this->api->passResponseCode($response);
+        ApiClient::passResponseCode($response);
     }
 
     public function checkFollowerMembershipStatus(): void
@@ -190,12 +174,12 @@ class PublicAjaxController
         check_ajax_referer('grocers_list_check_follower_membership_status', 'security');
 
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
-        $api_key = $this->settings->getApiKey();
+        $api_key = PluginSettings::getApiKey();
 
         $redirectUrl = wp_get_referer();
-        $response = $this->api->checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
+        $response = ApiClient::checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
-        $this->api->passResponseCode($response);
+        ApiClient::passResponseCode($response);
     }
 
     function fetchPostGatingOptions()

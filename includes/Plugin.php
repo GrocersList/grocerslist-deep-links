@@ -5,30 +5,16 @@ namespace GrocersList;
 use GrocersList\Admin\AjaxController;
 use GrocersList\Admin\PostGating;
 use GrocersList\Admin\SettingsPage;
-use GrocersList\Database\UrlMappingTable;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\PublicAjaxController;
-use GrocersList\Jobs\MigrationVisitor;
-use GrocersList\Service\ApiClient;
+use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\LinkRewriter;
-use GrocersList\Service\UrlMappingService;
-use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\ContentFilter;
-use GrocersList\Support\Hooks;
-use GrocersList\Support\LinkExtractor;
-use GrocersList\Support\LinkReplacer;
 use GrocersList\Support\Logger;
-use GrocersList\Support\WordPressHooks;
 
 class Plugin
 {
-    private Hooks $hooks;
     private static bool $registered = false;
-
-    public function __construct(?Hooks $hooks = null)
-    {
-        $this->hooks = $hooks ?? new WordPressHooks();
-    }
 
     public function register(): void
     {
@@ -47,35 +33,32 @@ class Plugin
         require_once __DIR__ . '/Database/Installer.php';
         Database\Installer::install();
 
-        $api = new ApiClient();
-        $extractor = new LinkExtractor();
-        $replacer = new LinkReplacer();
-        $pluginSettings = new PluginSettings();
-        $urlMappingTable = new UrlMappingTable();
-        $urlMappingService = new UrlMappingService($api, $extractor, $urlMappingTable);
+        // Register the hook for async migration
+        add_action('migration_visitor_run_async', ['\GrocersList\Jobs\MigrationVisitor', 'start']);
 
-        $settings = new SettingsPage($this->hooks, $api, $pluginSettings);
-        $settings->register();
+        $creatorSettingsFetcher = new CreatorSettingsFetcher();
 
-        $rewriter = new LinkRewriter($api, $extractor, $replacer, $this->hooks, $pluginSettings, $urlMappingService);
-        $rewriter->register();
+        $linkRewriter = new LinkRewriter();
+        $linkRewriter->register();
 
-        $migrationJob = new MigrationVisitor($rewriter, $pluginSettings, $urlMappingService, $extractor, $this->hooks, 50);
+        $ajaxController = new AjaxController();
+        $ajaxController->register();
 
-        $ajax = new AjaxController($pluginSettings, $api, $migrationJob, $this->hooks, $urlMappingService);
-        $ajax->register();
+        $publicAjaxController = new PublicAjaxController();
+        $publicAjaxController->register();
 
-        $publicAjax = new PublicAjaxController($pluginSettings, $api, $this->hooks);
-        $publicAjax->register();
+        // UIs:
+        $settingsPage = new SettingsPage($creatorSettingsFetcher);
+        $settingsPage->register();
 
-        $clientScripts = new ClientScripts($this->hooks, $api, $pluginSettings);
+        $clientScripts = new ClientScripts($creatorSettingsFetcher);
         $clientScripts->register();
 
-        $contentFilter = new ContentFilter($this->hooks, $pluginSettings, $urlMappingService, $api);
+        $contentFilter = new ContentFilter($creatorSettingsFetcher);
         $contentFilter->register();
 
         // Register post gating components
-        $postGating = new PostGating($this->hooks);
+        $postGating = new PostGating();
         $postGating->register();
 
         self::$registered = true;

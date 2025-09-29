@@ -3,33 +3,22 @@
 namespace GrocersList\Service;
 
 use GrocersList\Database\UrlMappingTable;
-use GrocersList\Support\ILinkExtractor;
+use GrocersList\Support\LinkExtractor;
 use GrocersList\Support\LinkUtils;
 
 class UrlMappingService
 {
-    private IApiClient $api;
-    private ILinkExtractor $extractor;
-    private UrlMappingTable $table;
-
-    public function __construct(
-        IApiClient $api,
-        ILinkExtractor $extractor,
-        UrlMappingTable $table
-    ) {
-        $this->api = $api;
-        $this->extractor = $extractor;
-        $this->table = $table;
-    }
-
-    public function reset_mappings(): void
+    static function reset_mappings(): void
     {
-        $this->table->truncate_table();
+        $table = new UrlMappingTable();
+        $table->truncate_table();
     }
 
-    public function get_link_count_info(): array
+    static function get_link_count_info(): array
     {
         global $wpdb;
+
+        $table = new UrlMappingTable();
 
         $posts_with_links = 0;
         $total_amazon_links = 0;
@@ -49,12 +38,12 @@ class UrlMappingService
         foreach ($posts as $post) {
             $content = $post->post_content;
             $normalized = html_entity_decode(stripslashes($content)); // *CRITICAL - hash will not match DB row if url is not normalized first
-            $amazon_links = $this->extractor->extractUnrewrittenLinks($normalized);
+            $amazon_links = LinkExtractor::extractUnrewrittenLinks($normalized);
 
             if (!empty($amazon_links)) {
                 $total_amazon_links += count($amazon_links);;
 
-                $existing_mappings = $this->table->get_mappings_by_urls($amazon_links);
+                $existing_mappings = $table->get_mappings_by_urls($amazon_links);
                 $total_mapped_links += count($existing_mappings);
 
                 $unmapped_links = array_values(array_diff($amazon_links, array_keys($existing_mappings)));
@@ -79,20 +68,22 @@ class UrlMappingService
         ];
     }
 
-    public function create_url_mappings_batch(array $urls, int $post_id = 0): array
+    static function create_url_mappings_batch(array $urls, int $post_id = 0): array
     {
         if (empty($urls)) {
             return [];
         }
 
+        $table = new UrlMappingTable();
+
         // Check which URLs we already have mappings for
-        $existing_mappings = $this->table->get_mappings_by_urls($urls);
+        $existing_mappings = $table->get_mappings_by_urls($urls);
         // Use array_values to reset keys after array_diff
         $missing_urls = array_values(array_diff($urls, array_keys($existing_mappings)));
 
         // Fetch new mappings for missing URLs
         if (!empty($missing_urls)) {
-            $response = $this->api->postAppLinks($missing_urls);
+            $response = ApiClient::postAppLinks($missing_urls);
 
             $new_mappings = [];
 
@@ -109,7 +100,7 @@ class UrlMappingService
 
             // Store new mappings in database
             if (!empty($new_mappings)) {
-                $this->table->upsert_mappings($new_mappings);
+                $table->upsert_mappings($new_mappings);
             }
 
             // Merge with existing mappings
@@ -125,15 +116,16 @@ class UrlMappingService
         return $existing_mappings;
     }
 
-    public function get_url_mappings_for_content(string $content): array
+    static function get_url_mappings_for_content(string $content): array
     {
+        $table = new UrlMappingTable();
         $normalized = html_entity_decode(stripslashes($content));
-        $urls = $this->extractor->extract($normalized);
+        $urls = LinkExtractor::extract($normalized);
 
         if (empty($urls)) {
             return [];
         }
 
-        return $this->table->get_mappings_by_urls($urls);
+        return $table->get_mappings_by_urls($urls);
     }
 }

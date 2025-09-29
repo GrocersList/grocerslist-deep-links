@@ -1,9 +1,4 @@
-import type {
-  IGrocersListApi,
-  LinkCountInfo,
-  MatchedLinks,
-  PostGatingOptions,
-} from './IGrocersListApi';
+import type { IGrocersListApi, LinkCountInfo } from './IGrocersListApi';
 
 export class GrocersListApi implements IGrocersListApi {
   private async post(action: string, params: Record<string, string>) {
@@ -42,11 +37,6 @@ export class GrocersListApi implements IGrocersListApi {
     });
   }
 
-  async countMatchedLinks(): Promise<MatchedLinks> {
-    const res = await this.post('grocers_list_count_matched_links', {});
-    return res.data;
-  }
-
   async triggerMigrate() {
     await this.post('grocers_list_trigger_migrate', {});
   }
@@ -63,17 +53,6 @@ export class GrocersListApi implements IGrocersListApi {
   async getLinkCountInfo(): Promise<LinkCountInfo> {
     const res = await this.post('grocers_list_get_link_count_info', {});
     return res.data;
-  }
-
-  async updatePostGatingOptions(
-    postId: number,
-    options: PostGatingOptions
-  ): Promise<void> {
-    await this.post('grocers_list_update_post_gating_options', {
-      postId: postId.toString(),
-      postGated: options.postGated ? '1' : '0',
-      recipeCardGated: options.recipeCardGated ? '1' : '0',
-    });
   }
 
   async getQueueStats() {

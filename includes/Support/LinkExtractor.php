@@ -2,9 +2,9 @@
 
 namespace GrocersList\Support;
 
-class LinkExtractor implements ILinkExtractor
+class LinkExtractor
 {
-    public function extract(string $content): array
+    static function extract(string $content): array
     {
         preg_match_all(Regex::amazonLink(), $content, $hrefMatches);
         $hrefLinks = $hrefMatches[1] ?? [];
@@ -15,7 +15,7 @@ class LinkExtractor implements ILinkExtractor
         return array_unique(array_merge($hrefLinks, $dataLinks));
     }
 
-    public function extractUnrewrittenLinks(string $content): array
+    static function extractUnrewrittenLinks(string $content): array
     {
         preg_match_all(Regex::amazonLink(), $content, $allMatches, PREG_SET_ORDER);
 

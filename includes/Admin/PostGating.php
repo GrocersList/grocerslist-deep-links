@@ -3,25 +3,17 @@
 namespace GrocersList\Admin;
 
 use GrocersList\Support\Config;
-use GrocersList\Support\Hooks;
 
 class PostGating
 {
-    private Hooks $hooks;
-
     private const META_POST_GATED = 'grocers_list_post_gated';
     private const META_RECIPE_CARD_GATED = 'grocers_list_recipe_card_gated';
 
-    public function __construct(Hooks $hooks)
-    {
-        $this->hooks = $hooks;
-    }
-
     public function register(): void
     {
-        $this->hooks->addAction('add_meta_boxes', [$this, 'addMetaBoxes']);
-        $this->hooks->addAction('save_post', [$this, 'savePostMeta']);
-        $this->hooks->addAction('init', [$this, 'registerPostMeta']);
+        add_action('add_meta_boxes', [$this, 'addMetaBoxes']);
+        add_action('save_post', [$this, 'savePostMeta']);
+        add_action('init', [$this, 'registerPostMeta']);
     }
 
     public function registerPostMeta(): void
@@ -55,7 +47,7 @@ class PostGating
 
         add_meta_box(
             'grocers_list_gating_options',
-            'Membership Options',
+            'Grocers List Membership Options',
             [$this, 'renderMetaBox'],
             'post',
             'side',

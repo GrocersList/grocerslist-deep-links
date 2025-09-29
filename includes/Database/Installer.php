@@ -30,8 +30,7 @@ class Installer
         
         if (version_compare($installed_version, self::CURRENT_DB_VERSION, '<')) {
             self::create_tables();
-            self::set_default_options();
-            
+
             // Run options migration if needed
             if (version_compare($installed_version, self::OPTIONS_MIGRATION_VERSION, '<')) {
                 self::migrate_option_prefixes();
@@ -59,23 +58,13 @@ class Installer
         $urlMappingTable = new UrlMappingTable();
         $urlMappingTable->create_table();
     }
-
-    /**
-     * Set default plugin options
-     */
-    private static function set_default_options(): void
-    {
-        $pluginSettings = new PluginSettings();
-        $pluginSettings->set_defaults();
-    }
     
     /**
      * Migrate options from old prefix to new prefix
      */
     private static function migrate_option_prefixes(): void
     {
-        $pluginSettings = new PluginSettings();
-        $pluginSettings->migrateAllOptions();
+        PluginSettings::migrateAllOptions();
     }
 
     /**
@@ -87,8 +76,6 @@ class Installer
             return;
         }
         
-        global $wpdb;
-        
         // Drop tables
         $urlMappingTable = new UrlMappingTable();
         $urlMappingTable->drop_table();
@@ -97,9 +84,8 @@ class Installer
         delete_option(self::DB_VERSION_OPTION);
         delete_option(self::OLD_DB_VERSION_OPTION);
         
-        $pluginSettings = new PluginSettings();
-        $pluginSettings->reset();
-        
+        PluginSettings::reset();
+
         Logger::debug('GrocersList plugin uninstalled');
     }
 }

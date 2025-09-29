@@ -7,17 +7,15 @@ use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Config;
 use GrocersList\Support\Logger;
 
-class ApiClient implements IApiClient
+class ApiClient
 {
-    private $creatorSettings;
-
     /**
      * Helper method to pass through response code
      *
      * @param mixed $response The API response (string body or WP_Error)
      * @return void
      */
-    public function passResponseCode($response): void
+    static function passResponseCode($response): void
     {
         // Handle WP_Error responses
         if (is_wp_error($response)) {
@@ -41,7 +39,7 @@ class ApiClient implements IApiClient
         wp_send_json_success($body);
     }
 
-    public function postAppLinks(array $urls): LinkResponse
+    static function postAppLinks(array $urls): LinkResponse
     {
         // Use PluginSettings to get API key with proper prefix handling
         $settings = new PluginSettings();
@@ -78,7 +76,7 @@ class ApiClient implements IApiClient
      * @param string $apiKey
      * @return string|\WP_Error Returns the response body or WP_Error on failure
      */
-    public function validateApiKey(string $apiKey)
+    static function validateApiKey(string $apiKey)
     {
         if (!$apiKey) return false;
 
@@ -100,37 +98,9 @@ class ApiClient implements IApiClient
             return false;
         }
 
-        return !!$data['valid'];
+        return !!$data;
     }
 
-    /**
-     * Get creator settings for WordPress Plugin settings
-     *
-     * @param string $apiKey
-     * @return array|\WP_Error Returns the response body or WP_Error on failure
-     */
-    public function getCreatorSettings(string $apiKey)
-    {
-        if (!$apiKey) return [];
-
-        // we memoize and return creatorSettings if it has already been set to avoid duplicate requests
-        if ($this->creatorSettings) return $this->creatorSettings;
-
-        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings", [
-            'headers' => [
-                'x-api-key' => $apiKey,
-                'x-gl-plugin-version' => Config::getPluginVersion(),
-            ],
-        ]);
-
-        if (is_wp_error($response)) {
-            return [];
-        }
-
-        $this->creatorSettings = json_decode($response['body'], false);
-
-        return $this->creatorSettings;
-    }
 
     /**
      * Get creator membership settings
@@ -140,7 +110,7 @@ class ApiClient implements IApiClient
      * @param boolean $gated
      * @return string|\WP_Error Returns the response body or WP_Error on failure
      */
-    public function getInitMemberships(string $apiKey, string $jwt, bool $gated = false)
+    static function getInitMemberships(string $apiKey, string $jwt, bool $gated = false)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
 
@@ -167,7 +137,7 @@ class ApiClient implements IApiClient
      * @param string $url
      * @return string|\WP_Error
      */
-    public function signupFollower(string $apiKey, string $email, string $password, string $url)
+    static function signupFollower(string $apiKey, string $email, string $password, string $url)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
@@ -195,7 +165,7 @@ class ApiClient implements IApiClient
      * @param string $password
      * @return string|\WP_Error
      */
-    public function loginFollower(string $apiKey, string $email, string $password)
+    static function loginFollower(string $apiKey, string $email, string $password)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
@@ -221,7 +191,7 @@ class ApiClient implements IApiClient
      * @param string $email
      * @return string|\WP_Error
      */
-    public function forgotPassword(string $apiKey, string $email)
+    static function forgotPassword(string $apiKey, string $email)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
@@ -247,7 +217,7 @@ class ApiClient implements IApiClient
      * @param string $email
      * @return string|\WP_Error
      */
-    public function resetPassword(string $apiKey, string $token, string $password)
+    static function resetPassword(string $apiKey, string $token, string $password)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
@@ -274,7 +244,7 @@ class ApiClient implements IApiClient
      * @param string $redirectUrl
      * @return string|\WP_Error
      */
-    public function checkoutFollower(string $apiKey, string $jwt, string $redirectUrl)
+    static function checkoutFollower(string $apiKey, string $jwt, string $redirectUrl)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
         if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
@@ -297,7 +267,7 @@ class ApiClient implements IApiClient
      * @param string $jwt
      * @return string|\WP_Error
      */
-    public function checkFollowerMembershipStatus(string $apiKey, string $jwt, string $redirectUrl)
+    static function checkFollowerMembershipStatus(string $apiKey, string $jwt, string $redirectUrl)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
         if (!$redirectUrl) return new \WP_Error('missing_param', 'Missing redirectUrl');;
@@ -313,7 +283,7 @@ class ApiClient implements IApiClient
         return $response;
     }
 
-    public function updateMembershipsEnabled(string $apiKey, string $enabled)
+    static function updateMembershipsEnabled(string $apiKey, string $enabled)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
         if ($enabled === '') return new \WP_Error('missing_param', 'Missing enabled parameter');;

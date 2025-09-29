@@ -2,28 +2,24 @@
 
 namespace GrocersList\Support;
 
-use GrocersList\Service\IApiClient;
+use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\UrlMappingService;
 use GrocersList\Settings\PluginSettings;
 
 class ContentFilter
 {
-    private Hooks $hooks;
-    private PluginSettings $settings;
-    private UrlMappingService $urlMappingService;
-    private IApiClient $api;
+    private CreatorSettingsFetcher $creatorSettingsFetcher;
 
-    public function __construct(Hooks $hooks, PluginSettings $settings, UrlMappingService $urlMappingService, IApiClient $api)
+    public function __construct(
+        CreatorSettingsFetcher $creatorSettingsFetcher
+    )
     {
-        $this->hooks = $hooks;
-        $this->settings = $settings;
-        $this->urlMappingService = $urlMappingService;
-        $this->api = $api;
+        $this->creatorSettingsFetcher = $creatorSettingsFetcher;
     }
 
     public function register(): void
     {
-        $this->hooks->addFilter('the_content', [$this, 'filterContent']);
+        add_filter('the_content', [$this, 'filterContent']);
     }
 
     private function create_timestamp_token($secret_key)
@@ -41,13 +37,13 @@ class ContentFilter
 
     public function filterContent(string $content): string
     {
-        $creatorSettings = $this->api->getCreatorSettings($this->settings->getApiKey());
+        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
 
         if (!$creatorSettings?->provisioning?->appLinks?->hasAppLinksAddon) {
             return $this->removeDataAttributes($content);
         }
 
-        if (!$this->settings->isUseLinkstaLinksEnabled()) {
+        if (!PluginSettings::isUseLinkstaLinksEnabled()) {
             return $this->removeDataAttributes($content);
         }
 
@@ -56,7 +52,7 @@ class ContentFilter
 
     private function filterContentWithDatabaseMappings(string $content): string
     {
-        $mappings = $this->urlMappingService->get_url_mappings_for_content($content);
+        $mappings = UrlMappingService::get_url_mappings_for_content($content);
         
         if (empty($mappings)) {
             // Check if content has old-style data attributes and handle them
