@@ -9,6 +9,18 @@ class ClientScripts
 {
     private CreatorSettingsFetcher $creatorSettingsFetcher;
 
+    private string $cacheBustingString;
+
+    // cache busting string comprised of version and timestamp
+    private function get_cache_busting_string(): string {
+        if (empty($this->cacheBustingString)) {
+            // TODO: cache for 5 min?
+            $this->cacheBustingString = Config::getPluginVersion() . "_" . time();
+        }
+
+        return $this->cacheBustingString;
+    }
+
     public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher) {
         $this->creatorSettingsFetcher = $creatorSettingsFetcher;
     }
@@ -44,10 +56,7 @@ class ClientScripts
 
         $assetBase = plugin_dir_url(__FILE__) . '../../client-ui/dist/';
         
-        // Use WordPress's built-in versioning system
-        $version = Config::getPluginVersion();
-        
-        wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $version, true);
+        wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $this->get_cache_busting_string(), true);
 
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
 
@@ -80,10 +89,9 @@ class ClientScripts
         wp_localize_script('grocers-list-client', 'grocersList', $window_grocersList);
 
         $externalJsUrl = Config::getExternalJsUrl();
-        $membershipsEnabled = $creatorSettings?->settings?->memberships?->enabled;
 
-        if (!empty($externalJsUrl) && $membershipsEnabled) {
-            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $version, false);
+        if (!empty($externalJsUrl)) {
+            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $this->get_cache_busting_string(), false);
         }
     }
     /**
@@ -97,12 +105,10 @@ class ClientScripts
     public function addPreloadHints(): void
     {
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-        $membershipsEnabled = $creatorSettings?->settings?->memberships?->enabled;
 
         $externalJsUrl = Config::getExternalJsUrl();
-        if (!empty($externalJsUrl) && $membershipsEnabled) {
-            $version = Config::getPluginVersion();
-            $versionedUrl = add_query_arg('ver', $version, $externalJsUrl);
+        if (!empty($externalJsUrl)) {
+            $versionedUrl = add_query_arg('ver', $this->get_cache_busting_string(), $externalJsUrl);
             echo '<link rel="preload" href="' . esc_url($versionedUrl) . '" as="script">' . "\n";
         }
     }
