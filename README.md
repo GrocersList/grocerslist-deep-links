@@ -41,6 +41,8 @@ An overview of our features:
 
 #### - 09/25/2025 - 1.2.0-beta.2 - Caching optimizations (FOR EARLY TESTERS ONLY)
 
+#### - 9/30/2025 1.2.0 - Grocers list memberships public release.
+
 ### Resources:
 
 - [How we use external services and what data we collect](https://github.com/GrocersList/grocerslist-deep-links/blob/main/docs/EXTERNAL_SERVICES.md)
