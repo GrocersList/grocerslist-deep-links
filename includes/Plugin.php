@@ -41,7 +41,7 @@ class Plugin
         $linkRewriter = new LinkRewriter();
         $linkRewriter->register();
 
-        $ajaxController = new AjaxController();
+        $ajaxController = new AjaxController($creatorSettingsFetcher);
         $ajaxController->register();
 
         $publicAjaxController = new PublicAjaxController();

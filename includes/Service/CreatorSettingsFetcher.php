@@ -7,14 +7,23 @@ use GrocersList\Support\Config;
 
 class CreatorSettingsFetcher
 {
+    // we cache the /creator-settings response in a transient for 24 hours
+    private const CREATOR_SETTINGS_TRANSIENT_KEY = 'grocerslist_creator_settings';
+    // don't cache indefinitely... external changes may affect behavior and should take effect within a reasonable period
+    // e.g., a Creator may cancel their applinks plan, and should no longer be able to use applinks features
+    private const EXPIRE_AFTER_SECONDS = 24 * 60 * 60; // 24 hours
+
+    // we also separately memoize the creatorSettings as an instance variable to prevent the need to fetch the transient
+    // multiple times per request
     private $creatorSettings;
 
     /**
      * Get creator settings for WordPress Plugin settings
      *
+     * @param bool $noCache will not read or write using the transient value
      * @return array|\WP_Error Returns the response body or WP_Error on failure
      */
-    public function getCreatorSettings()
+    public function getCreatorSettings(bool $noCache = false)
     {
         $apiKey = PluginSettings::getApiKey();
 
@@ -22,10 +31,20 @@ class CreatorSettingsFetcher
             return null;
         }
 
-        // we memoize and return creatorSettings if it has already been set to avoid duplicate requests
+        // Even if $noCache is true, we still use the instance var val since this method can be called multiple times
+        // for a single request.
         if ($this->creatorSettings) return $this->creatorSettings;
 
-        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings", [
+        if (!$noCache) {
+            $existingSettingsString = get_transient(self::CREATOR_SETTINGS_TRANSIENT_KEY);
+
+            if ($existingSettingsString) {
+                $this->creatorSettings = json_decode($existingSettingsString, false);
+                return $this->creatorSettings;
+            }
+        }
+
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings?ts=" . time(), [
             'headers' => [
                 'x-api-key' => $apiKey,
                 'x-gl-plugin-version' => Config::getPluginVersion(),
@@ -36,8 +55,20 @@ class CreatorSettingsFetcher
             return null;
         }
 
-        $this->creatorSettings = json_decode($response['body'], false);
+        $fetchedSettingsString = $response['body'];
+
+        if (!$noCache) {
+            set_transient(self::CREATOR_SETTINGS_TRANSIENT_KEY, $fetchedSettingsString, self::EXPIRE_AFTER_SECONDS);
+        }
+
+        // Even if $noCache is true, we still set to the instance var since this method can be called multiple times
+        // for a single request.
+        $this->creatorSettings = json_decode($fetchedSettingsString, false);
 
         return $this->creatorSettings;
+    }
+
+    public function deleteCreatorSettingsTransient() {
+        delete_transient(self::CREATOR_SETTINGS_TRANSIENT_KEY);
     }
 }

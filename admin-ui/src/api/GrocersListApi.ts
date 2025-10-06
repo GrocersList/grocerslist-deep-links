@@ -41,6 +41,10 @@ export class GrocersListApi implements IGrocersListApi {
     await this.post('grocers_list_trigger_migrate', {});
   }
 
+  async clearCache() {
+    await this.post('grocers_list_clear_cache', {});
+  }
+
   async clearSettings() {
     await this.post('grocers_list_clear_settings', {});
   }

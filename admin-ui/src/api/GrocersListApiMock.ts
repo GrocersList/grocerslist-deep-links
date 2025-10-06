@@ -62,11 +62,18 @@ export class GrocersListApiMock implements IGrocersListApi {
     localStorage.setItem('grocers_list_mock_migration_started', 'true');
   }
 
+  async clearCache() {
+    console.log('🔧 Mock clearCache');
+    await this.delay(500);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('grocers_list_mock_clear_cache');
+  }
+
   async clearSettings() {
     console.log('🔧 Mock clearSettings');
     await this.delay(500);
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem('grocers_list_mock_migration_started');
+    // TODO: mock clearing other settings
   }
 
   async getMigrationStatus(): Promise<MigrationStatus> {

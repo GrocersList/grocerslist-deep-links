@@ -4,17 +4,25 @@ namespace GrocersList\Admin;
 
 use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Service\ApiClient;
+use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\UrlMappingService;
 use GrocersList\Settings\PluginSettings;
 
 class AjaxController
 {
+    private CreatorSettingsFetcher $creatorSettingsFetcher;
+
+    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher) {
+        $this->creatorSettingsFetcher = $creatorSettingsFetcher;
+    }
+
     public function register(): void
     {
         $actions = [
             'grocers_list_get_state' => 'getState',
             'grocers_list_update_api_key' => 'updateApiKey',
             'grocers_list_update_use_linksta_links' => 'updateUseLinkstaLinks',
+            'grocers_list_clear_cache' => 'clearCache',
             'grocers_list_clear_settings' => 'clearSettings',
             'grocers_list_get_migration_status' => 'getMigrationStatus',
             'grocers_list_get_link_count_info' => 'getLinkCountInfo',
@@ -32,15 +40,29 @@ class AjaxController
         check_ajax_referer('grocers_list_clear_settings', 'security');
 
         $this->checkPermission('grocers_list_clear_settings');
-        // Clean up any legacy stored counts (both old and new prefixes)
 
         PluginSettings::reset();
 
         // remove all mappings (effectively undo-ing migration):
         UrlMappingService::reset_mappings();
 
+        // clear creator-settings cached value
+        $this->creatorSettingsFetcher->deleteCreatorSettingsTransient();
+
         wp_send_json_success(['message' => 'All settings cleared']);
     }
+
+    public function clearCache(): void
+    {
+        check_ajax_referer('grocers_list_clear_cache', 'security');
+
+        $this->checkPermission('grocers_list_clear_cache');
+
+        $this->creatorSettingsFetcher->deleteCreatorSettingsTransient();
+
+        wp_send_json_success(['message' => 'Cache cleared']);
+    }
+
 
     public function getState(): void
     {
@@ -70,6 +92,10 @@ class AjaxController
         }
 
         PluginSettings::setApiKey($apiKey);
+
+        // API key change may indicate new Creator, clear creator-settings cached value
+        $this->creatorSettingsFetcher->deleteCreatorSettingsTransient();
+
         wp_send_json_success(['message' => 'API key updated']);
     }
 
@@ -146,6 +172,9 @@ class AjaxController
             wp_send_json_error(['error' => 'Failed to update memberships enabled setting. Please check your API Key or contact support for help.'], 500);
             return;
         }
+
+        // clear creator-settings cached value, as "settings.memberships.enabled" is included in it
+        $this->creatorSettingsFetcher->deleteCreatorSettingsTransient();
 
         wp_send_json_success(['data' => $enabled, 'message' => 'Memberships enabled setting updated']);
     }

@@ -5,6 +5,7 @@ export interface IGrocersListApi {
   getState(): Promise<GrocersListPluginState>;
   updateUseLinkstaLinks(enabled: boolean): Promise<void>;
   triggerMigrate(): Promise<void>;
+  clearCache(): Promise<void>;
   clearSettings(): Promise<void>;
   getMigrationStatus(): Promise<MigrationStatus>;
   getLinkCountInfo(): Promise<LinkCountInfo>;

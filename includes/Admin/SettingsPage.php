@@ -47,7 +47,8 @@ class SettingsPage {
         
         wp_enqueue_script('grocers-list-admin-ui', $assetBase . 'bundle.js', [], $version, true);
 
-        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+        // $skipCacheRead on settings page. This occurs only at Creator scale and we always want the latest data.
+        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings(true);
 
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -56,6 +57,7 @@ class SettingsPage {
                 'grocers_list_update_api_key' => wp_create_nonce('grocers_list_update_api_key'),
                 'grocers_list_update_use_linksta_links' => wp_create_nonce('grocers_list_update_use_linksta_links'),
                 'grocers_list_mark_setup_complete' => wp_create_nonce('grocers_list_mark_setup_complete'),
+                'grocers_list_clear_cache' => wp_create_nonce('grocers_list_clear_cache'),
                 'grocers_list_clear_settings' => wp_create_nonce('grocers_list_clear_settings'),
                 'grocers_list_get_migration_status' => wp_create_nonce('grocers_list_get_migration_status'),
                 'grocers_list_get_link_count_info' => wp_create_nonce('grocers_list_get_link_count_info'),

@@ -51,6 +51,7 @@ export const SetupContext = createContext<{
   useLinkstaLinks: boolean;
   setUseLinkstaLinks: (v: boolean) => void;
   loading: boolean;
+  clearCache: () => void;
   clearSettings: () => void;
   api: IGrocersListApi;
   creatorSettings: ICreatorSettings;
@@ -61,6 +62,7 @@ export const SetupContext = createContext<{
   useLinkstaLinks: true,
   setUseLinkstaLinks: () => {},
   loading: true,
+  clearCache: () => {},
   clearSettings: () => {},
   api: {} as IGrocersListApi,
   creatorSettings: {
@@ -128,6 +130,11 @@ export const SetupProvider = ({ children }: { children: any }) => {
     fetchState();
   }, [api]);
 
+  const clearCache = async () => {
+    await api.clearCache();
+    window.location.reload();
+  };
+
   const clearSettings = async () => {
     await api.clearSettings();
     window.location.reload();
@@ -142,6 +149,7 @@ export const SetupProvider = ({ children }: { children: any }) => {
         setUseLinkstaLinks,
         loading,
         api,
+        clearCache,
         clearSettings,
         creatorSettings: window.grocersList.settings,
         creatorProvisioningSettings: window.grocersList.provisioning || {

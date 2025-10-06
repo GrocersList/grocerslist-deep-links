@@ -17,7 +17,11 @@ import { useSetupContext } from '@/hooks/useSetupContext';
 import type { Toast } from '@/types/ui';
 
 const SettingsConfiguration = () => {
-  const { clearSettings, loading: setupLoading } = useSetupContext();
+  const {
+    clearCache,
+    clearSettings,
+    loading: setupLoading,
+  } = useSetupContext();
 
   // ==================== STATE MANAGEMENT ====================
 
@@ -36,6 +40,11 @@ const SettingsConfiguration = () => {
 
   const closeToast = (id: number) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleClearCache = async () => {
+    clearCache();
+    addToast(true, 'Cache cleared');
   };
 
   const handleClearSettings = async () => {
@@ -84,6 +93,9 @@ const SettingsConfiguration = () => {
 
             {/* Action Buttons */}
             <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+              <Button variant="contained" onClick={handleClearCache}>
+                Clear Cache
+              </Button>
               <Button variant="outlined" onClick={handleClearSettings}>
                 Clear All Settings
               </Button>
