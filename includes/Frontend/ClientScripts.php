@@ -73,7 +73,6 @@ class ClientScripts
                 'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
             ],
             'settings' => $creatorSettings->settings ?? null,
-            'provisioning' => $creatorSettings->provisioning ?? null,
             'WP_CLICK_TOKEN_MAX_AGE_MS' => $creatorSettings->WP_CLICK_TOKEN_MAX_AGE_MS ?? null,
         ];
 
@@ -89,9 +88,10 @@ class ClientScripts
 
         wp_localize_script('grocers-list-client', 'grocersList', $window_grocersList);
 
+        $membershipsFullyEnabled = $this->creatorSettingsFetcher->getMembershipsFullyEnabled();
         $externalJsUrl = Config::getExternalJsUrl();
 
-        if (!empty($externalJsUrl)) {
+        if ($membershipsFullyEnabled && !empty($externalJsUrl)) {
             wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $this->get_cache_busting_string(), false);
         }
     }
@@ -105,10 +105,10 @@ class ClientScripts
      */
     public function addPreloadHints(): void
     {
-        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-
+        $membershipsFullyEnabled = $this->creatorSettingsFetcher->getMembershipsFullyEnabled();
         $externalJsUrl = Config::getExternalJsUrl();
-        if (!empty($externalJsUrl)) {
+
+        if ($membershipsFullyEnabled && !empty($externalJsUrl)) {
             $versionedUrl = add_query_arg('ver', $this->get_cache_busting_string(), $externalJsUrl);
             echo '<link rel="preload" href="' . esc_url($versionedUrl) . '" as="script">' . "\n";
         }

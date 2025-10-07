@@ -68,6 +68,23 @@ class CreatorSettingsFetcher
         return $this->creatorSettings;
     }
 
+    /**
+     * Get memberships FULLY enabled, meaning onboarding is complete and the feature is enabled
+     *
+     * @return bool
+     */
+    public function getMembershipsFullyEnabled()
+    {
+        $creatorSettings = $this->getCreatorSettings();
+
+        if (!$creatorSettings->settings->memberships->enabled) return false;
+        if (!$creatorSettings->provisioning->memberships->hasPriceIds) return false;
+        if (!$creatorSettings->provisioning->memberships->hasProductId) return false;
+        if (!$creatorSettings->provisioning->memberships->hasPaymentAccount) return false;
+
+        return true;
+    }
+
     public function deleteCreatorSettingsTransient() {
         delete_transient(self::CREATOR_SETTINGS_TRANSIENT_KEY);
     }
