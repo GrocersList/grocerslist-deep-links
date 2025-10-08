@@ -129,6 +129,31 @@ class ApiClient
     }
 
     /**
+     * Record single membership event
+     *
+     * @param string $apiKey
+     * @param string $event
+     * @return string|\WP_Error Returns the response body or WP_Error on failure
+     */
+    static function recordMembershipEvent(string $apiKey, string $event)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/events", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+            ],
+            'body' => json_encode([
+                'event' => $event,
+            ])
+        ]);
+
+        return $response;
+    }
+
+    /**
      * Signup a follower
      *
      * @param string $apiKey

@@ -11,6 +11,7 @@ class PublicAjaxController
     {
         $actions = [
             'grocers_list_get_init_memberships' => 'getInitMemberships',
+            'grocers_list_record_membership_event' => 'recordMembershipEvent',
             'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
             'grocers_list_forgot_password' => 'forgotPassword',
@@ -42,6 +43,24 @@ class PublicAjaxController
         $gated = isset($gating_options) && ($gating_options['postGated'] || $gating_options['recipeCardGated']);
 
         $response = ApiClient::getInitMemberships($api_key, $jwt, $gated);
+
+        ApiClient::passResponseCode($response);
+    }
+
+    public function recordMembershipEvent(): void
+    {
+        check_ajax_referer('grocers_list_record_membership_event', 'security');
+
+        $api_key = PluginSettings::getApiKey();
+
+        if (empty($api_key)) {
+            wp_send_json_error(['error' => 'No API key configured in plugin settings'], 401);
+            return;
+        }
+
+        $event = isset($_POST['event']) ? sanitize_text_field(wp_unslash($_POST['event'])) : '';
+
+        $response = ApiClient::recordMembershipEvent($api_key, $event);
 
         ApiClient::passResponseCode($response);
     }
