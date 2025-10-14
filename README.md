@@ -3,17 +3,24 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
 
-Automatically turn Amazon links on your blog into deep links that open the click into the amazon app - 3-5X more likely to buy.
+Earn more revenue from your website by offering paid memberships, exclusive content, and amazon deep links.
 
 == Description ==
 
-[Grocers List](https://grocerslist.com) is a suite of tools built for food and recipe bloggers. The plugin makes it super easy to start earning more from the existing Amazon affiliate links published on your posts. Connect the plugin to your existing grocers list account, and we’ll quickly find all amazon links published on your site.
+[Grocers List](https://grocerslist.com) is a suite of tools built for food and recipe bloggers. The plugin makes it super easy to start earning more revenue form your website traffic through our two plugin based services:
 
+## Paid Memberships
+
+Offer website visitors access to an ad-free cooking experience by joining your membership program. Offer paid members exclusive access to specific recipe posts, or exclusive recipe cards. Easily set your membership price, customize your membership display settings, and we will handle the paid membership checkout, member logins, and member exclusive content gating. Open up a predictable, recurring revenue stream on top of your existing content site, rather than pushing your audience into substack.
+
+## Amazon Deep links
+
+Earn more from the existing Amazon affiliate links published on your posts. Connect the plugin to your existing grocers list account, and we’ll quickly find all amazon links published on your site.
 We’ll then automatically convert them into deep links for Amazon. When clicked, it will bring the visitor into their Amazon app on their phone, where they have the highest likelihood of converting. Driving clicks into the Amazon app, rather than into Amazon in the browser, converts 3-5X more.
 
 <hr>
@@ -22,10 +29,11 @@ We’ll then automatically convert them into deep links for Amazon. When clicked
 
 An overview of our features:
 
-- **Quickly scan all your WordPress posts** to **find** previously **published Amazon links**.
-- **_Automatically convert_** all published Amazon links into deep links **that open in the Amazon app.**
-- **_Automatically convert_** Amazon links **into deep links** when publishing a new blog post.
-- Track deep link clicks and performance inside your Grocers List Account.
+- Set a price for your paid membership, which will get your audience access to an ad-free experience on Raptive or Mediavine.
+- Option to set specific recipes, or specific recipe cards as member benefits.
+- Automatically sync paying members to Kit (formerly ConvertKit) and Flodesk.
+- Quickly scan all your WordPress posts to find previously published Amazon links.
+- Automatically convert all published Amazon links into deep links that open in the Amazon app.
 
 == Changelog ==
 
@@ -43,7 +51,9 @@ An overview of our features:
 
 #### - 9/30/2025 1.2.0 - Grocers list memberships public release.
 
-#### - 10/14/2025 1.3.0 - Wordpress Deep Links Billing fix, various fixes for memberships product, and caching optimizations
+#### – 10/14/2025 1.3.0 – WordPress Deep Links Billing fix, various fixes for memberships product, and caching optimizations
+
+#### - 10/14/2025 - 1.4.0 - Listing page update
 
 ### Resources:
 
