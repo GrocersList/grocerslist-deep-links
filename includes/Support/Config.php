@@ -45,4 +45,16 @@ class Config {
         
         return $version;
     }
+
+    /**
+     * Get just the domain/host for the current WordPress blog
+     * 
+     * @return string Just the domain (e.g., example.com or subdomain.example.com)
+     */
+    public static function getBlogDomain(): string {
+       $url = get_bloginfo('url');
+       $parsed = parse_url($url);
+       return $parsed['host'] ?? '';
+    }
+
 }

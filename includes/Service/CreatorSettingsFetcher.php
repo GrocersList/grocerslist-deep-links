@@ -26,6 +26,7 @@ class CreatorSettingsFetcher
     public function getCreatorSettings(bool $noCache = false)
     {
         $apiKey = PluginSettings::getApiKey();
+        $wordpressDomain = Config::getBlogDomain();
 
         if (!$apiKey) {
             return null;
@@ -44,7 +45,7 @@ class CreatorSettingsFetcher
             }
         }
 
-        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings?ts=" . time(), [
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/creator-settings?ts=" . time() . "&wordpressDomain=" . urlencode($wordpressDomain), [
             'headers' => [
                 'x-api-key' => $apiKey,
                 'x-gl-plugin-version' => Config::getPluginVersion(),
