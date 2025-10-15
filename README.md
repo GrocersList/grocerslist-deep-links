@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -54,6 +54,8 @@ An overview of our features:
 #### – 10/14/2025 1.3.0 – WordPress Deep Links Billing fix, various fixes for memberships product, and caching optimizations
 
 #### - 10/14/2025 - 1.4.0 - Listing page update
+
+#### - 10/15/2025 - 1.5.0 - API updates to inform GL API of the blog URL
 
 ### Resources:
 
