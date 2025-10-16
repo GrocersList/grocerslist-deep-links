@@ -92,7 +92,7 @@ class ClientScripts
         $externalJsUrl = Config::getExternalJsUrl();
 
         if ($membershipsFullyEnabled && !empty($externalJsUrl)) {
-            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $this->get_cache_busting_string(), false);
+            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $this->get_cache_busting_string(), array('strategy' => 'async', 'in_footer' => false));
         }
     }
     /**
