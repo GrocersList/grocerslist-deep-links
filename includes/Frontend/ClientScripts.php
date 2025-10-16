@@ -73,7 +73,7 @@ class ClientScripts
                 'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
             ],
             'settings' => $creatorSettings->settings ?? null,
-            'WP_CLICK_TOKEN_MAX_AGE_MS' => $creatorSettings->WP_CLICK_TOKEN_MAX_AGE_MS ?? null,
+            'provisioning' => $creatorSettings->provisioning ?? null,
         ];
 
         if (is_singular('post')) {
