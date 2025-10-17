@@ -28,7 +28,7 @@ class LinkReplacer
                 $quoteChar = strpos($match[0], 'href="') !== false ? '"' : "'";
                 return str_replace(
                     '<a href=' . $quoteChar . $match[1] . $quoteChar,
-                    '<a href=' . $quoteChar . $match[1] . $quoteChar . ' data-grocerslist-rewritten-link="' . $newUrl . '"',
+                    '<a href=' . $quoteChar . $match[1] . $quoteChar . ' data-grocerslist-rewritten-link="' . $newUrl . '" rel="noopener noreferrer"',
                     $match[0]
                 );
             }

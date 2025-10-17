@@ -60,7 +60,7 @@ class ContentFilter
                     $linksta_url_with_token = $mapping->linksta_url . '/wp';
 
                     $tag = str_replace('href="' . $matches[1] . '"', 'href="' . $linksta_url_with_token . '"', $matches[0]);
-                    return str_replace('<a ', '<a data-grocers-list-rewritten="true" ', $tag);
+                    return str_replace('<a ', '<a data-grocers-list-rewritten="true" rel="noopener noreferrer" ', $tag);
                 }
 
                 return $matches[0];
@@ -76,7 +76,7 @@ class ContentFilter
             function ($matches) {
                 Logger::debug("ContentFilter::filterContentWithDataAttributes() using rewritten link: {$matches[1]} -> {$matches[2]}");
                 $tag = str_replace('href="' . $matches[1] . '"', 'href="' . $matches[2] . '/wp' . '"', $matches[0]);
-                return str_replace('<a ', '<a data-grocers-list-rewritten="true" ', $tag);
+                return str_replace('<a ', '<a data-grocers-list-rewritten="true" rel="noopener noreferrer" ', $tag);
             },
             $content
         );
