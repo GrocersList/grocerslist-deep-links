@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -58,6 +58,8 @@ An overview of our features:
 #### - 10/15/2025 - 1.5.0 - API updates to inform GL API of the blog URL
 
 #### - 10/16/2025 - 1.6.0 - JS tag loading optimizations
+
+#### - 10/16/2025 - 1.7.0 - Fix for bundle load order bug
 
 ### Resources:
 
