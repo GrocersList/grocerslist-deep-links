@@ -2,6 +2,7 @@
 
 namespace GrocersList\Frontend;
 
+use GrocersList\Admin\PostGating;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Support\Config;
 
@@ -79,10 +80,13 @@ class ClientScripts
         if (is_singular('post')) {
             $postId = get_the_ID();
 
+            // Use effective gating which checks both post-level and category-level settings
+            $effectiveGating = PostGating::getEffectiveGating($postId);
+
             $window_grocersList['postId'] = get_the_ID();
             $window_grocersList['postGatingConfig'] = [
-                'postGated' => get_post_meta($postId, 'grocers_list_post_gated', true) === '1',
-                'recipeCardGated' => get_post_meta($postId, 'grocers_list_recipe_card_gated', true) === '1',
+                'postGated' => $effectiveGating['post'],
+                'recipeCardGated' => $effectiveGating['recipe'],
             ];
         }
 
