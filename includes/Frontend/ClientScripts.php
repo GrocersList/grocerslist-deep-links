@@ -50,16 +50,49 @@ class ClientScripts
         }
     }
 
-    public function enqueueScripts(): void
-    {
+    /**
+     * Create a stylesheet that ensures ads are hidden on page load.
+     *
+     * In practice this looks like the following:
+     * - We inject a stylesheet that has dynamically generated classes
+     *   based on the adSelectors defined for the account.
+     * - These classes take the following shape:
+     *   body:not(.grocers-list-ads-processed) .my_ad_selector { display: none !important; }
+     * - This is done for every adSelector thats defined
+     * - These classes are applied immediately on page load to ensure that no ads are shown
+     * - Once we determine the authentication state of the user, we then do the following:
+     *   -- Immediately show the ads for unauthenticated users
+     *   -- Remove the ads and then apply the class (this is so there is no brief flash of content)
+     *
+     * @return void
+     **/
+    public function createAdselectorStylesheet($creatorSettings): void {
+        $STYLESHEET_IDENTIFIER= 'grocers-list-ad-selectors';
+
+        $adSelectors = $creatorSettings->adSelectors;
+        if ($adSelectors && count($adSelectors) > 0) {
+            wp_register_style($STYLESHEET_IDENTIFIER, false);
+            wp_enqueue_style($STYLESHEET_IDENTIFIER);
+
+            $bodySelector = 'body:not(.grocers-list-ads-processed) ';
+            $displayNone = ' { display: none !important; } }';
+            $classNamesSplit = implode(', ' . $bodySelector, $adSelectors);
+            wp_add_inline_style(
+                $STYLESHEET_IDENTIFIER,
+                $bodySelector . $classNamesSplit . $displayNone
+            );
+        }
+    }
+
+    public function enqueueScripts(): void {
         // Set comprehensive no-cache headers to prevent any caching
         $this->setNoCacheHeaders();
 
         $assetBase = plugin_dir_url(__FILE__) . '../../client-ui/dist/';
-        
         wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $this->get_cache_busting_string(), true);
 
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+        $this->createAdselectorStylesheet($creatorSettings);
 
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -75,6 +108,7 @@ class ClientScripts
             ],
             'settings' => $creatorSettings->settings ?? null,
             'provisioning' => $creatorSettings->provisioning ?? null,
+            'adSelectors' => $creatorSettings->adSelectors ?? null
         ];
 
         if (is_singular('post')) {
