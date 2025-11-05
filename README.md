@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.9.0
+Stable tag: 1.10.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -64,6 +64,8 @@ An overview of our features:
 #### - 10/21/2025 - 1.8.0 - Add noopener/noreferrer to external links, dependency updates
 
 #### - 10/28/2025 - 1.9.0 - Feature: ability to gate posts by category, ability to apply gating defaults to categories that get inherited by posts
+
+#### - 11/5/2025 - 1.10.0 - Ad removal optimizations for paying customers.
 
 ### Resources:
 
