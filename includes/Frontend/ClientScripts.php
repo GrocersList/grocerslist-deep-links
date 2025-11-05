@@ -58,7 +58,7 @@ class ClientScripts
      *   based on the adSelectors defined for the account.
      * - These classes take the following shape:
      *   body:not(.grocers-list-ads-processed) .my_ad_selector { display: none !important; }
-     * - This is done for every adSelector thats defined
+     * - This is done for every adSelector that's defined
      * - These classes are applied immediately on page load to ensure that no ads are shown
      * - Once we determine the authentication state of the user, we then do the following:
      *   -- Immediately show the ads for unauthenticated users
@@ -74,12 +74,15 @@ class ClientScripts
             wp_register_style($STYLESHEET_IDENTIFIER, false);
             wp_enqueue_style($STYLESHEET_IDENTIFIER);
 
-            $bodySelector = 'body:not(.grocers-list-ads-processed) ';
-            $displayNone = ' { display: none !important; } }';
-            $classNamesSplit = implode(', ' . $bodySelector, $adSelectors);
+            $prefixedAdSelectors = array_map(static function ($className): string {
+                return 'body:not(.grocers-list-ads-processed) ' . $className;
+            }, $adSelectors);
+
+            // Add stylesheet with each ad selector prefixed with 'body:not(.grocers-list-ads-processed) '
+            // e.g.,: body:not(.grocers-list-ads-processed) .foo, body:not(.grocers-list-ads-processed) .bar { display: none !important; }
             wp_add_inline_style(
                 $STYLESHEET_IDENTIFIER,
-                $bodySelector . $classNamesSplit . $displayNone
+                implode(',', $prefixedAdSelectors) . ' { display: none !important; } }'
             );
         }
     }
@@ -92,7 +95,6 @@ class ClientScripts
         wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $this->get_cache_busting_string(), true);
 
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-        $this->createAdselectorStylesheet($creatorSettings);
 
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -130,6 +132,7 @@ class ClientScripts
         $externalJsUrl = Config::getExternalJsUrl();
 
         if ($membershipsFullyEnabled && !empty($externalJsUrl)) {
+            $this->createAdselectorStylesheet($creatorSettings);
             wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $this->get_cache_busting_string(), array('strategy' => 'async', 'in_footer' => false));
         }
     }
