@@ -32,23 +32,6 @@ class ClientScripts
         add_action('wp_head', [$this, 'addPreloadHints']);
     }
 
-    /**
-     * Set no-cache headers to prevent caching by browsers, proxies, and 3rd party widgets
-     *
-     * @return void
-     */
-    private function setNoCacheHeaders(): void
-    {
-        if (!headers_sent()) {
-            header('Cache-Control: no-cache, no-store, must-revalidate, private');
-            header('Pragma: no-cache');
-            header('Expires: 0');
-            header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-            header('ETag: "' . md5(uniqid()) . '"');
-            header('X-Response-Time: ' . date('Y-m-d H:i:s'));
-            header('X-Request-ID: ' . uniqid());
-        }
-    }
 
     /**
      * Create a stylesheet that ensures ads are hidden on page load.
@@ -88,9 +71,6 @@ class ClientScripts
     }
 
     public function enqueueScripts(): void {
-        // Set comprehensive no-cache headers to prevent any caching
-        $this->setNoCacheHeaders();
-
         $assetBase = plugin_dir_url(__FILE__) . '../../client-ui/dist/';
         wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $this->get_cache_busting_string(), true);
 
