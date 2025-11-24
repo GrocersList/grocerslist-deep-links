@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.11.0
+Stable tag: 1.12.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -68,6 +68,8 @@ An overview of our features:
 #### - 11/5/2025 - 1.10.0 - Ad removal optimizations for paying customers.
 
 #### - 11/5/2025 - 1.11.0 - Remove no cache headers from plugin network requests.
+
+#### - 11/24/2025 - 1.12.0 - Update admin and client builds to prevent dependency conflicts.
 
 ### Resources:
 
