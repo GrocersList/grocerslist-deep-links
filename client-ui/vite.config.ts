@@ -1,9 +1,12 @@
-import path from 'path'
-import { defineConfig } from 'vite'
+import path from 'path';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
-    outDir: path.resolve(process.cwd(), '../../build/grocerslist/client-ui/dist'),
+    outDir: path.resolve(
+      process.cwd(),
+      '../../build/grocerslist/client-ui/dist'
+    ),
     emptyOutDir: true,
     manifest: false,
 
@@ -13,8 +16,10 @@ export default defineConfig({
       output: {
         manualChunks: undefined,
         inlineDynamicImports: true,
+        format: 'iife',
         entryFileNames: 'bundle.js',
       },
     },
   },
-})
+});
+

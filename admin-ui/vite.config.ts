@@ -17,6 +17,7 @@ export default defineConfig({
       output: {
         manualChunks: undefined,
         inlineDynamicImports: true,
+        format: 'iife',
         entryFileNames: 'bundle.js',
       },
     },
