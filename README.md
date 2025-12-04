@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.13.0
+Stable tag: 1.14.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -72,6 +72,8 @@ An overview of our features:
 #### - 11/24/2025 - 1.12.0 - Update admin and client builds to prevent dependency conflicts.
 
 #### - 11/26/2025 - 1.13.0 - Reverting changes introduced in v.1.10.0
+
+#### - 12/4/2-25 - 1.14.0 - Ability to gate category pages and pages in wordpress admin. TopBar/Drawer can now use theme fonts.
 
 ### Resources:
 
