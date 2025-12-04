@@ -40,9 +40,17 @@ class ClientScripts
         wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $this->get_cache_busting_string(), true);
 
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+        $theme_root = get_stylesheet_directory();
+        $theme_json_path = trailingslashit( $theme_root ) . 'theme.json';
+
+        if ( file_exists( $theme_json_path ) ) {
+            $theme_json_content = file_get_contents( $theme_json_path );
+            $theme_data = json_decode( $theme_json_content, true );
+        }
 
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
+            'theme' => $theme_data ?? null,
             'nonces' => [
                 'grocers_list_get_init_memberships' => wp_create_nonce('grocers_list_get_init_memberships'),
                 'grocers_list_record_membership_event' => wp_create_nonce('grocers_list_record_membership_event'),
