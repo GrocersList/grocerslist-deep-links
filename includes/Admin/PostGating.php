@@ -8,7 +8,6 @@ class PostGating
 {
     private const META_POST_GATED = 'grocers_list_post_gated';
     private const META_RECIPE_CARD_GATED = 'grocers_list_recipe_card_gated';
-    private const META_CATEGORY_GATING_TYPE = 'grocers_list_category_gating_type';
     private const META_NO_GATING = 'grocers_list_no_gating';
 
     public function register(): void
@@ -16,10 +15,6 @@ class PostGating
         add_action('add_meta_boxes', [$this, 'addMetaBoxes']);
         add_action('save_post', [$this, 'savePostMeta']);
         add_action('init', [$this, 'registerPostMeta']);
-        add_action('category_add_form_fields', [$this, 'addCategoryFields']);
-        add_action('category_edit_form_fields', [$this, 'editCategoryFields'], 10, 2);
-        add_action('created_category', [$this, 'saveCategoryFields']);
-        add_action('edited_category', [$this, 'saveCategoryFields']);
     }
 
     public function registerPostMeta(): void
@@ -77,12 +72,12 @@ class PostGating
         $post_gated = get_post_meta($post->ID, self::META_POST_GATED, true);
         $recipe_card_gated = get_post_meta($post->ID, self::META_RECIPE_CARD_GATED, true);
         $no_gating = get_post_meta($post->ID, self::META_NO_GATING, true);
-        
+        $page_gated = CategoryGating::getEffectiveGating($post->ID)['page'];
         // Determine current gating option
         $current_option = 'by_category';
         if ($no_gating === '1') {
             $current_option = 'no_gating';
-        } elseif ($post_gated === '1') {
+        } elseif ($post_gated === '1' || $page_gated === '1') {
             $current_option = 'post';
         } elseif ($recipe_card_gated === '1') {
             $current_option = 'recipe';
@@ -96,10 +91,10 @@ class PostGating
         
         if (!empty($categories)) {
             foreach ($categories as $category) {
-                $category_gating = get_term_meta($category->term_id, self::META_CATEGORY_GATING_TYPE, true);
+                $category_gating = get_term_meta($category->term_id, CategoryGating::META_CATEGORY_GATING_TYPE, true);
                 if (!empty($category_gating) && $category_gating !== 'none') {
                     $has_category_gating = true;
-                    $gating_label = $category_gating === 'post' ? 'entire post' : 'recipe cards only';
+                    $gating_label = $category_gating === 'post' || $category_gating === 'page' ? 'entire post' : 'recipe cards only';
                     $category_gating_info .= sprintf(
                         '<li>Category "<strong>%s</strong>" gates %s</li>',
                         esc_html($category->name),
@@ -191,6 +186,11 @@ class PostGating
                 $recipe_card_gated = '0';
                 $no_gating = '1';
                 break;
+            case 'page':
+                $post_gated = '1';
+                $recipe_card_gated = '0';
+                $no_gating = '0';
+                break;
             case 'post':
                 $post_gated = '1';
                 $recipe_card_gated = '0';
@@ -222,102 +222,6 @@ class PostGating
     public static function isRecipeCardGated($post_id): bool
     {
         return get_post_meta($post_id, self::META_RECIPE_CARD_GATED, true) === '1';
-    }
-
-    /**
-     * Add gating fields to category creation form
-     * 
-     * @return void
-     */
-    public function addCategoryFields(): void
-    {
-        // If external JS URL is not set, don't show the fields
-        $externalJsUrl = Config::getExternalJsUrl();
-        if (empty($externalJsUrl)) {
-            return;
-        }
-        ?>
-        <div class="form-field">
-            <label for="grocers_list_category_gating_type">
-                <?php esc_html_e('Grocers List Membership Gating', 'grocers-list'); ?>
-            </label>
-            <select name="grocers_list_category_gating_type" id="grocers_list_category_gating_type">
-                <option value="none"><?php esc_html_e('Do not gate (default)', 'grocers-list'); ?></option>
-                <option value="post"><?php esc_html_e('Gate entire post', 'grocers-list'); ?></option>
-                <option value="recipe"><?php esc_html_e('Gate recipe cards only', 'grocers-list'); ?></option>
-            </select>
-            <p class="description">
-                <?php esc_html_e('Apply gating to all posts in this category. Individual post settings will override this.', 'grocers-list'); ?>
-            </p>
-        </div>
-        <?php
-    }
-
-    /**
-     * Add gating fields to category edit form
-     * 
-     * @param \WP_Term $term Current taxonomy term object
-     * @return void
-     */
-    public function editCategoryFields($term): void
-    {
-        // If external JS URL is not set, don't show the fields
-        $externalJsUrl = Config::getExternalJsUrl();
-        if (empty($externalJsUrl)) {
-            return;
-        }
-
-        $gating_type = get_term_meta($term->term_id, self::META_CATEGORY_GATING_TYPE, true);
-        if (empty($gating_type)) {
-            $gating_type = 'none';
-        }
-        ?>
-        <tr class="form-field">
-            <th scope="row">
-                <label for="grocers_list_category_gating_type">
-                    <?php esc_html_e('Grocers List Membership Gating', 'grocers-list'); ?>
-                </label>
-            </th>
-            <td>
-                <select name="grocers_list_category_gating_type" id="grocers_list_category_gating_type">
-                    <option value="none" <?php selected($gating_type, 'none'); ?>>
-                        <?php esc_html_e('No gating (default)', 'grocers-list'); ?>
-                    </option>
-                    <option value="post" <?php selected($gating_type, 'post'); ?>>
-                        <?php esc_html_e('Gate entire post', 'grocers-list'); ?>
-                    </option>
-                    <option value="recipe" <?php selected($gating_type, 'recipe'); ?>>
-                        <?php esc_html_e('Gate recipe cards only', 'grocers-list'); ?>
-                    </option>
-                </select>
-                <p class="description">
-                    <?php esc_html_e('Apply gating to all posts in this category. Individual post settings will override this.', 'grocers-list'); ?>
-                </p>
-            </td>
-        </tr>
-        <?php
-    }
-
-    /**
-     * Save category gating fields
-     * 
-     * @param int $term_id Term ID
-     * @return void
-     */
-    public function saveCategoryFields(int $term_id): void
-    {
-        if (!isset($_POST['grocers_list_category_gating_type'])) {
-            return;
-        }
-
-        $gating_type = sanitize_text_field($_POST['grocers_list_category_gating_type']);
-        
-        // Validate the gating type
-        if (!in_array($gating_type, ['none', 'post', 'recipe'], true)) {
-            $gating_type = 'none';
-        }
-
-        update_term_meta($term_id, self::META_CATEGORY_GATING_TYPE, $gating_type);
     }
 
     /**
@@ -357,10 +261,10 @@ class PostGating
         // Check each category for gating settings
         // If any category has gating enabled, apply it
         foreach ($categories as $category) {
-            $category_gating = get_term_meta($category->term_id, self::META_CATEGORY_GATING_TYPE, true);
-            // If the category has post gating enabled, return the post gating
-            if ($category_gating === 'post') {
-                return ['post' => true, 'recipe' => false];
+            $category_gating = get_term_meta($category->term_id, CategoryGating::META_CATEGORY_GATING_TYPE, true);
+            // If the category has post gating enabled or page gating enabled, return the post gating
+            if ($category_gating === 'post' || $category_gating === 'page') {
+                $resolved_post_gating = ['post' => true, 'recipe' => false];
             }
 
             if ($category_gating === 'recipe') {

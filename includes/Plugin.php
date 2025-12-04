@@ -3,6 +3,8 @@
 namespace GrocersList;
 
 use GrocersList\Admin\AjaxController;
+use GrocersList\Admin\CategoryGating;
+use GrocersList\Admin\PageGating;
 use GrocersList\Admin\PostGating;
 use GrocersList\Admin\SettingsPage;
 use GrocersList\Frontend\ClientScripts;
@@ -57,9 +59,15 @@ class Plugin
         $contentFilter = new ContentFilter($creatorSettingsFetcher);
         $contentFilter->register();
 
-        // Register post gating components
+        // Register post, page, and category gating components
         $postGating = new PostGating();
         $postGating->register();
+
+        $pageGating = new PageGating();
+        $pageGating->register();
+
+        $categoryGating = new CategoryGating();
+        $categoryGating->register();
 
         self::$registered = true;
     }

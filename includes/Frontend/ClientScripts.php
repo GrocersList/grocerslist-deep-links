@@ -3,6 +3,8 @@
 namespace GrocersList\Frontend;
 
 use GrocersList\Admin\PostGating;
+use GrocersList\Admin\PageGating;
+use GrocersList\Admin\CategoryGating;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Support\Config;
 
@@ -66,6 +68,24 @@ class ClientScripts
                 'postGated' => $effectiveGating['post'],
                 'recipeCardGated' => $effectiveGating['recipe'],
             ];
+        }
+
+        if (is_singular('page')) {
+            $pageId = get_the_ID();
+            $effectiveGating = PageGating::getEffectiveGating($pageId);
+            $window_grocersList['pageGatingConfig'] = [
+                'pageGated' => $effectiveGating['page'],
+            ];
+        }
+
+        if (is_category()) {
+            $category = get_queried_object();
+            if ($category instanceof \WP_Term) {
+                $effectiveGating = CategoryGating::getEffectiveGating($category->term_id);
+                $window_grocersList['categoryGatingConfig'] = [
+                    'categoryGated' => $effectiveGating['category'],
+                ];
+            }
         }
 
         wp_localize_script('grocers-list-client', 'grocersList', $window_grocersList);

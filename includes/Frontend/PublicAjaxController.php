@@ -39,8 +39,11 @@ class PublicAjaxController
 
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
 
-        $gating_options = $this->fetchPostGatingOptions();
-        $gated = isset($gating_options) && ($gating_options['postGated'] || $gating_options['recipeCardGated']);
+        $post_gating_options = $this->fetchPostGatingOptions();
+        $page_gating_options = $this->fetchPageGatingOptions();
+
+        $gated = isset($post_gating_options) && ($post_gating_options['postGated'] || $post_gating_options['recipeCardGated']) ||
+            isset($page_gating_options) && ($page_gating_options['pageGated']);
 
         $response = ApiClient::getInitMemberships($api_key, $jwt, $gated);
 
@@ -225,6 +228,32 @@ class PublicAjaxController
         return [
             'postGated' => $post_gated,
             'recipeCardGated' => $recipe_card_gated,
+        ];
+    }
+
+    function fetchPageGatingOptions()
+    {
+        if (!isset($_POST['pageId'])) {
+            return null;
+        }
+
+        $page_id_raw = sanitize_text_field(wp_unslash($_POST['pageId']));
+
+        if (!is_numeric($page_id_raw)) {
+            return null;
+        }
+
+        $page_id = intval($page_id_raw);
+
+        $page = get_post($page_id);
+        if (!$page || $page->post_type !== 'page') {
+            return null;
+        }
+
+        $page_gated = get_post_meta($page_id, 'grocers_list_page_gated', true) === '1';
+
+        return [
+            'pageGated' => $page_gated,
         ];
     }
 }
