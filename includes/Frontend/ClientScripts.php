@@ -32,6 +32,24 @@ class ClientScripts
     {
         add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
         add_action('wp_head', [$this, 'addPreloadHints']);
+        // Add script to bottom of body for detecting and disabling ads
+        add_action('wp_footer', [$this, 'disable_ads_inline_script']);
+    }
+
+    public function disable_ads_inline_script(): void {
+        $inline_script = <<<EOD
+            <script id="gl-disable-ads">
+                (function() {
+                    const isPaidMember = localStorage.getItem('gl_is_paid_member');
+
+                    if (isPaidMember === 'true') {
+                        document.body.classList.add('adthrive-disable-all', 'gl-paid-member');
+                    }
+                })();
+            </script>
+        EOD;
+
+        echo $inline_script;
     }
 
     public function enqueueScripts(): void {
