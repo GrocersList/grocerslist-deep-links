@@ -26,7 +26,12 @@ class ContentFilter
     {
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
 
-        if (!$creatorSettings?->provisioning?->appLinks?->hasAppLinksAddon) {
+        $hasAppLinksAddon = $creatorSettings
+            && isset($creatorSettings->provisioning)
+            && isset($creatorSettings->provisioning->appLinks)
+            && $creatorSettings->provisioning->appLinks->hasAppLinksAddon;
+
+        if (!$hasAppLinksAddon) {
             return $this->removeDataAttributes($content);
         }
 
