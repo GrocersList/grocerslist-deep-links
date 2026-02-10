@@ -69,16 +69,6 @@ class ClientScripts
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'theme' => $theme_data ?? null,
-            'nonces' => [
-                'grocers_list_get_init_memberships' => wp_create_nonce('grocers_list_get_init_memberships'),
-                'grocers_list_record_membership_event' => wp_create_nonce('grocers_list_record_membership_event'),
-                'grocers_list_signup_follower' => wp_create_nonce('grocers_list_signup_follower'),
-                'grocers_list_login_follower' => wp_create_nonce('grocers_list_login_follower'),
-                'grocers_list_forgot_password' => wp_create_nonce('grocers_list_forgot_password'),
-                'grocers_list_reset_password' => wp_create_nonce('grocers_list_reset_password'),
-                'grocers_list_checkout_follower' => wp_create_nonce('grocers_list_checkout_follower'),
-                'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
-            ],
             'settings' => $creatorSettings->settings ?? null,
             'provisioning' => $creatorSettings->provisioning ?? null,
         ];

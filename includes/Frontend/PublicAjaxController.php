@@ -10,6 +10,7 @@ class PublicAjaxController
     public function register(): void
     {
         $actions = [
+            'grocers_list_get_nonces' => 'getNonces',
             'grocers_list_get_init_memberships' => 'getInitMemberships',
             'grocers_list_record_membership_event' => 'recordMembershipEvent',
             'grocers_list_signup_follower' => 'signupFollower',
@@ -24,6 +25,32 @@ class PublicAjaxController
             add_action("wp_ajax_public_{$hook}", [$this, $method]);
             add_action("wp_ajax_nopriv_public_{$hook}", [$this, $method]);
         }
+    }
+
+    /**
+     * Nonces protect against CSRF attacks by attempting to ensure requests originate from actual users.
+     * This route passes the nonces to the client scripts
+     * so that the client scripts can use them to make AJAX requests
+     * to the WP server.
+     * Including nonces on window via `wp_localize_script`
+     * will lead to issues with 3rd party cacheing plugins
+     *     *
+     * @return void
+     */
+    public function getNonces(): void
+    {
+        wp_send_json_success([
+            'nonces' =>  [
+                'grocers_list_get_init_memberships' => wp_create_nonce('grocers_list_get_init_memberships'),
+                'grocers_list_record_membership_event' => wp_create_nonce('grocers_list_record_membership_event'),
+                'grocers_list_signup_follower' => wp_create_nonce('grocers_list_signup_follower'),
+                'grocers_list_login_follower' => wp_create_nonce('grocers_list_login_follower'),
+                'grocers_list_forgot_password' => wp_create_nonce('grocers_list_forgot_password'),
+                'grocers_list_reset_password' => wp_create_nonce('grocers_list_reset_password'),
+                'grocers_list_checkout_follower' => wp_create_nonce('grocers_list_checkout_follower'),
+                'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
+            ],
+        ]);
     }
 
     public function getInitMemberships(): void
