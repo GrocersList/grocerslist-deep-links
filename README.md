@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.17.0
+Stable tag: 1.18.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -80,6 +80,8 @@ An overview of our features:
 #### - 12/15/2025 - 1.16.0 - Add body classes for ad removal
 
 #### - 01/29/2026 - 1.17.0 - Fix issue with PHP version 7.4
+
+#### - 02/11/2025 - 1.18.0 - Security and caching optimizations
 
 ### Resources:
 
