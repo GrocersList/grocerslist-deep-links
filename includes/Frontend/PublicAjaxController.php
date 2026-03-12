@@ -3,18 +3,28 @@
 namespace GrocersList\Frontend;
 
 use GrocersList\Service\ApiClient;
+use GrocersList\Service\CreatorSettingsFetcher;
+use GrocersList\Service\MemberService;
 use GrocersList\Settings\PluginSettings;
 
 class PublicAjaxController
 {
-    public function register(): void
+
+    private MemberService $memberService;
+    private CreatorSettingsFetcher $creatorSettingsFetcher;
+
+    public function register(CreatorSettingsFetcher $creatorSettingsFetcher, MemberService $memberService): void
     {
+        $this->memberService = $memberService;
+        $this->creatorSettingsFetcher = $creatorSettingsFetcher;
+
         $actions = [
             'grocers_list_get_nonces' => 'getNonces',
             'grocers_list_get_init_memberships' => 'getInitMemberships',
             'grocers_list_record_membership_event' => 'recordMembershipEvent',
             'grocers_list_signup_follower' => 'signupFollower',
             'grocers_list_login_follower' => 'loginFollower',
+            'grocers_list_logout' => 'logoutFollower',
             'grocers_list_forgot_password' => 'forgotPassword',
             'grocers_list_reset_password' => 'resetPassword',
             'grocers_list_checkout_follower' => 'checkoutFollower',
@@ -45,6 +55,7 @@ class PublicAjaxController
                 'grocers_list_record_membership_event' => wp_create_nonce('grocers_list_record_membership_event'),
                 'grocers_list_signup_follower' => wp_create_nonce('grocers_list_signup_follower'),
                 'grocers_list_login_follower' => wp_create_nonce('grocers_list_login_follower'),
+                'grocers_list_logout_follower' => wp_create_nonce('grocers_list_logout_follower'),
                 'grocers_list_forgot_password' => wp_create_nonce('grocers_list_forgot_password'),
                 'grocers_list_reset_password' => wp_create_nonce('grocers_list_reset_password'),
                 'grocers_list_checkout_follower' => wp_create_nonce('grocers_list_checkout_follower'),
@@ -73,6 +84,29 @@ class PublicAjaxController
             isset($page_gating_options) && ($page_gating_options['pageGated']);
 
         $response = ApiClient::getInitMemberships($api_key, $jwt, $gated);
+        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+        if ($this->memberService->shouldUpdateMemberData($creatorSettings->creatorAccountId)) {
+            $redirectUrl = wp_get_referer();
+            $followerResponse = ApiClient::checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
+
+            // Attempt to create or update a WP subscriber with metadata when API call succeeds
+            if (!is_wp_error($followerResponse)) {
+                $status = wp_remote_retrieve_response_code($followerResponse);
+                $_body = wp_remote_retrieve_body($followerResponse);
+                $body = is_string($_body) ? json_decode($_body, true) : $_body;
+
+
+                if ($status >= 200 && $status < 300 && is_array($body)) {
+                    $resp_email = isset($body['email']) ? sanitize_email($body['email']) : '';
+                    $subscription_status = isset($body['subscriptionStatus']) ? sanitize_text_field($body['subscriptionStatus']) : '';
+                    $is_paid_member = isset($body['isPaidMember']) ? rest_sanitize_boolean($body['isPaidMember']) : '';
+                    $is_past_due = isset($body['isPastDue']) ? rest_sanitize_boolean($body['isPastDue']) : '';
+                    $subscription_management_link = isset($body['subscriptionManagementLink']) ? sanitize_text_field($body['subscriptionManagementLink']) : '';
+
+                    $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId);
+                }
+            }
+        }
 
         ApiClient::passResponseCode($response);
     }
@@ -120,6 +154,12 @@ class PublicAjaxController
         ApiClient::passResponseCode($response);
     }
 
+    public function logoutFollower(): void {
+        check_ajax_referer('grocers_list_logout_follower', 'security');
+
+        $this->memberService->logout();
+    }
+
     public function loginFollower(): void
     {
         check_ajax_referer('grocers_list_login_follower', 'security');
@@ -139,7 +179,28 @@ class PublicAjaxController
 
         $api_key = PluginSettings::getApiKey();
 
-        $response = ApiClient::loginFollower($api_key, $email, $password);
+        $redirectUrl = wp_get_referer();
+        $response = ApiClient::loginFollower($api_key, $email, $password, $redirectUrl);
+
+        // Attempt to create or update a WP subscriber with metadata when API call succeeds
+        if (!is_wp_error($response)) {
+            $status = wp_remote_retrieve_response_code($response);
+            $_body = wp_remote_retrieve_body($response);
+            $body = is_string($_body) ? json_decode($_body, true) : $_body;
+
+
+            if ($status >= 200 && $status < 300 && is_array($body)) {
+                $follower_account = isset($body['followerAccount']) ? $body['followerAccount'] : '';
+                $resp_email = isset($follower_account['email']) ? sanitize_email($follower_account['email']) : '';
+                $subscription_status = isset($follower_account['subscriptionStatus']) ? sanitize_text_field($follower_account['subscriptionStatus']) : '';
+                $is_paid_member = isset($follower_account['isPaidMember']) ? rest_sanitize_boolean($follower_account['isPaidMember']) : '';
+                $is_past_due = isset($follower_account['isPastDue']) ? rest_sanitize_boolean($follower_account['isPastDue']) : '';
+                $subscription_management_link = isset($follower_account['subscriptionManagementLink']) ? sanitize_text_field($follower_account['subscriptionManagementLink']) : '';
+
+                $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId);
+            }
+        }
 
         ApiClient::passResponseCode($response);
     }

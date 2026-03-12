@@ -6,11 +6,13 @@ use GrocersList\Admin\PostGating;
 use GrocersList\Admin\PageGating;
 use GrocersList\Admin\CategoryGating;
 use GrocersList\Service\CreatorSettingsFetcher;
+use GrocersList\Service\MemberService;
 use GrocersList\Support\Config;
 
 class ClientScripts
 {
     private CreatorSettingsFetcher $creatorSettingsFetcher;
+    private MemberService $memberService;
 
     private string $cacheBustingString;
 
@@ -24,16 +26,27 @@ class ClientScripts
         return $this->cacheBustingString;
     }
 
-    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher) {
+    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher, MemberService $memberService) {
         $this->creatorSettingsFetcher = $creatorSettingsFetcher;
+        $this->memberService = $memberService;
+    }
+
+    public function hide_admin_bar_from_front_end(){
+        if (current_user_can('editor') || current_user_can('administrator')) {
+            return true;
+        }
+        return false;
     }
 
     public function register(): void
     {
+        add_filter('show_admin_bar', [$this, 'hide_admin_bar_from_front_end']);
         add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
         add_action('wp_head', [$this, 'addPreloadHints']);
         // Add script to bottom of body for detecting and disabling ads
         add_action('wp_footer', [$this, 'disable_ads_inline_script']);
+        // Inject HTML to disable mediavine ads if applicable
+        add_action('wp_footer', [$this, 'mediavine_disable_ads']);
     }
 
     public function disable_ads_inline_script(): void {
@@ -52,6 +65,22 @@ class ClientScripts
         echo $inline_script;
     }
 
+    public function mediavine_disable_ads(): void {
+        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+        [$email, , $is_paid] = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
+
+        if (!$email || !$is_paid) {
+            echo '';
+            return;
+        }
+
+        $mediavine_element = <<<EOD
+            <div id="mediavine-settings" data-blocklist-all="1"></div>
+        EOD;
+
+        echo $mediavine_element;
+    }
+
     public function enqueueScripts(): void {
         $assetBase = plugin_dir_url(__FILE__) . '../../client-ui/dist/';
 
@@ -66,11 +95,23 @@ class ClientScripts
             $theme_data = json_decode( $theme_json_content, true );
         }
 
+        [$email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link] = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
+
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'theme' => $theme_data ?? null,
             'settings' => $creatorSettings->settings ?? null,
             'provisioning' => $creatorSettings->provisioning ?? null,
+            'creatorId' => $creatorSettings->creatorAccountId ?? null,
+            'wpUserEnabled' => true,
+            'member' => [
+                'isWpUser' => !!$email,
+                'email' => $email ?: null,
+                'isPaidMember' => (bool) $is_paid_member,
+                'isPastDue' => (bool) $is_past_due,
+                'subscriptionStatus' => $subscription_status ?: null,
+                'subscriptionManagementLink' => $subscription_management_link ?: null,
+            ]
         ];
 
         if (is_singular('post')) {

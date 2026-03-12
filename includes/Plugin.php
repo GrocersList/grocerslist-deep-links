@@ -10,6 +10,7 @@ use GrocersList\Admin\SettingsPage;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\PublicAjaxController;
 use GrocersList\Service\CreatorSettingsFetcher;
+use GrocersList\Service\MemberService;
 use GrocersList\Service\LinkRewriter;
 use GrocersList\Support\ContentFilter;
 use GrocersList\Support\Logger;
@@ -39,6 +40,7 @@ class Plugin
         add_action('migration_visitor_run_async', ['\GrocersList\Jobs\MigrationVisitor', 'start']);
 
         $creatorSettingsFetcher = new CreatorSettingsFetcher();
+        $memberService = new MemberService();
 
         $linkRewriter = new LinkRewriter();
         $linkRewriter->register();
@@ -47,13 +49,13 @@ class Plugin
         $ajaxController->register();
 
         $publicAjaxController = new PublicAjaxController();
-        $publicAjaxController->register();
+        $publicAjaxController->register($creatorSettingsFetcher, $memberService);
 
         // UIs:
         $settingsPage = new SettingsPage($creatorSettingsFetcher);
         $settingsPage->register();
 
-        $clientScripts = new ClientScripts($creatorSettingsFetcher);
+        $clientScripts = new ClientScripts($creatorSettingsFetcher, $memberService);
         $clientScripts->register();
 
         $contentFilter = new ContentFilter($creatorSettingsFetcher);
