@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.18.0
+Stable tag: 1.19.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -81,7 +81,9 @@ An overview of our features:
 
 #### - 01/29/2026 - 1.17.0 - Fix issue with PHP version 7.4
 
-#### - 02/11/2025 - 1.18.0 - Security and caching optimizations
+#### - 02/11/2026 - 1.18.0 - Security and caching optimizations
+
+#### - 03/12/2026 - 1.19.0 - Leverage WP user records
 
 ### Resources:
 
