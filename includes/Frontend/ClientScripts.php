@@ -43,31 +43,26 @@ class ClientScripts
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_from_front_end']);
         add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
         add_action('wp_head', [$this, 'addPreloadHints']);
-        // Add script to bottom of body for detecting and disabling ads
-        add_action('wp_footer', [$this, 'disable_ads_inline_script']);
+        add_filter('body_class', [$this, 'add_ad_removal_classes']);
         // Inject HTML to disable mediavine ads if applicable
         add_action('wp_footer', [$this, 'mediavine_disable_ads']);
     }
 
-    public function disable_ads_inline_script(): void {
-        $inline_script = <<<EOD
-            <script id="gl-disable-ads">
-                (function() {
-                    const isPaidMember = localStorage.getItem('gl_is_paid_member');
+    public function add_ad_removal_classes(): array {
+        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+        list($email, , $is_paid) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
 
-                    if (isPaidMember === 'true') {
-                        document.body.classList.add('adthrive-disable-all', 'gl-paid-member');
-                    }
-                })();
-            </script>
-        EOD;
+        if (!$email || !$is_paid) {
+            return [];
+        }
 
-        echo $inline_script;
+        $classes = ['adthrive-disable-all', 'gl-paid-member'];
+        return $classes;
     }
 
     public function mediavine_disable_ads(): void {
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-        [$email, , $is_paid] = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
+        list($email, , $is_paid) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
 
         if (!$email || !$is_paid) {
             echo '';
@@ -76,7 +71,7 @@ class ClientScripts
 
         $mediavine_element = <<<EOD
             <div id="mediavine-settings" data-blocklist-all="1"></div>
-        EOD;
+EOD;
 
         echo $mediavine_element;
     }
@@ -95,7 +90,7 @@ class ClientScripts
             $theme_data = json_decode( $theme_json_content, true );
         }
 
-        [$email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link] = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
+        list($email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
 
         $window_grocersList = [
             'ajaxUrl' => admin_url('admin-ajax.php'),

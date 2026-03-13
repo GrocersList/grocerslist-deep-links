@@ -16,7 +16,7 @@ class MemberService {
         return $key . '-' . $namespace;
     }
 
-    protected function _getWordpressUserMetaData(string|null $creator_id) {
+    protected function _getWordpressUserMetaData(string $creator_id = null) {
         // TODO: NMML - need to put a limit on how long we trust WP_User... e.g., hit GL servers once every 24 hours per user to ensure active subscriptions via Stripe API check
         // TODO: NMML - can we kill JWT if we start using WP_User?
         // Build member info from current WP user meta
@@ -42,7 +42,7 @@ class MemberService {
         return [$email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $last_updated];
     }
 
-    public function getMemberData(string|null $creator_id) {
+    public function getMemberData(string $creator_id = null) {
         return $this->_getWordpressUserMetaData($creator_id);
     }
 
@@ -69,8 +69,7 @@ class MemberService {
         }
     }
 
-    public function createOrUpdateMember(string $email, string $subscription_status, bool $is_paid_member, bool $is_past_due, string $subscription_management_link, string|null $creator_id) {
-
+    public function createOrUpdateMember(string $email, string $subscription_status, bool $is_paid_member, bool $is_past_due, string $subscription_management_link, string $creator_id = null) {
         $creator_id = $creator_id ?? '';
         if (!empty($email)) {
             Logger::debug("attempt to find user");
@@ -126,9 +125,9 @@ class MemberService {
         }
     }
 
-    public function shouldUpdateMemberData(string|null $creator_id) {
+    public function shouldUpdateMemberData(string $creator_id = null) {
         if (is_user_logged_in()) {
-            [, , , , , $last_updated]= $this->getMemberData($creator_id);
+            list(, , , , , $last_updated) = $this->getMemberData($creator_id);
             // One day in seconds
             $one_day = 86400;
 
