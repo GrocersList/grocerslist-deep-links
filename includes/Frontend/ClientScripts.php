@@ -48,15 +48,16 @@ class ClientScripts
         add_action('wp_footer', [$this, 'mediavine_disable_ads']);
     }
 
-    public function add_ad_removal_classes(): array {
+    public function add_ad_removal_classes(array $classes): array {
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
         list($email, , $is_paid) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
 
         if (!$email || !$is_paid) {
-            return [];
+            return $classes;
         }
 
-        $classes = ['adthrive-disable-all', 'gl-paid-member'];
+        $classes[] = 'adthrive-disable-all';
+        $classes[] = 'gl-paid-member';
         return $classes;
     }
 
