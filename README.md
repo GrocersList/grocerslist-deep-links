@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: Grocers List, Engineering
 Tested up to: 6.8
-Stable tag: 1.21.0
+Stable tag: 1.22.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -88,6 +88,8 @@ An overview of our features:
 #### - 03/13/2026 - 1.20.0 - Raptive server side ad removal and PHP 7.4 issue
 
 #### - 03/16/2026 - 1.21.0 - Fix for body classes not being merged properly
+
+#### - 03/17/2026 - 1.22.0 - Improvements for signup and checkout experiences
 
 ### Resources:
 
