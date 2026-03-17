@@ -76,6 +76,7 @@ class PublicAjaxController
         }
 
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
+        $updateWpUser = isset($_POST['updateWpUser']) ? sanitize_text_field(wp_unslash($_POST['updateWpUser'])) : '';
 
         $post_gating_options = $this->fetchPostGatingOptions();
         $page_gating_options = $this->fetchPageGatingOptions();
@@ -85,7 +86,7 @@ class PublicAjaxController
 
         $response = ApiClient::getInitMemberships($api_key, $jwt, $gated);
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-        if ($this->memberService->shouldUpdateMemberData($creatorSettings->creatorAccountId)) {
+        if ($this->memberService->shouldUpdateMemberData($creatorSettings->creatorAccountId, $updateWpUser)) {
             $redirectUrl = wp_get_referer();
             $followerResponse = ApiClient::checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
@@ -149,9 +150,37 @@ class PublicAjaxController
 
         $api_key = PluginSettings::getApiKey();
 
-        $response = ApiClient::signupFollower($api_key, $email, $password, $url);
+        $signupResponse = ApiClient::signupFollower($api_key, $email, $password, $url);
 
-        ApiClient::passResponseCode($response);
+        if (!is_wp_error($signupResponse)) {
+            $signupStatus = wp_remote_retrieve_response_code($signupResponse);
+            if ($signupStatus >= 200 && $signupStatus < 300) {
+                $redirectUrl = wp_get_referer();
+                $response = ApiClient::loginFollower($api_key, $email, $password, $redirectUrl);
+
+                // Attempt to create or update a WP subscriber with metadata when API call succeeds
+                if (!is_wp_error($response)) {
+                    $status = wp_remote_retrieve_response_code($response);
+                    $_body = wp_remote_retrieve_body($response);
+                    $body = is_string($_body) ? json_decode($_body, true) : $_body;
+
+
+                    if ($status >= 200 && $status < 300 && is_array($body)) {
+                        $follower_account = isset($body['followerAccount']) ? $body['followerAccount'] : '';
+                        $resp_email = isset($follower_account['email']) ? sanitize_email($follower_account['email']) : '';
+                        $subscription_status = isset($follower_account['subscriptionStatus']) ? sanitize_text_field($follower_account['subscriptionStatus']) : '';
+                        $is_paid_member = isset($follower_account['isPaidMember']) ? rest_sanitize_boolean($follower_account['isPaidMember']) : '';
+                        $is_past_due = isset($follower_account['isPastDue']) ? rest_sanitize_boolean($follower_account['isPastDue']) : '';
+                        $subscription_management_link = isset($follower_account['subscriptionManagementLink']) ? sanitize_text_field($follower_account['subscriptionManagementLink']) : '';
+
+                        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+                        $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId);
+                    }
+                }
+            }
+        }
+
+        ApiClient::passResponseCode($signupResponse);
     }
 
     public function logoutFollower(): void {
@@ -273,7 +302,8 @@ class PublicAjaxController
         //  - account for removing url parameters that grocerslist sends like ?failure=
         //  - switch "?failure= for something less likely to collide with 3rd party params
         //      like ?gl-failure= or don't use url params
-        $redirectUrl = wp_get_referer();
+        $referer_url = wp_get_referer();
+        $redirectUrl = add_query_arg(array('gl-update-wp-user' => 'true'), $referer_url);
         $response = ApiClient::checkoutFollower($api_key, $jwt, $redirectUrl);
 
         ApiClient::passResponseCode($response);

@@ -125,7 +125,11 @@ class MemberService {
         }
     }
 
-    public function shouldUpdateMemberData(string $creator_id = null) {
+    public function shouldUpdateMemberData(string $creator_id = null, bool $forceUpdate = false) {
+        if ($forceUpdate) {
+            return true;
+        }
+
         if (is_user_logged_in()) {
             list(, , , , , $last_updated) = $this->getMemberData($creator_id);
             // One day in seconds
