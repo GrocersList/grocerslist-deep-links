@@ -3,7 +3,7 @@ Contributors: grocerslist
 Tags: affiliate, amazon, memberships, monetization, deep links
 Requires at least: 4.4
 Tested up to: 6.8
-Stable tag: 1.22.0
+Stable tag: 1.22.1
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -47,5 +47,5 @@ Contributors: GRO Holdings, Inc | Engineering
 
 == Changelog ==
 
-= 1.22.0 =
+= 1.22.1 =
 * Rebrand: Grocers List is now GRO.

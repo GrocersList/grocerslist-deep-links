@@ -1,9 +1,9 @@
-=== Grocers List ===
+=== GRO ===
 Contributors: grocerslist
 Requires at least: 4.4
-Author: Grocers List, Engineering
+Author: GRO Holdings, Inc
 Tested up to: 6.8
-Stable tag: 1.22.0
+Stable tag: 1.22.1
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -12,7 +12,7 @@ Earn more revenue from your website by offering paid memberships, exclusive cont
 
 == Description ==
 
-[Grocers List](https://grocerslist.com) is a suite of tools built for food and recipe bloggers. The plugin makes it super easy to start earning more revenue form your website traffic through our two plugin based services:
+[GRO](https://gro.co) is a suite of tools built for food and recipe bloggers. The plugin makes it super easy to start earning more revenue form your website traffic through our two plugin based services:
 
 ## Paid Memberships
 
@@ -20,7 +20,7 @@ Offer website visitors access to an ad-free cooking experience by joining your m
 
 ## Amazon Deep links
 
-Earn more from the existing Amazon affiliate links published on your posts. Connect the plugin to your existing grocers list account, and we’ll quickly find all amazon links published on your site.
+Earn more from the existing Amazon affiliate links published on your posts. Connect the plugin to your existing GRO account, and we’ll quickly find all amazon links published on your site.
 We’ll then automatically convert them into deep links for Amazon. When clicked, it will bring the visitor into their Amazon app on their phone, where they have the highest likelihood of converting. Driving clicks into the Amazon app, rather than into Amazon in the browser, converts 3-5X more.
 
 <hr>
@@ -90,6 +90,8 @@ An overview of our features:
 #### - 03/16/2026 - 1.21.0 - Fix for body classes not being merged properly
 
 #### - 03/17/2026 - 1.22.0 - Improvements for signup and checkout experiences
+
+#### - 05/14/2026 - 1.22.1 - Rename plugin from Grocers List to GRO
 
 ### Resources:
 
