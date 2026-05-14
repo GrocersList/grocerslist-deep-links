@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
 
@@ -23,22 +23,23 @@ interface PostGatingProps {
   onUpdate?: (postGated: boolean, recipeCardGated: boolean) => void;
 }
 
+const readInitialMeta = () => {
+  const meta =
+    window.wp.data.select('core/editor').getEditedPostAttribute('meta') || {};
+  return {
+    postGated: meta.grocers_list_post_gated === '1',
+    recipeCardGated: meta.grocers_list_recipe_card_gated === '1',
+  };
+};
+
 export const PostGatingMetaBox = ({ onUpdate }: PostGatingProps) => {
-  const [isPostGated, setIsPostGated] = useState(false);
-  const [isRecipeCardGated, setIsRecipeCardGated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Get meta values from WordPress editor
-    const meta =
-      window.wp.data.select('core/editor').getEditedPostAttribute('meta') || {};
-    const postGated = meta.grocers_list_post_gated === '1';
-    const recipeCardGated = meta.grocers_list_recipe_card_gated === '1';
-
-    setIsPostGated(postGated);
-    setIsRecipeCardGated(recipeCardGated);
-    setLoading(false);
-  }, []);
+  const [isPostGated, setIsPostGated] = useState(
+    () => readInitialMeta().postGated
+  );
+  const [isRecipeCardGated, setIsRecipeCardGated] = useState(
+    () => readInitialMeta().recipeCardGated
+  );
+  const [loading] = useState(false);
 
   const handlePostGatedChange = (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target as HTMLInputElement;

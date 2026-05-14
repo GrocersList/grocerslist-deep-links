@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Link } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -74,11 +74,17 @@ export const DeepLinksSection = ({
     loadMigrationStatus();
   }, [api]);
 
-  let migrationPollingInterval: NodeJS.Timeout;
+  const migrationPollingInterval = useRef<ReturnType<
+    typeof setInterval
+  > | null>(null);
 
   useEffect(() => {
     if (!migrationStatus?.isRunning) {
-      return () => clearInterval(migrationPollingInterval);
+      return () => {
+        if (migrationPollingInterval.current) {
+          clearInterval(migrationPollingInterval.current);
+        }
+      };
     }
 
     const poll = async () => {
@@ -90,8 +96,12 @@ export const DeepLinksSection = ({
       }
     };
 
-    migrationPollingInterval = setInterval(poll, 2000);
-    return () => clearInterval(migrationPollingInterval);
+    migrationPollingInterval.current = setInterval(poll, 2000);
+    return () => {
+      if (migrationPollingInterval.current) {
+        clearInterval(migrationPollingInterval.current);
+      }
+    };
   }, [migrationStatus, api]);
 
   const startMigration = async () => {
