@@ -103,7 +103,7 @@ export const MembershipsZeroState = () => {
             >
               <Box
                 component="img"
-                src="https://app.grocerslist.com/memberships-zero-state-img.png"
+                src="https://lets.gro.co/memberships-zero-state-img.png"
                 alt="Membership Features"
                 sx={{
                   width: '100%',
@@ -154,7 +154,7 @@ export const MembershipsZeroState = () => {
           color="primary"
           size="large"
           startIcon={<AttachMoney />}
-          href="https://app.grocerslist.com/creator-hq/memberships"
+          href="https://lets.gro.co/creator-hq/memberships"
           component="a"
           sx={{
             mt: 2,

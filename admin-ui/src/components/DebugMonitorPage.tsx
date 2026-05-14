@@ -149,7 +149,7 @@ export const DebugMonitorPage = () => {
     <Container maxWidth="lg" sx={{ paddingY: 4 }}>
       <Stack spacing={3}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h4">GrocersList Debug Monitor</Typography>
+          <Typography variant="h4">GRO Debug Monitor</Typography>
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}

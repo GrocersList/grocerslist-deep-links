@@ -52,7 +52,7 @@ class CategoryGating
         <tr class="form-field">
             <th scope="row">
                 <label for="grocers_list_category_gating_type">
-                    <?php esc_html_e('Grocers List Membership Gating', 'grocers-list'); ?>
+                    <?php esc_html_e('GRO Membership Gating', 'grocers-list'); ?>
                 </label>
             </th>
             <td>
@@ -87,7 +87,7 @@ class CategoryGating
         ob_start();
         ?>
         <label for="grocers_list_category_gating_type">
-            <?php esc_html_e('Grocers List Membership Gating', 'grocers-list'); ?>
+            <?php esc_html_e('GRO Membership Gating', 'grocers-list'); ?>
         </label>
         <select name="grocers_list_category_gating_type" id="grocers_list_category_gating_type">
             <option value="none" <?php selected($selected, 'none'); ?>>

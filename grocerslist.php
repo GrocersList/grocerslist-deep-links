@@ -1,14 +1,14 @@
 <?php
 /*
-Plugin Name: Grocers List
-Plugin URI: https://grocerslist.com
-Description: Automatically rewrites Amazon affiliate links with deep links using Grocers List's App Links Product Catalog.
+Plugin Name: GRO
+Plugin URI: https://gro.co
+Description: GRO is a suite of tools for bloggers — monetize your site with paid memberships and Amazon deep links.
 Requires at least: 4.4
 Requires PHP: 7.0
 Tested up to: 6.8
 Version: 1.22.0
 Stable tag: 1.22.0
-Author: Grocers List Engineering
+Author: GRO Holdings, Inc
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Author URI: https://github.com/GrocersList/grocerslist-wordpress-plugin
@@ -34,7 +34,7 @@ function grocers_list_activate() {
     // Check PHP version
     if (version_compare(PHP_VERSION, '7.0', '<')) {
         wp_die(
-            __('Grocers List requires PHP 7.0 or higher. Your server is running PHP ' . PHP_VERSION, 'grocers-list'),
+            __('GRO requires PHP 7.0 or higher. Your server is running PHP ' . PHP_VERSION, 'grocers-list'),
             __('Plugin Activation Error', 'grocers-list'),
             array('response' => 200, 'back_link' => TRUE)
         );

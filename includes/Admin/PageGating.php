@@ -45,7 +45,7 @@ class PageGating
 
         add_meta_box(
             'grocers_list_page_gating_options',
-            'Grocers List Membership Options',
+            'GRO Membership Options',
             [$this, 'renderMetaBox'],
             'page',
             'side',

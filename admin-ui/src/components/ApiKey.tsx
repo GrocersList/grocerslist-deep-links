@@ -70,12 +70,12 @@ export const ApiKeySection = ({
           You can find your API key on the{' '}
           <Box
             component="a"
-            href="https://app.grocerslist.com/creator-hq/settings"
+            href="https://lets.gro.co/creator-hq/settings"
             target="_blank"
             rel="noopener noreferrer"
             sx={{ display: 'inline-flex', alignItems: 'center' }}
           >
-            Grocers List settings page
+            GRO settings page
           </Box>
           .
         </Typography>

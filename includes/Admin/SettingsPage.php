@@ -22,8 +22,8 @@ class SettingsPage {
         $iconUrl = 'data:image/svg+xml;base64,' . base64_encode($svgData);
 
         add_menu_page(
-            'Grocers List',
-            'Grocers List',
+            'GRO',
+            'GRO',
             'manage_options',
             'grocers-list',
             [$this, 'renderPage'],

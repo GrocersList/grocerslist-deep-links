@@ -45,7 +45,7 @@ export const AppLinksZeroState = () => {
             color="primary"
             size="large"
             startIcon={<LinkIcon />}
-            href="https://app.grocerslist.com/creator-hq/app-links"
+            href="https://lets.gro.co/creator-hq/app-links"
             component="a"
             sx={{
               textTransform: 'none',
@@ -70,7 +70,7 @@ export const AppLinksZeroState = () => {
           }}
         >
           <img
-            src="https://app.grocerslist.com/AppLinksZeroStateImage.png"
+            src="https://lets.gro.co/AppLinksZeroStateImage.png"
             alt="App Links Feature"
           />
         </Box>

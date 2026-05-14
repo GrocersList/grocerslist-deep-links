@@ -76,8 +76,8 @@ const SettingsConfiguration = () => {
           <>
             <Box>
               <img
-                src="https://app.grocerslist.com/gl-logo.png"
-                alt="Grocers List"
+                src="https://lets.gro.co/gro-logo.png"
+                alt="GRO"
                 style={{
                   width: '200px',
                   height: 'auto',

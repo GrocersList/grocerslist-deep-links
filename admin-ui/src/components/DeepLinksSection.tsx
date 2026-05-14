@@ -134,8 +134,8 @@ export const DeepLinksSection = ({
       ) : (
         <Stack spacing={1}>
           <ToggleInput
-            label="Enable Grocers List Deep Links"
-            description="Convert Amazon links to GrocersList Deep Links"
+            label="Enable GRO Deep Links"
+            description="Convert Amazon links to GRO Deep Links"
             checked={useLinkstaLinks}
             onChange={handleSetUseLinkstaLinks}
           />
@@ -151,13 +151,13 @@ export const DeepLinksSection = ({
               <Alert severity="warning">
                 {linkCountInfo.totalUnmappedLinks} of{' '}
                 {linkCountInfo.totalAmazonLinks} Amazon links need to be mapped
-                to Grocers List Deep Links. Click "Run Migration" below to map
-                all existing Amazon links to Grocers List Deep Links.
+                to GRO Deep Links. Click "Run Migration" below to map all
+                existing Amazon links to GRO Deep Links.
               </Alert>
             ) : (
               <Alert severity="info">
                 All {linkCountInfo.totalAmazonLinks} Amazon links have been
-                mapped to Grocers List Deep Links.
+                mapped to GRO Deep Links.
               </Alert>
             ))}
 
