@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 6.8
-Stable tag: 1.22.1
+Stable tag: 1.23.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -92,6 +92,8 @@ An overview of our features:
 #### - 03/17/2026 - 1.22.0 - Improvements for signup and checkout experiences
 
 #### - 05/14/2026 - 1.22.1 - Rename plugin from Grocers List to GRO
+
+#### - 05/25/2026 - 1.23.0 - Update Mediavine ad-removal to not remove video players
 
 ### Resources:
 

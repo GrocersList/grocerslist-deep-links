@@ -6,8 +6,8 @@ Description: GRO is a suite of tools for bloggers — monetize your site with pa
 Requires at least: 4.4
 Requires PHP: 7.0
 Tested up to: 6.8
-Version: 1.22.1
-Stable tag: 1.22.1
+Version: 1.23.0
+Stable tag: 1.23.0
 Author: GRO Holdings, Inc
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -17,7 +17,7 @@ Author URI: https://github.com/GrocersList/grocerslist-wordpress-plugin
 
 if (!defined('ABSPATH')) exit;
 
-define('GROCERS_LIST_VERSION', '1.22.1');
+define('GROCERS_LIST_VERSION', '1.23.0');
 define('GROCERS_LIST_PLUGIN_FILE', __FILE__);
 define('GROCERS_LIST_PLUGIN_DIR', __DIR__);
 
