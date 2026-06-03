@@ -11,9 +11,11 @@ use GrocersList\Settings\PluginSettings;
 class AjaxController
 {
     private CreatorSettingsFetcher $creatorSettingsFetcher;
+    private SalesPage $salesPage;
 
-    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher) {
+    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher, SalesPage $salesPage) {
         $this->creatorSettingsFetcher = $creatorSettingsFetcher;
+        $this->salesPage = $salesPage;
     }
 
     public function register(): void
@@ -28,6 +30,13 @@ class AjaxController
             'grocers_list_get_link_count_info' => 'getLinkCountInfo',
             'grocers_list_trigger_migrate' => 'triggerMigrate',
             'grocers_list_update_memberships_enabled' => 'updateMembershipsEnabled',
+            'grocers_list_get_sales_page_state' => 'getSalesPageState',
+            'grocers_list_create_sales_page' => 'createSalesPage',
+            'grocers_list_regenerate_sales_page' => 'regenerateSalesPage',
+            'grocers_list_add_sales_page_to_menu' => 'addSalesPageToMenu',
+            'grocers_list_update_sales_page_menu_item_label' => 'updateSalesPageMenuItemLabel',
+            'grocers_list_remove_sales_page_from_menu' => 'removeSalesPageFromMenu',
+            'grocers_list_remove_sales_page' => 'removeSalesPage',
         ];
 
         foreach ($actions as $hook => $method) {
@@ -177,5 +186,96 @@ class AjaxController
         $this->creatorSettingsFetcher->deleteCreatorSettingsTransient();
 
         wp_send_json_success(['data' => $enabled, 'message' => 'Memberships enabled setting updated']);
+    }
+
+    public function getSalesPageState(): void
+    {
+        check_ajax_referer('grocers_list_get_sales_page_state', 'security');
+        $this->checkPermission('grocers_list_get_sales_page_state');
+
+        wp_send_json_success($this->salesPage->getState());
+    }
+
+    public function createSalesPage(): void
+    {
+        check_ajax_referer('grocers_list_create_sales_page', 'security');
+        $this->checkPermission('grocers_list_create_sales_page');
+
+        $slug = isset($_POST['slug']) ? sanitize_title(wp_unslash($_POST['slug'])) : 'membership';
+
+        $result = $this->salesPage->createPage($slug);
+        if (isset($result['error'])) {
+            wp_send_json_error(['error' => $result['error']], 500);
+            return;
+        }
+
+        wp_send_json_success($this->salesPage->getState());
+    }
+
+    public function regenerateSalesPage(): void
+    {
+        check_ajax_referer('grocers_list_regenerate_sales_page', 'security');
+        $this->checkPermission('grocers_list_regenerate_sales_page');
+
+        $slug = isset($_POST['slug']) ? sanitize_title(wp_unslash($_POST['slug'])) : 'membership';
+
+        $result = $this->salesPage->regeneratePage($slug);
+        if (isset($result['error'])) {
+            wp_send_json_error(['error' => $result['error']], 500);
+            return;
+        }
+
+        wp_send_json_success($this->salesPage->getState());
+    }
+
+    public function addSalesPageToMenu(): void
+    {
+        check_ajax_referer('grocers_list_add_sales_page_to_menu', 'security');
+        $this->checkPermission('grocers_list_add_sales_page_to_menu');
+
+        $menuId = isset($_POST['menuId']) ? (int) wp_unslash($_POST['menuId']) : 0;
+        $label = isset($_POST['label']) ? sanitize_text_field(wp_unslash($_POST['label'])) : 'Membership';
+
+        $result = $this->salesPage->addToMenu($menuId, $label);
+        if (isset($result['error'])) {
+            wp_send_json_error(['error' => $result['error']], 400);
+            return;
+        }
+
+        wp_send_json_success($this->salesPage->getState());
+    }
+
+    public function updateSalesPageMenuItemLabel(): void
+    {
+        check_ajax_referer('grocers_list_update_sales_page_menu_item_label', 'security');
+        $this->checkPermission('grocers_list_update_sales_page_menu_item_label');
+
+        $label = isset($_POST['label']) ? sanitize_text_field(wp_unslash($_POST['label'])) : '';
+
+        $result = $this->salesPage->updateMenuItemLabel($label);
+        if (isset($result['error'])) {
+            wp_send_json_error(['error' => $result['error']], 400);
+            return;
+        }
+
+        wp_send_json_success($this->salesPage->getState());
+    }
+
+    public function removeSalesPageFromMenu(): void
+    {
+        check_ajax_referer('grocers_list_remove_sales_page_from_menu', 'security');
+        $this->checkPermission('grocers_list_remove_sales_page_from_menu');
+
+        $this->salesPage->removeFromMenu();
+        wp_send_json_success($this->salesPage->getState());
+    }
+
+    public function removeSalesPage(): void
+    {
+        check_ajax_referer('grocers_list_remove_sales_page', 'security');
+        $this->checkPermission('grocers_list_remove_sales_page');
+
+        $this->salesPage->removePage();
+        wp_send_json_success($this->salesPage->getState());
     }
 }

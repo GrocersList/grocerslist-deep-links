@@ -6,6 +6,7 @@ use GrocersList\Admin\AjaxController;
 use GrocersList\Admin\CategoryGating;
 use GrocersList\Admin\PageGating;
 use GrocersList\Admin\PostGating;
+use GrocersList\Admin\SalesPage;
 use GrocersList\Admin\SettingsPage;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\PublicAjaxController;
@@ -14,6 +15,7 @@ use GrocersList\Service\MemberService;
 use GrocersList\Service\LinkRewriter;
 use GrocersList\Support\ContentFilter;
 use GrocersList\Support\Logger;
+use GrocersList\Support\SalesPagePattern;
 
 class Plugin
 {
@@ -45,7 +47,11 @@ class Plugin
         $linkRewriter = new LinkRewriter();
         $linkRewriter->register();
 
-        $ajaxController = new AjaxController($creatorSettingsFetcher);
+        $salesPagePattern = new SalesPagePattern($creatorSettingsFetcher);
+        $salesPage = new SalesPage($salesPagePattern);
+        $salesPage->register();
+
+        $ajaxController = new AjaxController($creatorSettingsFetcher, $salesPage);
         $ajaxController->register();
 
         $publicAjaxController = new PublicAjaxController();

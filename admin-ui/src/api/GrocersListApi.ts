@@ -1,4 +1,8 @@
-import type { IGrocersListApi, LinkCountInfo } from './IGrocersListApi';
+import type {
+  IGrocersListApi,
+  LinkCountInfo,
+  SalesPageState,
+} from './IGrocersListApi';
 
 export class GrocersListApi implements IGrocersListApi {
   private async post(action: string, params: Record<string, string>) {
@@ -86,5 +90,49 @@ export class GrocersListApi implements IGrocersListApi {
     await this.post('grocers_list_update_memberships_enabled', {
       enabled: enabled ? '1' : '0',
     });
+  }
+
+  async getSalesPageState(): Promise<SalesPageState> {
+    const res = await this.post('grocers_list_get_sales_page_state', {});
+    return res.data;
+  }
+
+  async createSalesPage(slug: string): Promise<SalesPageState> {
+    const res = await this.post('grocers_list_create_sales_page', { slug });
+    return res.data;
+  }
+
+  async regenerateSalesPage(slug: string): Promise<SalesPageState> {
+    const res = await this.post('grocers_list_regenerate_sales_page', { slug });
+    return res.data;
+  }
+
+  async addSalesPageToMenu(
+    menuId: number,
+    label: string
+  ): Promise<SalesPageState> {
+    const res = await this.post('grocers_list_add_sales_page_to_menu', {
+      menuId: menuId.toString(),
+      label,
+    });
+    return res.data;
+  }
+
+  async updateSalesPageMenuItemLabel(label: string): Promise<SalesPageState> {
+    const res = await this.post(
+      'grocers_list_update_sales_page_menu_item_label',
+      { label }
+    );
+    return res.data;
+  }
+
+  async removeSalesPageFromMenu(): Promise<SalesPageState> {
+    const res = await this.post('grocers_list_remove_sales_page_from_menu', {});
+    return res.data;
+  }
+
+  async removeSalesPage(): Promise<SalesPageState> {
+    const res = await this.post('grocers_list_remove_sales_page', {});
+    return res.data;
   }
 }

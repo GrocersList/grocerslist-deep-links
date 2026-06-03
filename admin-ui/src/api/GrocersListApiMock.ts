@@ -5,6 +5,7 @@ import type {
   ProcessQueueResult,
   QueueStats,
   ResetFailedResult,
+  SalesPageState,
   UrlMapping,
 } from './IGrocersListApi';
 
@@ -176,5 +177,113 @@ export class GrocersListApiMock implements IGrocersListApi {
   async updateMembershipsEnabled(enabled: boolean) {
     console.log('🔧 Mock updateMembershipsEnabled', enabled);
     await this.delay(500);
+  }
+
+  private getSalesPageStateFromStorage(): SalesPageState {
+    const raw = localStorage.getItem('grocers_list_mock_sales_page');
+    if (raw) return JSON.parse(raw);
+    return {
+      page: null,
+      menuItemId: 0,
+      menuItemLabel: '',
+      menus: [
+        { id: 1, name: 'Primary Menu' },
+        { id: 2, name: 'Footer Menu' },
+      ],
+      primaryMenuId: 1,
+      isBlockTheme: false,
+      menuEditorUrl: '#nav-menus',
+      siteEditorUrl: '#site-editor',
+      supportsPattern: true,
+    };
+  }
+
+  private setSalesPageStateToStorage(state: SalesPageState) {
+    localStorage.setItem('grocers_list_mock_sales_page', JSON.stringify(state));
+  }
+
+  async getSalesPageState(): Promise<SalesPageState> {
+    console.log('🔧 Mock getSalesPageState');
+    await this.delay(300);
+    return this.getSalesPageStateFromStorage();
+  }
+
+  async createSalesPage(slug: string): Promise<SalesPageState> {
+    console.log('🔧 Mock createSalesPage', slug);
+    await this.delay(500);
+    const state = this.getSalesPageStateFromStorage();
+    state.page = {
+      id: 42,
+      slug: slug || 'membership',
+      title: 'Membership',
+      status: 'draft',
+      editUrl: '#edit',
+      previewUrl: '#preview',
+      viewUrl: `/${slug || 'membership'}`,
+    };
+    this.setSalesPageStateToStorage(state);
+    return state;
+  }
+
+  async regenerateSalesPage(slug: string): Promise<SalesPageState> {
+    console.log('🔧 Mock regenerateSalesPage', slug);
+    await this.delay(500);
+    const state = this.getSalesPageStateFromStorage();
+    state.menuItemId = 0;
+    state.menuItemLabel = '';
+    state.page = {
+      id: 43,
+      slug: slug || 'membership',
+      title: 'Membership',
+      status: 'draft',
+      editUrl: '#edit',
+      previewUrl: '#preview',
+      viewUrl: `/${slug || 'membership'}`,
+    };
+    this.setSalesPageStateToStorage(state);
+    return state;
+  }
+
+  async addSalesPageToMenu(
+    menuId: number,
+    label: string
+  ): Promise<SalesPageState> {
+    console.log('🔧 Mock addSalesPageToMenu', menuId, label);
+    await this.delay(400);
+    const state = this.getSalesPageStateFromStorage();
+    state.menuItemId = Math.floor(Math.random() * 10000) + 1;
+    state.menuItemLabel = label || 'Membership';
+    this.setSalesPageStateToStorage(state);
+    return state;
+  }
+
+  async updateSalesPageMenuItemLabel(label: string): Promise<SalesPageState> {
+    console.log('🔧 Mock updateSalesPageMenuItemLabel', label);
+    await this.delay(400);
+    const state = this.getSalesPageStateFromStorage();
+    state.menuItemLabel = label;
+    this.setSalesPageStateToStorage(state);
+    return state;
+  }
+
+  async removeSalesPageFromMenu(): Promise<SalesPageState> {
+    console.log('🔧 Mock removeSalesPageFromMenu');
+    await this.delay(400);
+    const state = this.getSalesPageStateFromStorage();
+    state.menuItemId = 0;
+    state.menuItemLabel = '';
+    this.setSalesPageStateToStorage(state);
+    return state;
+  }
+
+  async removeSalesPage(): Promise<SalesPageState> {
+    console.log('🔧 Mock removeSalesPage');
+    await this.delay(400);
+    const state = this.getSalesPageStateFromStorage();
+    state.page = null;
+    state.menuItemId = 0;
+    state.menuItemLabel = '';
+    this.setSalesPageStateToStorage(state);
+    return state;
   }
 }

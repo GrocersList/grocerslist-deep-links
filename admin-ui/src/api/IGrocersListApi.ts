@@ -14,7 +14,41 @@ export interface IGrocersListApi {
   resetFailedPosts(): Promise<ResetFailedResult>;
   getUrlMappings(limit?: number): Promise<UrlMapping[]>;
   updateMembershipsEnabled(enabled: boolean): Promise<void>;
+  getSalesPageState(): Promise<SalesPageState>;
+  createSalesPage(slug: string): Promise<SalesPageState>;
+  regenerateSalesPage(slug: string): Promise<SalesPageState>;
+  addSalesPageToMenu(menuId: number, label: string): Promise<SalesPageState>;
+  updateSalesPageMenuItemLabel(label: string): Promise<SalesPageState>;
+  removeSalesPageFromMenu(): Promise<SalesPageState>;
+  removeSalesPage(): Promise<SalesPageState>;
 }
+
+export type SalesPageInfo = {
+  id: number;
+  slug: string;
+  title: string;
+  status: string;
+  editUrl: string;
+  previewUrl: string;
+  viewUrl: string;
+};
+
+export type SalesPageMenu = {
+  id: number;
+  name: string;
+};
+
+export type SalesPageState = {
+  page: SalesPageInfo | null;
+  menuItemId: number;
+  menuItemLabel: string;
+  menus: SalesPageMenu[];
+  primaryMenuId: number;
+  isBlockTheme: boolean;
+  menuEditorUrl: string;
+  siteEditorUrl: string;
+  supportsPattern: boolean;
+};
 
 export type MatchedLinks = {
   postsWithLinks: number;

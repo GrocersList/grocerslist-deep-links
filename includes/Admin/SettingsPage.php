@@ -64,6 +64,13 @@ class SettingsPage {
                 'grocers_list_trigger_migrate' => wp_create_nonce('grocers_list_trigger_migrate'),
                 'grocers_list_process_next_count_batch' => wp_create_nonce('grocers_list_process_next_count_batch'),
                 'grocers_list_update_memberships_enabled' => wp_create_nonce('grocers_list_update_memberships_enabled'),
+                'grocers_list_get_sales_page_state' => wp_create_nonce('grocers_list_get_sales_page_state'),
+                'grocers_list_create_sales_page' => wp_create_nonce('grocers_list_create_sales_page'),
+                'grocers_list_regenerate_sales_page' => wp_create_nonce('grocers_list_regenerate_sales_page'),
+                'grocers_list_add_sales_page_to_menu' => wp_create_nonce('grocers_list_add_sales_page_to_menu'),
+                'grocers_list_update_sales_page_menu_item_label' => wp_create_nonce('grocers_list_update_sales_page_menu_item_label'),
+                'grocers_list_remove_sales_page_from_menu' => wp_create_nonce('grocers_list_remove_sales_page_from_menu'),
+                'grocers_list_remove_sales_page' => wp_create_nonce('grocers_list_remove_sales_page'),
             ],
             'settings' => $creatorSettings->settings ?? null,
             'provisioning' => $creatorSettings->provisioning ?? null

@@ -13,6 +13,7 @@ import {
 import { ApiKeySection } from '@/components/ApiKey';
 import { DeepLinksSection } from '@/components/DeepLinksSection';
 import { MembershipsSection } from '@/components/MembershipsSection';
+import { SalesPageSection } from '@/components/SalesPageSection';
 import { useSetupContext } from '@/hooks/useSetupContext';
 import type { Toast } from '@/types/ui';
 
@@ -89,6 +90,7 @@ const SettingsConfiguration = () => {
 
             <ApiKeySection addToast={addToast} />
             <MembershipsSection />
+            <SalesPageSection addToast={addToast} />
             <DeepLinksSection addToast={addToast} />
 
             {/* Action Buttons */}

@@ -23,6 +23,9 @@ class PluginSettings {
             'migration_last_started_at',
             'migration_last_completed_at',
             'migration_total_mappings',
+            // sales page:
+            'sales_page_id',
+            'sales_page_menu_item_id',
         ];
     }
 
