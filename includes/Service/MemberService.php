@@ -53,8 +53,59 @@ class MemberService {
         }
     }
 
+    /**
+     * Capabilities that mark a WP user as privileged. The plugin refuses to
+     * authenticate any account that holds even one of these, so the
+     * unauthenticated signup path can never escalate into an admin/editor/
+     * author/contributor session. A plain reader/subscriber/customer — whether
+     * created by this plugin or by another (e.g. WooCommerce) — holds none of
+     * these and is allowed through.
+     */
+    protected $PRIVILEGED_CAPABILITIES = [
+        'manage_options',
+        'edit_posts',
+        'edit_pages',
+        'edit_others_posts',
+        'publish_posts',
+        'upload_files',
+        'edit_published_posts',
+        'delete_posts',
+        'manage_categories',
+        'moderate_comments',
+        'list_users',
+    ];
+
+    /**
+     * The security boundary is capability, not provenance: any WP user is safe
+     * to authenticate as long as it cannot edit content or manage the site.
+     *
+     * Residual risk: this path still authenticates purely by email, with no
+     * password check, so a visitor who types an existing non-privileged WP
+     * user's email can be logged into that account. That lateral risk is closed
+     * separately by server-side email-ownership verification (tracked in the
+     * GrocersList server repo), not here.
+     */
+    protected function _isSafeToAuthenticate(\WP_User $user): bool {
+        foreach ($this->PRIVILEGED_CAPABILITIES as $cap) {
+            if (user_can($user, $cap)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function login(string $email) {
         $user = get_user_by('email', $email);
+
+        if (!$user || !is_a($user, 'WP_User')) {
+            return;
+        }
+
+        if (!$this->_isSafeToAuthenticate($user)) {
+            Logger::debug("Refusing to log in user for email '" . $email . "': account holds a privileged capability");
+            return;
+        }
 
         if (!is_user_logged_in()) {
             // TODO: NMML - what if there's already a logged in user and emails don't match?
@@ -108,6 +159,14 @@ class MemberService {
                 }
             } else {
                 Logger::debug("Found user: " . print_r($user, true));
+
+                // Never attach member metadata to, or log in, an existing WP
+                // user that can edit content or manage the site (admin/editor/
+                // author/contributor). Non-privileged accounts are allowed.
+                if (!$this->_isSafeToAuthenticate($user)) {
+                    Logger::debug("Refusing to manage existing user for email '" . $email . "': account holds a privileged capability");
+                    return;
+                }
             }
 
             if ($user && is_a($user, 'WP_User')) {

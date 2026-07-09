@@ -10,6 +10,7 @@ use GrocersList\Admin\SalesPage;
 use GrocersList\Admin\SettingsPage;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\PublicAjaxController;
+use GrocersList\Frontend\WprmPrintIntegration;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\MemberService;
 use GrocersList\Service\LinkRewriter;
@@ -63,6 +64,9 @@ class Plugin
 
         $clientScripts = new ClientScripts($creatorSettingsFetcher, $memberService);
         $clientScripts->register();
+
+        $wprmPrintIntegration = new WprmPrintIntegration($creatorSettingsFetcher, $clientScripts);
+        $wprmPrintIntegration->register();
 
         $contentFilter = new ContentFilter($creatorSettingsFetcher);
         $contentFilter->register();

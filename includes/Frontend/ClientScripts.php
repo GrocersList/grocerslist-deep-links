@@ -17,13 +17,17 @@ class ClientScripts
     private string $cacheBustingString;
 
     // cache busting string comprised of version and timestamp
-    private function get_cache_busting_string(): string {
+    public function getCacheBustingString(): string {
         if (empty($this->cacheBustingString)) {
             // TODO: cache for 5 min?
             $this->cacheBustingString = Config::getPluginVersion() . "_" . time();
         }
 
         return $this->cacheBustingString;
+    }
+
+    public function getBundleUrl(): string {
+        return plugin_dir_url(__FILE__) . '../../client-ui/dist/bundle.js';
     }
 
     public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher, MemberService $memberService) {
@@ -78,10 +82,21 @@ EOD;
     }
 
     public function enqueueScripts(): void {
-        $assetBase = plugin_dir_url(__FILE__) . '../../client-ui/dist/';
+        wp_enqueue_script('grocers-list-client', $this->getBundleUrl(), [], $this->getCacheBustingString(), true);
 
-        wp_enqueue_script('grocers-list-client', $assetBase . 'bundle.js', [], $this->get_cache_busting_string(), true);
+        $window_grocersList = $this->buildWindowGrocersList();
 
+        wp_localize_script('grocers-list-client', 'grocersList', $window_grocersList);
+
+        $membershipsFullyEnabled = $this->creatorSettingsFetcher->getMembershipsFullyEnabled();
+        $externalJsUrl = Config::getExternalJsUrl();
+
+        if ($membershipsFullyEnabled && !empty($externalJsUrl)) {
+            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $this->getCacheBustingString(), array('strategy' => 'async', 'in_footer' => false));
+        }
+    }
+
+    public function buildWindowGrocersList(): array {
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
         $theme_root = get_stylesheet_directory();
         $theme_json_path = trailingslashit( $theme_root ) . 'theme.json';
@@ -141,14 +156,7 @@ EOD;
             }
         }
 
-        wp_localize_script('grocers-list-client', 'grocersList', $window_grocersList);
-
-        $membershipsFullyEnabled = $this->creatorSettingsFetcher->getMembershipsFullyEnabled();
-        $externalJsUrl = Config::getExternalJsUrl();
-
-        if ($membershipsFullyEnabled && !empty($externalJsUrl)) {
-            wp_enqueue_script('grocers-list-external', $externalJsUrl, [], $this->get_cache_busting_string(), array('strategy' => 'async', 'in_footer' => false));
-        }
+        return $window_grocersList;
     }
     /**
      * Summary of addPreloadHints
@@ -164,7 +172,7 @@ EOD;
         $externalJsUrl = Config::getExternalJsUrl();
 
         if ($membershipsFullyEnabled && !empty($externalJsUrl)) {
-            $versionedUrl = add_query_arg('ver', $this->get_cache_busting_string(), $externalJsUrl);
+            $versionedUrl = add_query_arg('ver', $this->getCacheBustingString(), $externalJsUrl);
             echo '<link rel="preload" href="' . esc_url($versionedUrl) . '" as="script">' . "\n";
         }
     }
