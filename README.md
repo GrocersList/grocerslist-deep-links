@@ -97,7 +97,7 @@ An overview of our features:
 
 #### - 06/03/2026 - 1.24.0 - Sales page generator for admins
 
-#### - 07/07/2026 - 1.25.0 - Security: fix front-end signup logging visitors into other WordPress accounts
+#### - 07/07/2026 - 1.25.0 - Security updates
 
 ### Resources:
 

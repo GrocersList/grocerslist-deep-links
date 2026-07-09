@@ -54,14 +54,12 @@ class MemberService {
     }
 
     /**
-     * Capabilities that mark a WP user as privileged. The plugin refuses to
-     * authenticate any account that holds even one of these, so the
-     * unauthenticated signup path can never escalate into an admin/editor/
-     * author/contributor session. A plain reader/subscriber/customer — whether
-     * created by this plugin or by another (e.g. WooCommerce) — holds none of
-     * these and is allowed through.
+     * Capabilities that mark a WP user as privileged. The plugin does not
+     * authenticate any account that holds even one of these through the
+     * membership flow; a plain reader/subscriber/customer holds none of these
+     * and is allowed through.
      */
-    protected $PRIVILEGED_CAPABILITIES = [
+    public const PRIVILEGED_CAPABILITIES = [
         'manage_options',
         'edit_posts',
         'edit_pages',
@@ -76,17 +74,12 @@ class MemberService {
     ];
 
     /**
-     * The security boundary is capability, not provenance: any WP user is safe
-     * to authenticate as long as it cannot edit content or manage the site.
-     *
-     * Residual risk: this path still authenticates purely by email, with no
-     * password check, so a visitor who types an existing non-privileged WP
-     * user's email can be logged into that account. That lateral risk is closed
-     * separately by server-side email-ownership verification (tracked in the
-     * GrocersList server repo), not here.
+     * A WP user is treated as safe to authenticate through the membership flow
+     * only when it holds none of the privileged capabilities above (i.e. it
+     * cannot edit content or manage the site).
      */
     protected function _isSafeToAuthenticate(\WP_User $user): bool {
-        foreach ($this->PRIVILEGED_CAPABILITIES as $cap) {
+        foreach (self::PRIVILEGED_CAPABILITIES as $cap) {
             if (user_can($user, $cap)) {
                 return false;
             }
@@ -129,9 +122,7 @@ class MemberService {
             // Find existing user by email or create one
             $user = get_user_by('email', $email);
 
-            // TODO: NMML - password? do we sync with our FollowerAccount passwords? - YES
             $password = wp_generate_password(12, true);
-            Logger::debug("Generated password: " . $password);
 
             if (!$user) {
                 Logger::debug("No user found for email: " . $email);

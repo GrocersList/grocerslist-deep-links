@@ -9,12 +9,14 @@ use GrocersList\Admin\PostGating;
 use GrocersList\Admin\SalesPage;
 use GrocersList\Admin\SettingsPage;
 use GrocersList\Frontend\ClientScripts;
+use GrocersList\Frontend\EmailVerificationPage;
 use GrocersList\Frontend\PublicAjaxController;
 use GrocersList\Frontend\WprmPrintIntegration;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\MemberService;
 use GrocersList\Service\LinkRewriter;
 use GrocersList\Support\ContentFilter;
+use GrocersList\Support\ElevatedUserRemediation;
 use GrocersList\Support\Logger;
 use GrocersList\Support\SalesPagePattern;
 
@@ -58,6 +60,9 @@ class Plugin
         $publicAjaxController = new PublicAjaxController();
         $publicAjaxController->register($creatorSettingsFetcher, $memberService);
 
+        $emailVerificationPage = new EmailVerificationPage();
+        $emailVerificationPage->register();
+
         // UIs:
         $settingsPage = new SettingsPage($creatorSettingsFetcher);
         $settingsPage->register();
@@ -80,6 +85,9 @@ class Plugin
 
         $categoryGating = new CategoryGating();
         $categoryGating->register();
+
+        $elevatedUserRemediation = new ElevatedUserRemediation();
+        $elevatedUserRemediation->register();
 
         self::$registered = true;
     }

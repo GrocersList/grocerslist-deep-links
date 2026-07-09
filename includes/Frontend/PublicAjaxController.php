@@ -138,6 +138,10 @@ class PublicAjaxController
         $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : '';
         $url = isset($_POST['url']) ? sanitize_text_field(wp_unslash($_POST['url'])) : '';
 
+        if (empty($url)) {
+            $url = home_url();
+        }
+
         if (empty($email) || empty($password)) {
             wp_send_json_error([
                 'type' => 'about:blank',
@@ -150,7 +154,19 @@ class PublicAjaxController
 
         $api_key = PluginSettings::getApiKey();
 
-        $signupResponse = ApiClient::signupFollower($api_key, $email, $password, $url);
+        $wpUser = !empty($email) ? get_user_by('email', $email) : false;
+        $wpUserExists = (bool) $wpUser;
+        $wpUserIsElevated = false;
+        if ($wpUser instanceof \WP_User) {
+            foreach (MemberService::PRIVILEGED_CAPABILITIES as $cap) {
+                if (user_can($wpUser, $cap)) {
+                    $wpUserIsElevated = true;
+                    break;
+                }
+            }
+        }
+
+        $signupResponse = ApiClient::signupFollower($api_key, $email, $password, $url, $wpUserExists, $wpUserIsElevated);
 
         if (!is_wp_error($signupResponse)) {
             $signupStatus = wp_remote_retrieve_response_code($signupResponse);

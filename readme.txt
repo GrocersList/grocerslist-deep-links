@@ -54,4 +54,4 @@ Contributors: GRO Holdings, Inc | Engineering
 = 1.24.0 =
 * Sales page generator for admins
 = 1.25.0 =
-* Security: fix front-end signup logging visitors into other WordPress accounts
+* Security updates

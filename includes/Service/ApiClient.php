@@ -160,9 +160,11 @@ class ApiClient
      * @param string $email
      * @param string $password
      * @param string $url
+     * @param bool $emailMatchesWpUser
+     * @param bool $wpUserIsElevated
      * @return string|\WP_Error
      */
-    static function signupFollower(string $apiKey, string $email, string $password, string $url)
+    static function signupFollower(string $apiKey, string $email, string $password, string $url, bool $emailMatchesWpUser = false, bool $wpUserIsElevated = false)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
 
@@ -176,6 +178,8 @@ class ApiClient
                 'username' => $email,
                 'password' => $password,
                 'post_url' => $url,
+                'emailMatchesWpUser' => $emailMatchesWpUser,
+                'wpUserIsElevated' => $wpUserIsElevated,
             ])
         ]);
 
@@ -204,6 +208,32 @@ class ApiClient
                 'username' => $email,
                 'password' => $password,
             ])
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * Verify a follower's email address
+     *
+     * @param string $apiKey
+     * @param string $token
+     * @return string|\WP_Error
+     */
+    static function verifyEmail(string $apiKey, string $token)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/verify-email", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+            ],
+            'body' => json_encode([
+                'token' => $token,
+            ]),
+            'timeout' => 10,
         ]);
 
         return $response;
@@ -303,6 +333,30 @@ class ApiClient
                 'x-gl-plugin-version' => Config::getPluginVersion(),
                 'Authorization' => $jwt ? "Bearer " . $jwt : null,
             ],
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * Clear the membership records for the given emails server-side.
+     *
+     * @param string $apiKey
+     * @param string[] $emails
+     * @return array|\WP_Error
+     */
+    static function deleteFollowers(string $apiKey, array $emails)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/purge", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+            ],
+            'body' => json_encode(['emails' => array_values($emails)]),
+            'timeout' => 15,
         ]);
 
         return $response;
