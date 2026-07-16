@@ -2,6 +2,7 @@
 
 namespace GrocersList\Service;
 
+use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Logger;
 
 class MemberService {
@@ -113,7 +114,7 @@ class MemberService {
         }
     }
 
-    public function createOrUpdateMember(string $email, string $subscription_status, bool $is_paid_member, bool $is_past_due, string $subscription_management_link, string $creator_id = null) {
+    public function createOrUpdateMember(string $email, string $subscription_status, bool $is_paid_member, bool $is_past_due, string $subscription_management_link, string $creator_id = null, string $jwt = null) {
         $creator_id = $creator_id ?? '';
         if (!empty($email)) {
             Logger::debug("attempt to find user");
@@ -171,6 +172,15 @@ class MemberService {
                 update_user_meta($user->ID, $this->_namespaceMetaDataKey($creator_id, $this->LAST_UPDATED), time());
 
                 $this->login($email);
+
+                // Best-effort side-channel: tell the GL server which WP user id represents
+                // this follower so the server can call back to delete the WP user on churn.
+                if (!empty($jwt)) {
+                    $apiKey = PluginSettings::getApiKey();
+                    if (!empty($apiKey)) {
+                        ApiClient::patchFollowerWpUserId($apiKey, $jwt, (int) $user->ID);
+                    }
+                }
             }
         }
     }

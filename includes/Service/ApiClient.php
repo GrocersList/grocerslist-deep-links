@@ -362,6 +362,134 @@ class ApiClient
         return $response;
     }
 
+    /**
+     * Notify the GL server of the WordPress user id that was created (or reused)
+     * for the currently-authenticated follower. Enables the server to reliably
+     * identify which WP user to delete on Stripe subscription cancellation.
+     *
+     * Failures are swallowed: this is a best-effort side-channel update, not a
+     * required leg of the membership signup flow.
+     *
+     * @param string $apiKey
+     * @param string $jwt
+     * @param int $wpUserId
+     * @return string|\WP_Error
+     */
+    static function patchFollowerWpUserId(string $apiKey, string $jwt, int $wpUserId)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+        if (!$jwt) return new \WP_Error('missing_jwt', 'Missing JWT');
+        if ($wpUserId <= 0) return new \WP_Error('invalid_param', 'Invalid wpUserId');
+
+        $response = wp_remote_request("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/me/wp-user", [
+            'method' => 'PATCH',
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+                'Authorization' => "Bearer " . $jwt,
+            ],
+            'body' => json_encode([
+                'wpUserId' => $wpUserId,
+            ]),
+        ]);
+
+        if (is_wp_error($response)) {
+            Logger::debug("patchFollowerWpUserId transport error: " . $response->get_error_message());
+
+            return $response;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        if ($status >= 400) {
+            Logger::debug("patchFollowerWpUserId non-2xx status " . $status . ": " . wp_remote_retrieve_body($response));
+        }
+
+        return $response;
+    }
+
+    /**
+     * Fetch the list of follower accounts on this creator whose WP users the
+     * plugin still needs to delete (or dissociate). Polled hourly by WP-Cron.
+     *
+     * @param string $apiKey
+     * @return array|\WP_Error Decoded response body, or WP_Error on transport
+     *                         failure / missing api key.
+     */
+    static function getWpCleanupPending(string $apiKey)
+    {
+        if (!$apiKey) return new \WP_Error('grocerslist_missing_api_key', 'Missing API key');
+
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/wp-cleanup/pending", [
+            'headers' => [
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+                'x-api-key' => $apiKey,
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            Logger::debug("getWpCleanupPending transport error: " . $response->get_error_message());
+
+            return $response;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        if ($status < 200 || $status >= 300) {
+            Logger::debug("getWpCleanupPending non-2xx status " . $status . ": " . wp_remote_retrieve_body($response));
+
+            return $response;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (!is_array($body)) {
+            Logger::debug("getWpCleanupPending: response body could not be parsed as JSON");
+
+            return ['pending' => []];
+        }
+
+        return $body;
+    }
+
+    /**
+     * Acknowledge to the GL server that the plugin has processed a set of
+     * pending cleanup entries (deleted the WP user, dissociated on multi-creator,
+     * or noticed the WP user was already gone). The server can then clear its
+     * cleanup flag for those follower accounts.
+     *
+     * @param string $apiKey
+     * @param array<int, string> $followerAccountIds
+     * @return array|\WP_Error|null Null when called with an empty id list.
+     */
+    static function postWpCleanupComplete(string $apiKey, array $followerAccountIds)
+    {
+        if (!$apiKey) return new \WP_Error('grocerslist_missing_api_key', 'Missing API key');
+        if (empty($followerAccountIds)) return null;
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/wp-cleanup/complete", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+                'x-api-key' => $apiKey,
+            ],
+            'body' => json_encode([
+                'followerAccountIds' => array_values($followerAccountIds),
+            ]),
+        ]);
+
+        if (is_wp_error($response)) {
+            Logger::debug("postWpCleanupComplete transport error: " . $response->get_error_message());
+
+            return $response;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        if ($status < 200 || $status >= 300) {
+            Logger::debug("postWpCleanupComplete non-2xx status " . $status . ": " . wp_remote_retrieve_body($response));
+        }
+
+        return $response;
+    }
+
     static function updateMembershipsEnabled(string $apiKey, string $enabled)
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');;

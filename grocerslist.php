@@ -86,6 +86,11 @@ function grocers_list_activate() {
     require_once __DIR__ . '/includes/Database/Installer.php';
     GrocersList\Database\Installer::install();
 
+    // Schedule the hourly WP user cleanup cron. Handler is wired in Plugin::register().
+    if (!wp_next_scheduled('grocerslist_wp_user_cleanup')) {
+        wp_schedule_event(time(), 'hourly', 'grocerslist_wp_user_cleanup');
+    }
+
     // Flush rewrite rules (useful for nginx compatibility)
     flush_rewrite_rules();
 }
@@ -96,7 +101,8 @@ function grocers_list_activate() {
 function grocers_list_deactivate() {
     // Clean up any scheduled events if we had any
     wp_clear_scheduled_hook('grocers_list_scheduled_task');
-    
+    wp_clear_scheduled_hook('grocerslist_wp_user_cleanup');
+
     // Flush rewrite rules (useful for nginx compatibility)
     flush_rewrite_rules();
 }

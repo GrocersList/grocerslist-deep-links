@@ -104,7 +104,7 @@ class PublicAjaxController
                     $is_past_due = isset($body['isPastDue']) ? rest_sanitize_boolean($body['isPastDue']) : '';
                     $subscription_management_link = isset($body['subscriptionManagementLink']) ? sanitize_text_field($body['subscriptionManagementLink']) : '';
 
-                    $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId);
+                    $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $jwt);
                 }
             }
         }
@@ -188,9 +188,10 @@ class PublicAjaxController
                         $is_paid_member = isset($follower_account['isPaidMember']) ? rest_sanitize_boolean($follower_account['isPaidMember']) : '';
                         $is_past_due = isset($follower_account['isPastDue']) ? rest_sanitize_boolean($follower_account['isPastDue']) : '';
                         $subscription_management_link = isset($follower_account['subscriptionManagementLink']) ? sanitize_text_field($follower_account['subscriptionManagementLink']) : '';
+                        $login_jwt = isset($body['token']) ? sanitize_text_field($body['token']) : '';
 
                         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-                        $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId);
+                        $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $login_jwt);
                     }
                 }
             }
@@ -241,9 +242,10 @@ class PublicAjaxController
                 $is_paid_member = isset($follower_account['isPaidMember']) ? rest_sanitize_boolean($follower_account['isPaidMember']) : '';
                 $is_past_due = isset($follower_account['isPastDue']) ? rest_sanitize_boolean($follower_account['isPastDue']) : '';
                 $subscription_management_link = isset($follower_account['subscriptionManagementLink']) ? sanitize_text_field($follower_account['subscriptionManagementLink']) : '';
+                $login_jwt = isset($body['token']) ? sanitize_text_field($body['token']) : '';
 
                 $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId);
+                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $login_jwt);
             }
         }
 

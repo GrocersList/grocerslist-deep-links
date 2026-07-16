@@ -15,6 +15,7 @@ use GrocersList\Frontend\WprmPrintIntegration;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\MemberService;
 use GrocersList\Service\LinkRewriter;
+use GrocersList\Service\WpUserCleanupService;
 use GrocersList\Support\ContentFilter;
 use GrocersList\Support\ElevatedUserRemediation;
 use GrocersList\Support\Logger;
@@ -62,6 +63,22 @@ class Plugin
 
         $emailVerificationPage = new EmailVerificationPage();
         $emailVerificationPage->register();
+
+        // Hourly WP-Cron handler: poll GL server for churned followers and delete
+        // (or dissociate) their WordPress users locally.
+        $wpUserCleanupService = new WpUserCleanupService($creatorSettingsFetcher);
+        add_action('grocerslist_wp_user_cleanup', [$wpUserCleanupService, 'run']);
+
+        // Self-heal the cron schedule on every request. register_activation_hook
+        // fires only on click-to-activate; auto-updates from earlier plugin
+        // versions do NOT re-fire it, so existing installs that upgrade to this
+        // version would otherwise never get the cleanup cron scheduled. Cheap
+        // after the first schedule (wp_next_scheduled short-circuits).
+        add_action('init', function () {
+            if (!wp_next_scheduled('grocerslist_wp_user_cleanup')) {
+                wp_schedule_event(time(), 'hourly', 'grocerslist_wp_user_cleanup');
+            }
+        });
 
         // UIs:
         $settingsPage = new SettingsPage($creatorSettingsFetcher);
