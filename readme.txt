@@ -3,7 +3,7 @@ Contributors: grocerslist
 Tags: affiliate, amazon, memberships, monetization, deep links
 Requires at least: 4.4
 Tested up to: 6.8
-Stable tag: 1.25.0
+Stable tag: 1.26.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -55,3 +55,5 @@ Contributors: GRO Holdings, Inc | Engineering
 * Sales page generator for admins
 = 1.25.0 =
 * Security updates
+= 1.26.0 =
+WP user removal and configurable badge icon for post gating

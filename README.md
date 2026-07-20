@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 6.8
-Stable tag: 1.25.0
+Stable tag: 1.26.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -98,6 +98,8 @@ An overview of our features:
 #### - 06/03/2026 - 1.24.0 - Sales page generator for admins
 
 #### - 07/07/2026 - 1.25.0 - Security updates
+
+#### - 07/19/2026 - 1.26.0 - Remove WP users after churn and configurable badge icon for post gating
 
 ### Resources:
 
