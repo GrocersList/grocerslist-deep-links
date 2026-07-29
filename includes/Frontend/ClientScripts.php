@@ -16,6 +16,10 @@ class ClientScripts
     private const GATED_POST_URLS_TTL_SECONDS = 5 * 60; // 5 minutes
     private const GATED_POST_URLS_MAX = 500;
 
+    // Honored by Raptive/AdThrive; shared with WprmPrintIntegration, which must
+    // apply the same classes via inline JS on WPRM print pages.
+    public const AD_REMOVAL_CLASSES = ['adthrive-disable-all', 'gl-paid-member'];
+
     private CreatorSettingsFetcher $creatorSettingsFetcher;
     private MemberService $memberService;
 
@@ -65,33 +69,41 @@ class ClientScripts
         add_filter('post_thumbnail_html', [$this, 'wrapGatedPostThumbnail'], 10, 2);
     }
 
-    public function add_ad_removal_classes(array $classes): array {
+    public function isPaidMember(): bool {
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-        list($email, , $is_paid) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
+        list($email, , $is_paid) = $this->memberService->getMemberData($creatorSettings->creatorAccountId ?? null);
 
-        if (!$email || !$is_paid) {
+        return !empty($email) && !empty($is_paid);
+    }
+
+    public function add_ad_removal_classes(array $classes): array {
+        if (!$this->isPaidMember()) {
             return $classes;
         }
 
-        $classes[] = 'adthrive-disable-all';
-        $classes[] = 'gl-paid-member';
+        foreach (self::AD_REMOVAL_CLASSES as $class) {
+            $classes[] = $class;
+        }
         return $classes;
     }
 
-    public function mediavine_disable_ads(): void {
-        $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-        list($email, , $is_paid) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
-
-        if (!$email || !$is_paid) {
-            echo '';
-            return;
-        }
-
+    // Closing EOD stays at column 0: an indented closing marker would strip the
+    // body's leading whitespace and change the emitted bytes on normal pages.
+    public function getMediavineSettingsMarkup(): string {
         $mediavine_element = <<<EOD
             <div id="mediavine-settings" data-blocklist-leaderboard="1" data-blocklist-sidebar-atf="1" data-blocklist-sidebar-btf="1" data-blocklist-content-desktop="1" data-blocklist-content-mobile="1" data-blocklist-adhesion-mobile="1" data-blocklist-adhesion-tablet="1" data-blocklist-adhesion-desktop="1" data-blocklist-recipe="1" data-blocklist-auto-insert-sticky="1" data-blocklist-chicory="1" data-blocklist-zergnet="1" data-blocklist-interstitial-mobile="1" data-blocklist-interstitial-desktop="1" data-blocklist-universal-player-desktop="1" data-blocklist-universal-player-mobile="1"></div>
 EOD;
 
-        echo $mediavine_element;
+        return $mediavine_element;
+    }
+
+    public function mediavine_disable_ads(): void {
+        if (!$this->isPaidMember()) {
+            echo '';
+            return;
+        }
+
+        echo $this->getMediavineSettingsMarkup();
     }
 
     public function enqueueScripts(): void {
