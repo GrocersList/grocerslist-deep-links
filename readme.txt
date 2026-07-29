@@ -50,12 +50,12 @@ Contributors: GRO Holdings, Inc | Engineering
 = 1.22.1 =
 * Rebrand: Grocers List is now GRO.
 = 1.23.0 =
-* Update Mediavine ad-removal to not remove video players
+* Update Mediavine ad-removal to not remove video players.
 = 1.24.0 =
-* Sales page generator for admins
+* Sales page generator for admins.
 = 1.25.0 =
-* Security updates
+* Security updates.
 = 1.26.0 =
-WP user removal and configurable badge icon for post gating
+* WP user removal and configurable badge icon for post gating.
 = 1.27.0 =
-* Suppress ads for paid members on WP Recipe Maker print pages
+* Suppress ads for paid members on WP Recipe Maker print pages.
