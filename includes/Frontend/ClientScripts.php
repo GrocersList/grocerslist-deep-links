@@ -56,9 +56,9 @@ class ClientScripts
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_from_front_end']);
         add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
         add_action('wp_head', [$this, 'addPreloadHints']);
-        // Emit inline style before body paint so server-rendered lock icons pick up
-        // the configured color immediately, without waiting for the widget bundle.
-        add_action('wp_head', [$this, 'outputLockIconBackgroundStyle']);
+        // Hide server-rendered lock icons until the widget takes over styling —
+        // see outputLockIconHideGuard for the cross-repo contract.
+        add_action('wp_head', [$this, 'outputLockIconHideGuard']);
         add_filter('body_class', [$this, 'add_ad_removal_classes']);
         // Inject HTML to disable mediavine ads if applicable
         add_action('wp_footer', [$this, 'mediavine_disable_ads']);
@@ -269,13 +269,21 @@ EOD;
     }
 
     /**
-     * Emits an inline `<style>` in wp_head so server-rendered lock icons pick
-     * up the configured background color before the widget bundle loads
-     * (avoids a FOUC where icons briefly render with the widget's built-in
-     * rgba(0,0,0,0.65) default). No output when the toggle is off or the
-     * color is unset.
+     * Emits a hide-guard `<style>` in wp_head whenever the lock feature is on.
+     *
+     * Contract: the plugin server-renders lock markup (wrapGatedPostThumbnail)
+     * that must never paint unstyled — without CSS the icon span lands in
+     * normal flow below the image and its width/height-less SVG defaults to
+     * 300x150, a large white gap. The widget is the sole owner of the
+     * lock-overlay CSS: at init it either injects its full styles and removes
+     * this guard tag (non-members) or removes the server-rendered icons
+     * outright (paid members). If the widget never loads, the guard keeps the
+     * icons hidden — clean image, no broken layout.
+     *
+     * The tag id is a cross-repo contract with grocerslist-widget
+     * src/LockOverlay/index.ts (removePluginHideGuard).
      */
-    public function outputLockIconBackgroundStyle(): void
+    public function outputLockIconHideGuard(): void
     {
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
 
@@ -283,16 +291,7 @@ EOD;
             return;
         }
 
-        $color = $this->readLockIconBackgroundColor($creatorSettings);
-
-        if ($color === null) {
-            return;
-        }
-
-        echo '<style id="gl-lock-icon-inline-style">.gl-locked-thumbnail-icon { background: '
-            . esc_attr($color)
-            . '; }</style>'
-            . "\n";
+        echo '<style id="gl-lock-icon-inline-style">.gl-locked-thumbnail-icon{display:none}</style>' . "\n";
     }
 
     /**
