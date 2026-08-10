@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 6.8
-Stable tag: 1.27.0
+Stable tag: 1.28.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -102,6 +102,8 @@ An overview of our features:
 #### - 07/19/2026 - 1.26.0 - Remove WP users after churn and configurable badge icon for post gating
 
 #### - 07/28/2026 - 1.27.0 - Suppress ads for paid members on WP Recipe Maker print pages
+
+#### - 08/10/2026 - 1.28.0 - Server side CSS for gated-post lock icon
 
 ### Resources:
 
