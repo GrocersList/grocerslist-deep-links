@@ -3,7 +3,7 @@ Contributors: grocerslist
 Tags: affiliate, amazon, memberships, monetization, deep links
 Requires at least: 4.4
 Tested up to: 6.8
-Stable tag: 1.28.0
+Stable tag: 1.29.0
 Requires PHP: 7.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -61,3 +61,5 @@ Contributors: GRO Holdings, Inc | Engineering
 * Suppress ads for paid members on WP Recipe Maker print pages.
 = 1.28.0 =
 * Server side CSS for gated-post lock icon.
+= 1.29.9 =
+* Expand server side CSS for gated-recipe-cards with lock icon.
