@@ -7,7 +7,7 @@ use GrocersList\Support\Config;
 class PostGating
 {
     public const META_POST_GATED = 'grocers_list_post_gated';
-    private const META_RECIPE_CARD_GATED = 'grocers_list_recipe_card_gated';
+    public const META_RECIPE_CARD_GATED = 'grocers_list_recipe_card_gated';
     private const META_NO_GATING = 'grocers_list_no_gating';
 
     public function register(): void

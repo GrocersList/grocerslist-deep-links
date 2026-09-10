@@ -296,8 +296,10 @@ EOD;
 
     /**
      * Returns an array of URL pathnames (leading slash) for every published post
-     * where PostGating reports effective gating at the post level. Cached in a
-     * transient keyed on creator id + plugin version for 5 minutes.
+     * where PostGating reports effective gating at EITHER level — whole-post or
+     * recipe-card-only. Both levels get the same lock icon, so the widget needs
+     * both in one list. Cached in a transient keyed on creator id + plugin
+     * version for 5 minutes.
      *
      * @param string|null $creatorAccountId
      * @return string[]
@@ -319,8 +321,9 @@ EOD;
 
     /**
      * Composes the gated-post candidate set from BOTH sources:
-     *   A. posts whose post-level META_POST_GATED is '1', and
-     *   B. posts assigned to a category whose META_CATEGORY_GATING_TYPE is 'post' or 'page'.
+     *   A. posts whose post-level META_POST_GATED or META_RECIPE_CARD_GATED is '1', and
+     *   B. posts assigned to a category whose META_CATEGORY_GATING_TYPE is 'post',
+     *      'page', or 'recipe'.
      * The union is then re-checked with PostGating::getEffectiveGating(), which is the
      * authoritative filter — it honors per-post META_NO_GATING opt-out and post-level
      * overrides of a category's gating. The GATED_POST_URLS_MAX cap is enforced on
@@ -330,7 +333,7 @@ EOD;
      */
     private function queryGatedPostUrls(): array
     {
-        // Query A: posts with the post-level flag set.
+        // Query A: posts with either post-level gating flag set.
         $queryA = new \WP_Query([
             'post_type' => 'post',
             'post_status' => 'publish',
@@ -339,8 +342,14 @@ EOD;
             'fields' => 'ids',
             'no_found_rows' => true,
             'meta_query' => [
+                'relation' => 'OR',
                 [
                     'key' => PostGating::META_POST_GATED,
+                    'value' => '1',
+                    'compare' => '=',
+                ],
+                [
+                    'key' => PostGating::META_RECIPE_CARD_GATED,
                     'value' => '1',
                     'compare' => '=',
                 ],
@@ -374,9 +383,10 @@ EOD;
         $truncated = false;
         foreach ($candidateIds as $postId) {
             // Authoritative re-check: honors META_NO_GATING opt-out and
-            // resolves per-post overrides of category gating.
+            // resolves per-post overrides of category gating. Recipe-card-only
+            // gating earns the same lock icon, so either level qualifies.
             $gating = PostGating::getEffectiveGating((int) $postId);
-            if (empty($gating['post'])) {
+            if (empty($gating['post']) && empty($gating['recipe'])) {
                 continue;
             }
 
@@ -409,7 +419,9 @@ EOD;
     }
 
     /**
-     * Returns term_ids of categories whose gating type is 'post' or 'page'.
+     * Returns term_ids of categories whose gating type is 'post', 'page', or
+     * 'recipe' — recipe-card-only categories count because their posts get the
+     * same lock icon as fully gated ones.
      * Uses WP_Term_Query so category-inherited gated posts can be discovered
      * without loading every published post.
      *
@@ -428,7 +440,7 @@ EOD;
             'meta_query' => [
                 [
                     'key' => CategoryGating::META_CATEGORY_GATING_TYPE,
-                    'value' => ['post', 'page'],
+                    'value' => ['post', 'page', 'recipe'],
                     'compare' => 'IN',
                 ],
             ],
@@ -500,8 +512,9 @@ EOD;
             return $html;
         }
 
+        // Both gating levels render the same icon, so don't narrow to 'post'.
         $gating = PostGating::getEffectiveGating((int) $post_id);
-        if (empty($gating['post'])) {
+        if (empty($gating['post']) && empty($gating['recipe'])) {
             return $html;
         }
 
