@@ -53,9 +53,20 @@ paid memberships.
   for Raptive, `sh_mv` for Mediavine), except a redirect to GRO's own links
   (gro.co, grocerslist.com, linksta.io and their subdomains), which goes
   exactly as set. When a form shows the opt-in checkbox and the visitor
-  leaves it unticked, nothing is handed to the ad script and no hash is added
-  to that page's address. The plugin makes no request of its own for this and
-  does not store the hash.
+  leaves it unticked, the plugin hands the ad script nothing and adds no
+  hash to that page's address. The plugin makes no request of its own for
+  this and does not store the hash.
+  Separately from the plugin: an ad network's identity script — the kind
+  the creator's ad partner loads on their pages, which this plugin does
+  not load — can read those pages' email fields itself. On a GRO test
+  site, observed on 2026-10-07, such a script hashed and sent the typed
+  address as soon as the email field lost focus, with no form submission
+  and whatever the opt-in checkbox said. The plugin does not load that
+  script and cannot switch it off; what it collects is between the creator
+  and their ad network. The plugin's own part: after a successful sign-up
+  the visitor's browser remembers the address, and the plugin fills it
+  into a GRO form's email field on later page views, as it does for a
+  signed-in member.
 - Paid memberships: when memberships are on, the site's pages load GRO's
   membership script from wp-plugin.grocerslist.com in visitors' browsers.
   When a visitor signs up, logs in, confirms their email or resets their
