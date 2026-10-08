@@ -4,9 +4,14 @@ namespace GrocersList\Blocks;
 
 /**
  * The picture of what a locked gate hides, blurred under the gate's card: the
- * hidden blocks' shape drawn with the theme's own elements — headings of the
- * same level, paragraphs, lists — so that it reads as the post going on in
- * the site's own type, with boxes where pictures and a recipe card would be.
+ * hidden blocks' shape drawn with the theme's own elements — paragraphs,
+ * lists — so that it reads as the post going on in the site's own type, with
+ * boxes where pictures and a recipe card would be.
+ *
+ * A heading's shape is the one thing drawn without the theme's element: a div
+ * carrying the level as a class, so the glimpse puts nothing in the page's
+ * outline, with the size a heading would have inherited drawn by the
+ * stylesheet instead.
  *
  * Only the shape is read: a block's name, a heading's level, how long a list
  * or a paragraph is, a picture's rough proportions. Nothing of the content
@@ -148,7 +153,7 @@ final class GatePreview
             $level = isset($attrs['level']) && is_numeric($attrs['level']) ? (int) $attrs['level'] : 2;
             $level = max(1, min(6, $level));
 
-            return '<h' . $level . '>' . self::LINE . '</h' . $level . '>';
+            return '<div class="gl-gate__heading gl-gate__heading--h' . $level . '">' . self::LINE . '</div>';
         }
 
         if ($name === 'core/list') {

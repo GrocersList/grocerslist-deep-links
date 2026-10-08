@@ -15,12 +15,18 @@
  *   --below               hides everything below it in the post
  *   --inside              hides the blocks inside it
  * .gl-gate__preview       the picture (aria-hidden, inert): the theme's own
- *                         headings, paragraphs and lists, and boxes for
- *                         media, in the shape of the hidden blocks, with
- *                         nothing from them (GatePreview.php); blurred
+ *                         paragraphs and lists, and boxes for media, in the
+ *                         shape of the hidden blocks, with nothing from them
+ *                         (GatePreview.php); blurred
  * .gl-gate__line          a line of text in it: an empty span whose words
  *                         are filler drawn by this stylesheet, so no filler
  *                         is in the page's text
+ * .gl-gate__heading       a hidden heading's shape: a div, never an h1-h6,
+ *                         so nothing in the picture is in the page's
+ *                         outline, with the size a heading element would
+ *                         have inherited drawn by this stylesheet
+ *   --h1 | --h2 | --h3 | --h4 | --h5 | --h6
+ *                         the hidden heading's level
  * .gl-gate__media         a box in place of an image, a video or an embed
  *   --1-1 | --4-3 | --3-2 | --16-9 | --21-9 | --3-4 | --2-3 | --9-16
  *                         its aspect ratio, the nearest to the block's
@@ -172,9 +178,27 @@ li:nth-child(3n) > .gl-gate__line:only-child {
   width: 70%;
 }
 
-:is(h1, h2, h3, h4, h5, h6) > .gl-gate__line:only-child {
+.gl-gate__heading > .gl-gate__line:only-child {
   width: 56%;
 }
+
+/* A heading's shape is a div, so nothing in the picture is in the page's
+   outline (GatePreview.php), and what the heading element used to inherit is
+   drawn here: the level's size, from the theme's own preset sizes where it
+   has them, and a heading's tighter line. A theme that gives its headings
+   sizes of its own draws the bars at a size its headings do not use
+   (docs/FORMS.md, "Limits"). */
+.gl-gate .gl-gate__heading {
+  font-weight: 400;
+  line-height: 1.125;
+}
+
+.gl-gate__heading--h1 { font-size: var(--wp--preset--font-size--xx-large, var(--wp--preset--font-size--x-large, 2em)); }
+.gl-gate__heading--h2 { font-size: var(--wp--preset--font-size--x-large, 1.5em); }
+.gl-gate__heading--h3 { font-size: var(--wp--preset--font-size--large, 1.17em); }
+.gl-gate__heading--h4 { font-size: var(--wp--preset--font-size--medium, 1em); }
+.gl-gate__heading--h5 { font-size: var(--wp--preset--font-size--small, 0.83em); }
+.gl-gate__heading--h6 { font-size: var(--wp--preset--font-size--small, 0.67em); }
 
 .gl-gate__media {
   box-sizing: border-box;
