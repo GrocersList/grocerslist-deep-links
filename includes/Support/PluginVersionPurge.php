@@ -66,6 +66,8 @@ class PluginVersionPurge
         update_option(self::OPTION, $this->version, true);
 
         Logger::debug('PluginVersionPurge: plugin ' . $why . ' (version ' . $this->version . '); purging the page cache');
-        $this->purger->purgeAll();
+        // Forced: a purge for a version change or an activation must never be
+        // lost to the purger's per-site debounce.
+        $this->purger->purgeAll('', true);
     }
 }
