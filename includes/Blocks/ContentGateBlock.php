@@ -175,6 +175,12 @@ class ContentGateBlock
      * - a feed and WP Recipe Maker's print view get neither it nor the gate:
      *   neither can subscribe;
      * - anyone else gets the locked gate.
+     *
+     * locksInPage() is this same rule for a request that has not rendered the
+     * gate yet (GatedRecipeMetadata asks it before wp_head runs) — change the
+     * two together. It takes the caller's post id, while this resolves
+     * postId($block), which prefers the block's own postId context: inside a
+     * Query Loop or a template's core/post-content render they can differ.
      */
     private function view(int $postId, string $gateId): string
     {
@@ -194,6 +200,31 @@ class ContentGateBlock
         }
 
         return self::VIEW_LOCKED;
+    }
+
+    /**
+     * Whether a gate on $postId keeps its content out of this page, for a
+     * request that has not rendered it yet: view()'s rule, with the outcomes
+     * that put nothing of the gate in the page (LOCKED, and the feed and print
+     * views' nothing-at-all) answering true.
+     *
+     * The reveal check is folded in rather than left to the caller: view()
+     * reaches it through revealing(), which needs the cookie and so cannot be
+     * reproduced from outside.
+     */
+    public static function locksInPage(int $postId, string $gateId): bool
+    {
+        // Content GateContent is revealing goes to a recognized subscriber.
+        if (GateContent::renderingPostId() > 0) {
+            return false;
+        }
+
+        // An editor sees the content, unless they asked for the visitor's view.
+        if (is_user_logged_in() && current_user_can('edit_posts')) {
+            return self::previewRequested();
+        }
+
+        return apply_filters('grocerslist_content_gate_bypass', false, $postId, $gateId) !== true;
     }
 
     /**

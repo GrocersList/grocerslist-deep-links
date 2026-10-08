@@ -12,8 +12,10 @@ use GrocersList\Blocks\ContentGateBlock;
 use GrocersList\Blocks\FormBlock;
 use GrocersList\Blocks\FormRenderer;
 use GrocersList\Blocks\FormShortcodes;
+use GrocersList\Blocks\GateCache;
 use GrocersList\Blocks\GateContent;
 use GrocersList\Blocks\GatedRecipeLinks;
+use GrocersList\Blocks\GatedRecipeMetadata;
 use GrocersList\Blocks\GateRegion;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\EmailVerificationPage;
@@ -131,10 +133,17 @@ class Plugin
         $formShortcodes->register();
 
         $gateCookie = new GateCookie();
-        $gateContent = new GateContent();
+        // The one GateContent the gate route and the submit route share, so
+        // both read and write the same cached reveal.
+        $gateCache = new GateCache();
+        $gateCache->register();
+        $gateContent = new GateContent($gateCookie, $gateCache);
 
         $contentGateBlock = new ContentGateBlock($formRenderer, $wprmRecipes, $gateCookie);
         $contentGateBlock->register();
+
+        $gatedRecipeMetadata = new GatedRecipeMetadata($wprmRecipes);
+        $gatedRecipeMetadata->register();
 
         $gateRegion = new GateRegion();
         $gateRegion->register();

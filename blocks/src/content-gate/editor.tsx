@@ -12,6 +12,7 @@ import {
   RadioControl,
   Spinner,
   TextControl,
+  ToggleControl,
 } from '@wordpress/components';
 import { useDispatch, useRegistry, useSelect } from '@wordpress/data';
 import { createElement, Fragment, useEffect } from '@wordpress/element';
@@ -58,6 +59,7 @@ interface Attributes {
   gateId: string;
   teaser: string;
   mode?: Mode;
+  hideRecipeMetadata: boolean;
 }
 
 interface EditorBlock extends BlockLike {
@@ -92,7 +94,7 @@ const Edit = ({
   setAttributes,
   clientId,
 }: BlockEditProps<Attributes>) => {
-  const { formId, gateId, teaser, mode } = attributes;
+  const { formId, gateId, teaser, mode, hideRecipeMetadata } = attributes;
   const list = useGroForms();
   const config = useFormConfig(formId);
   const registry = useRegistry();
@@ -335,6 +337,19 @@ const Edit = ({
             __next40pxDefaultSize
             __nextHasNoMarginBottom
           />
+          <ToggleControl
+            label={__(
+              "Leave the ingredients and steps out of this page's recipe data",
+              'grocers-list'
+            )}
+            help={__(
+              'WP Recipe Maker publishes a recipe’s ingredients and steps in the page’s recipe data, where anyone can read them while the gate is locked. Turn this on and they are left out. The recipe keeps its name, picture, summary, rating, times and nutrition facts, so it can still show as a recipe in search results, but Google no longer has its ingredients or steps, and Search Console reports them as missing recommended fields. It applies only where this gate hides a WP Recipe Maker recipe, and only on this post. After turning it on, clear your page cache and CDN for this post.',
+              'grocers-list'
+            )}
+            checked={hideRecipeMetadata === true}
+            onChange={value => setAttributes({ hideRecipeMetadata: value })}
+            __nextHasNoMarginBottom
+          />
           <p>
             {__(
               'Visitors see a blurred glimpse of what the gate hides, under a card with the teaser and the form. Once they subscribe, and for anyone signed in who can edit posts, the content shows in its place.',
@@ -384,6 +399,10 @@ const LEGACY = {
     formId: { type: 'string', default: '' },
     gateId: { type: 'string', default: '' },
     teaser: { type: 'string', default: DEFAULT_TEASER },
+    // Declared here too, so Gutenberg's re-parse against this deprecation's
+    // own schema does not drop a gate that carries the switch and no mode,
+    // which migrate() would then save back off.
+    hideRecipeMetadata: { type: 'boolean', default: false },
   },
   supports: { html: false, anchor: true },
   isEligible: (attributes: Record<string, unknown>) => !isMode(attributes.mode),

@@ -55,8 +55,10 @@ abstract class PublicFormController
             );
         }
 
-        // An old ts is fine — page caches serve the same form for hours. A ts in
-        // the future, or a submission faster than a human can type, is not.
+        // An old ts is fine — page caches serve the same form for hours, and
+        // Blocks/GateCache serves one revealed form, signature and all, to
+        // every subscriber in its window, so do not narrow this. A ts in the
+        // future, or a submission faster than a human can type, is not.
         $elapsedMs = $request->get_param('elapsedMs');
         if ($ts > time() + self::MAX_CLOCK_SKEW
             || ($elapsedMs !== null && (int) $elapsedMs < self::MIN_ELAPSED_MS)) {

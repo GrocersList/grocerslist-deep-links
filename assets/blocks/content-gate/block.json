@@ -13,7 +13,8 @@
     "formId": { "type": "string", "default": "" },
     "gateId": { "type": "string", "default": "" },
     "teaser": { "type": "string", "default": "The rest of this post is one click away." },
-    "mode": { "type": "string", "enum": ["below", "inside"] }
+    "mode": { "type": "string", "enum": ["below", "inside"] },
+    "hideRecipeMetadata": { "type": "boolean", "default": false }
   },
   "supports": {
     "html": false,
