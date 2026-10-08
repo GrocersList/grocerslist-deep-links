@@ -4,9 +4,9 @@ Plugin Name: GRO
 Plugin URI: https://gro.co
 Description: GRO is a suite of tools for bloggers — monetize your site with paid memberships and Amazon deep links.
 Requires at least: 4.4
-Requires PHP: 7.0
-Tested up to: 6.8
-Version: 1.29.0
+Requires PHP: 7.4
+Tested up to: 7.1
+Version: 1.30.0-beta.1
 Stable tag: 1.29.0
 Author: GRO Holdings, Inc
 License: GPLv3
@@ -17,7 +17,7 @@ Author URI: https://github.com/GrocersList/grocerslist-wordpress-plugin
 
 if (!defined('ABSPATH')) exit;
 
-define('GROCERS_LIST_VERSION', '1.29.0');
+define('GROCERS_LIST_VERSION', '1.30.0-beta.1');
 define('GROCERS_LIST_PLUGIN_FILE', __FILE__);
 define('GROCERS_LIST_PLUGIN_DIR', __DIR__);
 
@@ -32,9 +32,9 @@ register_deactivation_hook(__FILE__, 'grocers_list_deactivate');
  */
 function grocers_list_activate() {
     // Check PHP version
-    if (version_compare(PHP_VERSION, '7.0', '<')) {
+    if (version_compare(PHP_VERSION, '7.4', '<')) {
         wp_die(
-            __('GRO requires PHP 7.0 or higher. Your server is running PHP ' . PHP_VERSION, 'grocers-list'),
+            __('GRO requires PHP 7.4 or higher. Your server is running PHP ' . PHP_VERSION, 'grocers-list'),
             __('Plugin Activation Error', 'grocers-list'),
             array('response' => 200, 'back_link' => TRUE)
         );
@@ -86,6 +86,11 @@ function grocers_list_activate() {
     require_once __DIR__ . '/includes/Database/Installer.php';
     GrocersList\Database\Installer::install();
 
+    // What a content gate hides renders in the open while its block is not
+    // registered (the plugin off); purge any page a cache kept meanwhile.
+    // Plugin::register() purges again whenever the version changes.
+    (new GrocersList\Support\PluginVersionPurge())->purgeOnActivation();
+
     // Schedule the hourly WP user cleanup cron. Handler is wired in Plugin::register().
     if (!wp_next_scheduled('grocerslist_wp_user_cleanup')) {
         wp_schedule_event(time(), 'hourly', 'grocerslist_wp_user_cleanup');
@@ -102,6 +107,14 @@ function grocers_list_deactivate() {
     // Clean up any scheduled events if we had any
     wp_clear_scheduled_hook('grocers_list_scheduled_task');
     wp_clear_scheduled_hook('grocerslist_wp_user_cleanup');
+
+    // Every pending form-config refresh, whatever cache key it carries:
+    // wp_clear_scheduled_hook() clears only the events whose arguments it is
+    // given. Before WordPress 4.9 they are left to run once, with nothing
+    // hooked to them.
+    if (function_exists('wp_unschedule_hook')) {
+        wp_unschedule_hook('grocerslist_forms_refresh');
+    }
 
     // Flush rewrite rules (useful for nginx compatibility)
     flush_rewrite_rules();

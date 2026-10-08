@@ -1,0 +1,457 @@
+/*
+ * GRO Content Gate
+ *
+ * What a visitor sees where a gate hides content (ContentGateBlock.php): a
+ * blurred picture of the hidden content's shape, under a card holding the
+ * gate's GRO form. What the gate hides is never in the page: the view script
+ * puts it in the gate's place for a subscriber. Enqueued only where a gate
+ * renders, and in the block editor.
+ *
+ * .gl-gate                the wrapper, with the block's own classes;
+ *                         data-gl-gate (the gate's id), data-gl-post,
+ *                         data-gl-reveal (the gate route's URL) and, while an
+ *                         editor previews the page as a visitor,
+ *                         data-gl-preview
+ *   --below               hides everything below it in the post
+ *   --inside              hides the blocks inside it
+ * .gl-gate__preview       the picture (aria-hidden, inert): the theme's own
+ *                         headings, paragraphs and lists, and boxes for
+ *                         media, in the shape of the hidden blocks, with
+ *                         nothing from them (GatePreview.php); blurred
+ * .gl-gate__line          a line of text in it: an empty span whose words
+ *                         are filler drawn by this stylesheet, so no filler
+ *                         is in the page's text
+ * .gl-gate__media         a box in place of an image, a video or an embed
+ *   --1-1 | --4-3 | --3-2 | --16-9 | --21-9 | --3-4 | --2-3 | --9-16
+ *                         its aspect ratio, the nearest to the block's
+ * .gl-gate__gallery       boxes in a grid, for a gallery
+ *   --1 | --2 | --3       its columns
+ * .gl-gate__columns       columns side by side, each a .gl-gate__column
+ * .gl-gate__recipe        a recipe card's shape (WP Recipe Maker), with
+ *                         __recipe-top, __recipe-intro, __recipe-name and
+ *                         __recipe-label
+ * .gl-gate__overlay       holds the card a few lines down, over a wash (its
+ *                         ::before) that tints the picture
+ * .gl-gate__card          the card. Its style attribute carries the gate
+ *                         form's brand colours as the form's own
+ *                         --gl-form-* custom properties
+ *                         (assets/blocks/form/style.css), so the card and
+ *                         the badge wear them
+ * .gl-gate__badge         the lock over the card's top edge
+ * .gl-gate__teaser        the sentence above the form
+ *
+ * The form in the card is a GRO form, styled by assets/blocks/form/style.css,
+ * whose own box gives way to the card's.
+ *
+ * .gl-gate-marker         what a signed-in editor sees where a gate starts,
+ *                         in place of the gate (visitors never get it): what
+ *                         visitors see from there, and a link to the page
+ *                         as they see it (?gl_gate_preview=1)
+ *   --end                 where a gate that hides its inner blocks ends
+ *   --preview             above a gate an editor is previewing
+ * .gl-gate-marker__icon, __text, __link   its parts
+ * .gl-gate-start          the first revealed element while it holds the focus
+ *                         the view script moves there after a submit
+ */
+
+.gl-gate {
+  --gl-gate-wash: rgba(127, 127, 127, 0.16);
+  --gl-gate-gap: var(--wp--style--block-gap, 1.25em);
+  display: grid;
+  box-sizing: border-box;
+  max-width: 100%;
+  isolation: isolate;
+}
+
+/* The wash tints towards the text colour: darker on a light theme, lighter
+   on a dark one. */
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  .gl-gate {
+    --gl-gate-wash: color-mix(in srgb, currentColor 13%, transparent);
+  }
+}
+
+/* The picture and the overlay share one cell: the gate is as tall as the
+   taller of the two, with no absolute positioning to fall out of place. */
+.gl-gate > .gl-gate__preview,
+.gl-gate > .gl-gate__overlay {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* The picture                                                          */
+/* ------------------------------------------------------------------ */
+
+.gl-gate__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gl-gate-gap);
+  max-height: 36em;
+  overflow: hidden;
+  opacity: 0.8;
+  filter: blur(8px);
+  /* Fades in from the text above it, and out towards the bottom. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 3.5em, #000 58%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 3.5em, #000 58%, transparent);
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The gap spaces the blocks, as the site's own block gap does. */
+.gl-gate .gl-gate__preview > *,
+.gl-gate .gl-gate__column > *,
+.gl-gate .gl-gate__recipe-intro > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.gl-gate__line {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.gl-gate__line::before {
+  content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+}
+
+.gl-gate__line:nth-child(3n + 2)::before {
+  content: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+}
+
+.gl-gate__line:nth-child(3n)::before {
+  content: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.";
+}
+
+/* Each paragraph and item starts somewhere else in its filler, so no two
+   lines look alike. */
+.gl-gate__preview :nth-child(2n) > .gl-gate__line {
+  text-indent: -11ch;
+}
+
+.gl-gate__preview :nth-child(3n) > .gl-gate__line {
+  text-indent: -23ch;
+}
+
+.gl-gate__line:nth-child(3n + 2) {
+  width: 96%;
+}
+
+.gl-gate__line:nth-child(3n) {
+  width: 98%;
+}
+
+/* The last line of a paragraph stops short, and so does a lone line. */
+.gl-gate__line:last-child:not(:only-child) {
+  width: 62%;
+}
+
+:nth-child(2n) > .gl-gate__line:last-child:not(:only-child) {
+  width: 37%;
+}
+
+:nth-child(3n) > .gl-gate__line:last-child:not(:only-child) {
+  width: 79%;
+}
+
+.gl-gate__line:only-child {
+  width: 74%;
+}
+
+li > .gl-gate__line:only-child {
+  width: 83%;
+}
+
+li:nth-child(2n) > .gl-gate__line:only-child {
+  width: 61%;
+}
+
+li:nth-child(3n) > .gl-gate__line:only-child {
+  width: 70%;
+}
+
+:is(h1, h2, h3, h4, h5, h6) > .gl-gate__line:only-child {
+  width: 56%;
+}
+
+.gl-gate__media {
+  box-sizing: border-box;
+  width: 100%;
+  height: 12em;
+  max-height: 22em;
+  border-radius: 6px;
+  background: currentColor;
+  opacity: 0.16;
+}
+
+@supports (aspect-ratio: 1 / 1) {
+  .gl-gate__media {
+    height: auto;
+    aspect-ratio: 3 / 2;
+  }
+
+  .gl-gate__media--1-1 { aspect-ratio: 1 / 1; }
+  .gl-gate__media--4-3 { aspect-ratio: 4 / 3; }
+  .gl-gate__media--16-9 { aspect-ratio: 16 / 9; }
+  .gl-gate__media--21-9 { aspect-ratio: 21 / 9; }
+  .gl-gate__media--3-4 { aspect-ratio: 3 / 4; }
+  .gl-gate__media--2-3 { aspect-ratio: 2 / 3; }
+  .gl-gate__media--9-16 { aspect-ratio: 9 / 16; }
+}
+
+.gl-gate__gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5em;
+}
+
+.gl-gate__gallery--1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gl-gate__gallery--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gl-gate__columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gl-gate-gap);
+}
+
+.gl-gate__column {
+  display: flex;
+  flex: 1 1 12em;
+  flex-direction: column;
+  gap: var(--gl-gate-gap);
+  min-width: 0;
+}
+
+.gl-gate__recipe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  padding: clamp(0.75em, 4%, 1.5em);
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  border-radius: 8px;
+}
+
+.gl-gate__recipe > * {
+  margin: 0;
+}
+
+.gl-gate__recipe-top {
+  display: flex;
+  gap: 1em;
+  align-items: flex-start;
+}
+
+.gl-gate__recipe-top > .gl-gate__media {
+  flex: 0 0 32%;
+  max-width: 10em;
+}
+
+.gl-gate__recipe-intro {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.5em;
+  min-width: 0;
+}
+
+.gl-gate .gl-gate__recipe-name {
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.gl-gate__recipe-name > .gl-gate__line:only-child {
+  width: 70%;
+}
+
+.gl-gate .gl-gate__recipe-label {
+  font-weight: 700;
+}
+
+.gl-gate__recipe-label > .gl-gate__line:only-child {
+  width: 28%;
+}
+
+.gl-gate__recipe :is(ul, ol) {
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+/* ------------------------------------------------------------------ */
+/* The card                                                             */
+/* ------------------------------------------------------------------ */
+
+/* A few blurred lines show above the card, so it sits in the post rather
+   than on top of the text above it. */
+.gl-gate__overlay {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  box-sizing: border-box;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5em 0 3.5em;
+}
+
+/* The wash: a tint over the picture, soft at every edge. */
+.gl-gate__overlay::before {
+  content: "";
+  position: absolute;
+  top: 3.5em;
+  right: 0;
+  bottom: 3em;
+  left: 0;
+  z-index: -1;
+  border-radius: 32px;
+  background: var(--gl-gate-wash);
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.gl-gate__card {
+  --gl-gate-card: var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0;
+  padding: 2.5em clamp(1em, 6%, 2em) clamp(1.25em, 5%, 1.75em);
+  border: 1px solid rgba(127, 127, 127, 0.18);
+  border-radius: 16px;
+  background: var(--gl-gate-card);
+  color: var(--gl-form-text, var(--wp--preset--color--contrast, #1e1e1e));
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 18px 44px -14px rgba(0, 0, 0, 0.38);
+  text-align: left;
+}
+
+.gl-gate__badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  width: 2.75em;
+  height: 2.75em;
+  border: 0.3em solid var(--gl-gate-card);
+  border-radius: 50%;
+  background: var(--gl-form-accent, #1e1e1e);
+  color: var(--gl-form-accent-text, #fff);
+  transform: translate(-50%, -50%);
+}
+
+.gl-gate__badge svg {
+  width: 1.35em;
+  height: 1.35em;
+}
+
+.gl-gate__card .gl-gate__teaser {
+  margin: 0 0 0.75em;
+  font-size: 0.9375em;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+/* The card is the form's box. */
+.gl-gate__card .gl-form {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+}
+
+.gl-gate__card .gl-form__copy {
+  align-items: center;
+  text-align: center;
+}
+
+.gl-gate__card .gl-form__title {
+  justify-content: center;
+}
+
+/* The badge is the card's lock. */
+.gl-gate__card .gl-form__icon {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .gl-gate__overlay {
+    padding-top: 4em;
+  }
+
+  .gl-gate__card {
+    padding-right: 1em;
+    padding-left: 1em;
+    border-radius: 14px;
+  }
+}
+
+@media (forced-colors: active) {
+  .gl-gate__card {
+    border-color: CanvasText;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Editors                                                              */
+/* ------------------------------------------------------------------ */
+
+.gl-gate-marker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25em 0.5em;
+  box-sizing: border-box;
+  margin: 1.25em 0;
+  padding: 0.5em 0.75em;
+  border: 1px dashed rgba(127, 127, 127, 0.7);
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.07);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.gl-gate-marker__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.gl-gate-marker__text {
+  flex: 1 1 16em;
+  min-width: 0;
+}
+
+.gl-gate-marker .gl-gate-marker__link {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gl-gate-marker--end {
+  justify-content: center;
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+  opacity: 0.75;
+}
+
+.gl-gate-start:focus {
+  outline: none;
+}

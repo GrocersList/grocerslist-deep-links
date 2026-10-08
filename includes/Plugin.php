@@ -8,18 +8,31 @@ use GrocersList\Admin\PageGating;
 use GrocersList\Admin\PostGating;
 use GrocersList\Admin\SalesPage;
 use GrocersList\Admin\SettingsPage;
+use GrocersList\Blocks\ContentGateBlock;
+use GrocersList\Blocks\FormBlock;
+use GrocersList\Blocks\FormRenderer;
+use GrocersList\Blocks\FormShortcodes;
+use GrocersList\Blocks\GateContent;
+use GrocersList\Blocks\GatedRecipeLinks;
+use GrocersList\Blocks\GateRegion;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\EmailVerificationPage;
 use GrocersList\Frontend\PublicAjaxController;
 use GrocersList\Frontend\WprmPrintIntegration;
+use GrocersList\Rest\FormsController;
+use GrocersList\Rest\GateController;
 use GrocersList\Service\CreatorSettingsFetcher;
+use GrocersList\Service\FormConfigCache;
 use GrocersList\Service\MemberService;
 use GrocersList\Service\LinkRewriter;
 use GrocersList\Service\WpUserCleanupService;
 use GrocersList\Support\ContentFilter;
 use GrocersList\Support\ElevatedUserRemediation;
+use GrocersList\Support\GateCookie;
 use GrocersList\Support\Logger;
+use GrocersList\Support\PluginVersionPurge;
 use GrocersList\Support\SalesPagePattern;
+use GrocersList\Support\WprmRecipes;
 
 class Plugin
 {
@@ -102,6 +115,41 @@ class Plugin
 
         $categoryGating = new CategoryGating();
         $categoryGating->register();
+
+        $wprmRecipes = new WprmRecipes();
+        $formConfigCache = new FormConfigCache();
+        // A server with no finish function cannot send the page before its
+        // stale form configs are refreshed, so the refresh runs as a WP-Cron
+        // event that carries the cache key (FormConfigCache::runDeferred()).
+        add_action(FormConfigCache::REFRESH_HOOK, [$formConfigCache, 'refresh']);
+        $formRenderer = new FormRenderer($formConfigCache, $wprmRecipes);
+
+        $formBlock = new FormBlock($formRenderer);
+        $formBlock->register();
+
+        $formShortcodes = new FormShortcodes($formRenderer);
+        $formShortcodes->register();
+
+        $gateCookie = new GateCookie();
+        $gateContent = new GateContent();
+
+        $contentGateBlock = new ContentGateBlock($formRenderer, $wprmRecipes, $gateCookie);
+        $contentGateBlock->register();
+
+        $gateRegion = new GateRegion();
+        $gateRegion->register();
+
+        $gatedRecipeLinks = new GatedRecipeLinks($wprmRecipes);
+        $gatedRecipeLinks->register();
+
+        $formsController = new FormsController($formConfigCache, $wprmRecipes, null, $gateCookie, $gateContent);
+        $formsController->register();
+
+        $gateController = new GateController($gateContent, $gateCookie);
+        $gateController->register();
+
+        $pluginVersionPurge = new PluginVersionPurge();
+        $pluginVersionPurge->register();
 
         $elevatedUserRemediation = new ElevatedUserRemediation();
         $elevatedUserRemediation->register();

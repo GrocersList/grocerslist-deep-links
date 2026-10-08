@@ -10,6 +10,12 @@ use GrocersList\Support\Logger;
 class ApiClient
 {
     /**
+     * Seconds a form read waits on GRO unless its caller asks for less: the
+     * form-config cache passes less when a page view waits on the read.
+     */
+    public const FORM_READ_TIMEOUT = 10;
+
+    /**
      * Helper method to pass through response code
      *
      * @param mixed $response The API response (string body or WP_Error)
@@ -488,6 +494,104 @@ class ApiClient
         }
 
         return $response;
+    }
+
+    /**
+     * The creator's active GRO forms (GL_ListGrowthFormConfig[] under "data"),
+     * for the GRO Form block's picker and for the default form a shortcode
+     * without an id shows. Returns the raw response: FormConfigCache reads its
+     * status, ETag and body.
+     *
+     * @param string $apiKey
+     * @param string|null $etag The ETag of the copy the site holds, sent as
+     *                          If-None-Match; GRO answers 304 when it is current.
+     * @param int $timeout Seconds to wait. FormConfigCache passes 2 when a
+     *                     page view waits on the read (nothing stored, or a
+     *                     refresh event WP-Cron left unrun), and keeps the
+     *                     default 10 off the render path: a refresh, GRO's
+     *                     hint and the block editor.
+     * @return array|\WP_Error
+     */
+    static function getForms(string $apiKey, ?string $etag = null, int $timeout = self::FORM_READ_TIMEOUT)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        return wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/forms", [
+            'headers' => self::formReadHeaders($apiKey, $etag),
+            'timeout' => max(1, $timeout),
+        ]);
+    }
+
+    /**
+     * One GRO form's config (GL_ListGrowthFormConfig). GRO answers 404 for an
+     * archived form or another creator's hash. Returns the raw response.
+     *
+     * @param string $apiKey
+     * @param string $hash
+     * @param string|null $etag Sent as If-None-Match, as for getForms().
+     * @param int $timeout Seconds to wait, as for getForms().
+     * @return array|\WP_Error
+     */
+    static function getForm(string $apiKey, string $hash, ?string $etag = null, int $timeout = self::FORM_READ_TIMEOUT)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        return wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/forms/" . rawurlencode($hash), [
+            'headers' => self::formReadHeaders($apiKey, $etag),
+            'timeout' => max(1, $timeout),
+        ]);
+    }
+
+    /**
+     * Submit a visitor's GRO form. GRO resolves what to do from the form
+     * itself (its tags and its follow-up), so the payload carries only what
+     * the visitor typed and the page they were on. Returns the raw response
+     * so the caller can map GRO's status onto its own REST answer.
+     *
+     * Waits up to 25s: for a Save to Email form GRO unfurls the page, fetching
+     * it and copying its image, and sends the email before it answers. Timing
+     * out while GRO is still working would show the visitor an error for an
+     * email that still goes out, and their retry would send it again. 25s
+     * stays under the 30s at which GRO's API cuts a request off; PHP's
+     * max_execution_time, often 30s, still covers the wait.
+     *
+     * @param string $apiKey
+     * @param string $hash
+     * @param array $payload {email, firstName?, subscribe, optInShown, page: {url, title, categories, imageUrl?}}
+     * @return array|\WP_Error
+     */
+    static function submitForm(string $apiKey, string $hash, array $payload)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        return wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/forms/" . rawurlencode($hash) . "/submit", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+            ],
+            'body' => wp_json_encode($payload),
+            'timeout' => 25,
+        ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function formReadHeaders(string $apiKey, ?string $etag): array
+    {
+        $headers = [
+            'Accept' => 'application/json',
+            'x-api-key' => $apiKey,
+            'x-gl-plugin-version' => Config::getPluginVersion(),
+        ];
+
+        if ($etag !== null && $etag !== '') {
+            $headers['If-None-Match'] = $etag;
+        }
+
+        return $headers;
     }
 
     static function updateMembershipsEnabled(string $apiKey, string $enabled)

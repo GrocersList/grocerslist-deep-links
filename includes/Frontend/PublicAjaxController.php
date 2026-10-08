@@ -87,7 +87,7 @@ class PublicAjaxController
         $response = ApiClient::getInitMemberships($api_key, $jwt, $gated);
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
         if ($this->memberService->shouldUpdateMemberData($creatorSettings->creatorAccountId, $updateWpUser)) {
-            $redirectUrl = wp_get_referer();
+            $redirectUrl = $this->refererWithoutEventId();
             $followerResponse = ApiClient::checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
             // Attempt to create or update a WP subscriber with metadata when API call succeeds
@@ -171,7 +171,7 @@ class PublicAjaxController
         if (!is_wp_error($signupResponse)) {
             $signupStatus = wp_remote_retrieve_response_code($signupResponse);
             if ($signupStatus >= 200 && $signupStatus < 300) {
-                $redirectUrl = wp_get_referer();
+                $redirectUrl = $this->refererWithoutEventId();
                 $response = ApiClient::loginFollower($api_key, $email, $password, $redirectUrl);
 
                 // Attempt to create or update a WP subscriber with metadata when API call succeeds
@@ -225,7 +225,7 @@ class PublicAjaxController
 
         $api_key = PluginSettings::getApiKey();
 
-        $redirectUrl = wp_get_referer();
+        $redirectUrl = $this->refererWithoutEventId();
         $response = ApiClient::loginFollower($api_key, $email, $password, $redirectUrl);
 
         // Attempt to create or update a WP subscriber with metadata when API call succeeds
@@ -320,7 +320,7 @@ class PublicAjaxController
         //  - account for removing url parameters that grocerslist sends like ?failure=
         //  - switch "?failure= for something less likely to collide with 3rd party params
         //      like ?gl-failure= or don't use url params
-        $referer_url = wp_get_referer();
+        $referer_url = $this->refererWithoutEventId();
         $redirectUrl = add_query_arg(array('gl-update-wp-user' => 'true'), $referer_url);
         $response = ApiClient::checkoutFollower($api_key, $jwt, $redirectUrl);
 
@@ -334,10 +334,52 @@ class PublicAjaxController
         $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
         $api_key = PluginSettings::getApiKey();
 
-        $redirectUrl = wp_get_referer();
+        $redirectUrl = $this->refererWithoutEventId();
         $response = ApiClient::checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
 
         ApiClient::passResponseCode($response);
+    }
+
+    /**
+     * The page the visitor came from, without the GRO form event id.
+     *
+     * The referer reaches GRO as ApiClient's ?redirect= on /followers/checkout
+     * and /followers/me, and GRO records that URL verbatim on its CONVERSION
+     * and PLANS_VIEW events and groups "conversions by page" by the raw
+     * string. gl_eid names one form submit and nothing else
+     * (blocks/src/form/view.ts), so a visitor who signed up through a GRO form
+     * and then joined the membership from the page that form sent them to
+     * would carry an id no other visitor has, and that report would give every
+     * one of them a bucket of their own. The two loginFollower() calls below
+     * pass the value as a 4th argument to a three-parameter method, so PHP
+     * discards it; they are left alone in case that signature grows a redirect.
+     *
+     * Rewrite only when the id is actually there. remove_query_arg() does not
+     * hand back the string it was given — it re-parses the query and re-encodes
+     * it, so "a%20b" becomes "a+b", "a.b=1" becomes "a_b=1", "a[]" becomes
+     * "a%5B0%5D", and a repeated name keeps only its last value. Run
+     * unconditionally it would change the grouping key of every referer that
+     * never carried an id — the fragmentation this helper exists to prevent —
+     * so do not simplify the guard away. strpos() over the whole URL can only
+     * over-trigger, on a path segment or another parameter that spells gl_eid,
+     * and that merely gives such a URL the behaviour it had before.
+     *
+     * Without a referer nothing is rewritten either: wp_get_referer() answers
+     * false, which remove_query_arg() would read as "this request's own URL"
+     * and hand GRO the admin-ajax endpoint; '' carries no gl_eid, so it takes
+     * the same arm. That only keeps this helper from introducing the problem —
+     * checkoutFollower() runs the same false through add_query_arg() itself,
+     * where core reads it the same way.
+     *
+     * @return string|false
+     */
+    private function refererWithoutEventId()
+    {
+        $referer = wp_get_referer();
+
+        return is_string($referer) && strpos($referer, 'gl_eid') !== false
+            ? remove_query_arg('gl_eid', $referer)
+            : $referer;
     }
 
     function fetchPostGatingOptions()

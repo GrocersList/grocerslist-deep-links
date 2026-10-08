@@ -1,0 +1,52 @@
+/* The block in the editor: a labelled frame showing the card visitors see
+   (the front end's .gl-gate__card, from style.css) and, for a gate that
+   hides the blocks inside it, those blocks. */
+.gl-gate-editor {
+  box-sizing: border-box;
+  padding: 0.75em 1em 1em;
+  border: 1px dashed rgba(127, 127, 127, 0.6);
+  border-radius: 8px;
+}
+
+.gl-gate-editor__label {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  margin: 0 0 0.5em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+.gl-gate-editor__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.gl-gate-editor .components-placeholder__label .gl-gate-editor__icon {
+  margin-right: 0.5em;
+}
+
+/* Room for the badge over the card's top edge. */
+.gl-gate-editor .gl-gate__card {
+  margin: 2.25em auto 0.5em;
+}
+
+.gl-gate-editor .components-notice {
+  margin: 0 0 0.75em;
+}
+
+.gl-gate-editor__inner {
+  margin-top: 1.25em;
+  padding-top: 0.75em;
+  border-top: 1px dashed rgba(127, 127, 127, 0.6);
+}
+
+/* Everything below a gate that hides everything below it: a thin rule down
+   the left of each block, in the editor only. */
+.gl-gate-editor--below ~ .wp-block {
+  box-shadow: -0.75rem 0 0 -0.625rem rgba(127, 127, 127, 0.55);
+}

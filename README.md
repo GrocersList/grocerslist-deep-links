@@ -2,9 +2,9 @@
 Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
-Tested up to: 6.8
+Tested up to: 7.1
 Stable tag: 1.29.0
-Requires PHP: 7.0
+Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
 
@@ -105,7 +105,23 @@ An overview of our features:
 
 #### - 08/10/2026 - 1.28.0 - Server side CSS for gated-post lock icon
 
-#### - 09/10/2026 - Expand server side CSS for gated-recipe-cards with lock icon
+#### - 09/10/2026 - 1.29.0 - Expand server side CSS for gated-recipe-cards with lock icon
+
+#### - 09/26/2026 - 1.30.0-beta.1 - GRO Forms and the GRO Content Gate
+
+- Beta: WordPress.org does not offer this version as an update. To try it, download https://downloads.wordpress.org/plugin/grocerslist.1.30.0-beta.1.zip and install it with Plugins → Add New → Upload Plugin → Replace current with uploaded.
+- New GRO Form block: show the signup and Save to Email forms you set up in GRO, in your brand colors. Edits you make to a form in GRO show on your site automatically, usually within seconds.
+- New `[gro_form]` and `[gro_save_to_email]` shortcodes for your GRO forms. Both also work inside WP Recipe Maker recipe card templates.
+- New GRO Content Gate block: hide everything below it, or only the blocks you put inside it (a recipe card, say), until the visitor subscribes through one of your GRO forms. Visitors see a blurred preview with the form on top; what the gate hides is not in the page until they subscribe.
+- Page-cache friendly: the plugin clears known page caches (WP Rocket, W3 Total Cache, WP Super Cache, LiteSpeed Cache, SiteGround Optimizer, WP Fastest Cache, Breeze, WP Engine and Kinsta) when a form changes in GRO, when the plugin is activated and when it is updated. Updating to this version clears your page cache once.
+- GRO forms keep showing from the plugin's saved copy while GRO is slow or unreachable, and the copy is refreshed after the page has been sent, so your pages don't wait on GRO.
+- Spam protection and rate limits for GRO forms and the content gate.
+- Optional email-consent checkbox on any GRO form, ticked to start with unless the form is set in GRO to start it unticked: on a signup form or a content gate it must be ticked to sign up; on a Save to Email form it stays an optional opt-in.
+- A GRO form can send visitors to a page of your choice after they sign up (never from inside a content gate, which opens in place).
+- With Advanced Tracking on in GRO, a GRO form submission hands the visitor's hashed email to your site's Raptive or Mediavine ad script, as GRO's links already do, unless the form shows the opt-in checkbox and the visitor leaves it unticked.
+- GRO form fixes: filling in your email with browser autofill or paste is no longer refused as too quick; a blank or mistyped address is caught on the page before anything is sent; and when a form is rate-limited, the message now says about how long to wait.
+- Only real sign-ups count: a form submission caught by spam protection, or an answer your site could not read (a firewall or a maintenance page answering for the plugin), no longer counts as a sign-up. The hidden anti-spam field now hides itself even where a performance plugin strips the form's stylesheet, and the sign-up event a GRO form fires for your analytics no longer carries the visitor's email address.
+- Requires PHP 7.4 or newer. Tested up to WordPress 7.1.
 
 ### Resources:
 
@@ -115,5 +131,5 @@ An overview of our features:
 
 == Terms of Service and Privacy Policy ==
 
-- [Creator Terms of Service](https://www.grocerslist.com/creator-tos)
-- [Privacy Policy](https://www.grocerslist.com/privacy)
+- [Creator Terms of Service](https://gro.co/creator-tos)
+- [Privacy Policy](https://gro.co/privacy)

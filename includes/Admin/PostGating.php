@@ -72,12 +72,15 @@ class PostGating
         $post_gated = get_post_meta($post->ID, self::META_POST_GATED, true);
         $recipe_card_gated = get_post_meta($post->ID, self::META_RECIPE_CARD_GATED, true);
         $no_gating = get_post_meta($post->ID, self::META_NO_GATING, true);
-        $page_gated = CategoryGating::getEffectiveGating($post->ID)['page'];
-        // Determine current gating option
+        // Page gating is deliberately not consulted here: its meta is registered for
+        // the 'page' post type only and this box renders for 'post', so a post can
+        // never carry it. Category gating reaches this box as the 'by_category'
+        // default plus $inherited_gating_text below -- preselecting 'post' from it
+        // would freeze an inherited setting into an explicit override on next save.
         $current_option = 'by_category';
         if ($no_gating === '1') {
             $current_option = 'no_gating';
-        } elseif ($post_gated === '1' || $page_gated === '1') {
+        } elseif ($post_gated === '1') {
             $current_option = 'post';
         } elseif ($recipe_card_gated === '1') {
             $current_option = 'recipe';

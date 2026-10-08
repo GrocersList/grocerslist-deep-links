@@ -1,0 +1,9 @@
+/* The editor shows a preview, not a live form: its inputs take no clicks and
+   its button is not one. */
+.gl-form input {
+  pointer-events: none;
+}
+
+.gl-form .gl-form__submit {
+  cursor: default;
+}

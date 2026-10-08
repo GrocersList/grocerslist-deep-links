@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "grocerslist/content-gate",
+  "title": "GRO Content Gate",
+  "category": "grocerslist",
+  "icon": "lock",
+  "description": "Hide everything below it, or only what you put inside it, behind one of your GRO forms. Visitors who subscribe see it straight away.",
+  "keywords": ["gate", "lock", "subscribe", "email", "newsletter", "hide", "gro"],
+  "textdomain": "grocers-list",
+  "usesContext": ["postId"],
+  "attributes": {
+    "formId": { "type": "string", "default": "" },
+    "gateId": { "type": "string", "default": "" },
+    "teaser": { "type": "string", "default": "The rest of this post is one click away." },
+    "mode": { "type": "string", "enum": ["below", "inside"] }
+  },
+  "supports": {
+    "html": false,
+    "anchor": true
+  },
+  "editorScript": "grocerslist-content-gate-editor",
+  "editorStyle": "grocerslist-content-gate-editor-style"
+}

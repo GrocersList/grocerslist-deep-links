@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "grocerslist/form",
+  "title": "GRO Form",
+  "category": "grocerslist",
+  "icon": "email-alt",
+  "description": "Show one of your GRO forms: a signup form, Save to Email or a content gate. Edit its copy and look in GRO.",
+  "keywords": ["email", "newsletter", "subscribe", "save", "recipe", "form", "gro"],
+  "textdomain": "grocers-list",
+  "usesContext": ["postId", "queryId"],
+  "attributes": {
+    "formId": { "type": "string", "default": "" },
+    "align": { "type": "string", "enum": ["wide", "full", ""] }
+  },
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "align": ["wide", "full"],
+    "spacing": { "margin": true }
+  },
+  "editorScript": "grocerslist-form-editor",
+  "editorStyle": "grocerslist-form-editor-style",
+  "style": "grocerslist-form-style"
+}

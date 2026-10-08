@@ -1,0 +1,41 @@
+{
+  "name": "blocks",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b && vite build --mode editor && vite build --mode view && vite build --mode content-gate-editor",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"{src,tests}/**/*.{js,ts,tsx}\" vitest.config.ts",
+    "format:check": "prettier --check \"{src,tests}/**/*.{js,ts,tsx}\" vitest.config.ts",
+    "lint-and-format": "npm run lint:fix && npm run format",
+    "check-all": "npm run lint && npm run format:check",
+    "test": "tsc -p tsconfig.test.json && vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@types/jsdom": "^28.0.3",
+    "@types/node": "^24.8.1",
+    "@types/react": "^19.2.2",
+    "@wordpress/api-fetch": "^7.55.0",
+    "@wordpress/block-editor": "^17.1.0",
+    "@wordpress/blocks": "^16.0.0",
+    "@wordpress/components": "^40.1.0",
+    "@wordpress/data": "^10.55.0",
+    "@wordpress/element": "^8.7.0",
+    "@wordpress/i18n": "^6.28.0",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "globals": "^16.4.0",
+    "jsdom": "^28.1.0",
+    "prettier": "^3.6.2",
+    "react": "^19.2.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.1",
+    "vite": "^7.1.10",
+    "vitest": "^4.1.11"
+  }
+}
