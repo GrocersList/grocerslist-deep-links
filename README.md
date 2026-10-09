@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 7.1
-Stable tag: 1.29.0
+Stable tag: 1.30.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -107,9 +107,8 @@ An overview of our features:
 
 #### - 09/10/2026 - 1.29.0 - Expand server side CSS for gated-recipe-cards with lock icon
 
-#### - 09/26/2026 - 1.30.0-beta.1 - GRO Forms and the GRO Content Gate
+#### - 10/15/2026 - 1.30.0 - GRO Forms and the GRO Content Gate
 
-- Beta: WordPress.org does not offer this version as an update. To try it, download https://downloads.wordpress.org/plugin/grocerslist.1.30.0-beta.1.zip and install it with Plugins → Add New → Upload Plugin → Replace current with uploaded.
 - New GRO Form block: show the signup and Save to Email forms you set up in GRO, in your brand colors. Edits you make to a form in GRO show on your site automatically, usually within seconds — for a form inside a content gate, within about five minutes.
 - New `[gro_form]` and `[gro_save_to_email]` shortcodes for your GRO forms. Both also work inside WP Recipe Maker recipe card templates.
 - New GRO Content Gate block: hide everything below it, or only the blocks you put inside it (a recipe card, say), until the visitor subscribes through one of your GRO forms. Visitors see a blurred preview with the form on top, and what the gate hides is not in the page until they subscribe — except that WP Recipe Maker also publishes a recipe's ingredients and steps in the page's recipe data, which the gate's new switch can leave out.

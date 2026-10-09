@@ -35,9 +35,11 @@ class GateCache
     private const TTL = 300;
 
     /**
-     * Bump this when the revealed output changes within one plugin version:
-     * GROCERS_LIST_VERSION is frozen at 1.30.0-beta.1 for the beta, so the
-     * version half of the key invalidates nothing on a deploy by itself.
+     * Bump this when the revealed output changes within one plugin version.
+     * GROCERS_LIST_VERSION is the other half of the key's version segment,
+     * so a plugin update (the beta's update to 1.30.0 included) starts a
+     * fresh cache by itself; this covers a change to what a reveal renders
+     * that ships without one.
      */
     private const SCHEMA = '1';
 
