@@ -6,7 +6,10 @@
  * a form looks the same everywhere. Keep them in step.
  *
  * .gl-form                  the wrapper, one per form, with modifiers:
- *   --signup | --save-to-email | --content-gate    the config's kind
+ *   --signup | --save-to-email | --content-gate    the config's kind;
+ *   --popup                                         a popup's form, in the
+ *                                                   card of the popup
+ *                                                   (assets/blocks/popup)
  *   --stacked | --inline | --split | --compact     design.layout
  *   --boxed | --plain                               design.appearance
  *   --icon                                          design.showIcon

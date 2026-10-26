@@ -9,8 +9,8 @@ use GrocersList\Support\WprmRecipes;
 
 /**
  * Renders a GRO form from its config (GL_ListGrowthFormConfig), for the GRO
- * Form block, the [gro_form] and [gro_save_to_email] shortcodes and the GRO
- * Content Gate block alike.
+ * Form block, the [gro_form] and [gro_save_to_email] shortcodes, the GRO
+ * Content Gate block and the popup (PopupRenderer) alike.
  * The markup and its classes, documented at the top of
  * assets/blocks/form/style.css, are the contract the HQ preview and the GRO
  * landing page render too.
@@ -25,6 +25,7 @@ class FormRenderer
         'SIGNUP'        => 'signup',
         'SAVE_TO_EMAIL' => 'save-to-email',
         'CONTENT_GATE'  => 'content-gate',
+        'POPUP'         => 'popup',
     ];
 
     private const LAYOUTS = ['stacked', 'inline', 'split', 'compact'];
@@ -44,12 +45,13 @@ class FormRenderer
     private const HONEYPOT_STYLE = 'position:absolute;width:1px;height:1px;overflow:hidden;'
         . 'clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap';
 
-    /** The icon's shapes, by kind: an envelope, a heart and a lock. */
+    /** The icon's shapes, by kind: an envelope (a popup's too), a heart and a lock. */
     private const ICONS = [
         'SIGNUP'        => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/>',
         'SAVE_TO_EMAIL' => '<path d="M12 20.5C12 20.5 3 15 3 9.25C3 6.35 5.25 4.5 7.75 4.5C9.6 4.5 11.1 5.55 12 7.1'
             . 'C12.9 5.55 14.4 4.5 16.25 4.5C18.75 4.5 21 6.35 21 9.25C21 15 12 20.5 12 20.5Z"/>',
         'CONTENT_GATE'  => '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+        'POPUP'         => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/>',
     ];
 
     private const NOTICE_CONNECT = 'connect';
@@ -192,9 +194,70 @@ class FormRenderer
     }
 
     /**
+     * The popup's form (PopupRenderer), for $config, the creator's POPUP
+     * form, sending $postId (0 off any one post: the home page). Its heading
+     * carries the id popupForm() gives, for the dialog to be named by. Empty
+     * rather than an editor's notice when it cannot show: the popup sits in
+     * every page's footer, and is left out of it whole.
+     *
+     * @param array<string, mixed> $config
+     */
+    public function renderPopupForm(array $config, int $postId): string
+    {
+        if (!PluginSettings::getApiKey() || $this->popupForm($config) === null) {
+            return '';
+        }
+
+        return $this->render(
+            function () use ($config): array {
+                return $config;
+            },
+            null,
+            'popup',
+            0,
+            self::NOTICE_MISSING,
+            null,
+            max(0, $postId)
+        );
+    }
+
+    /**
+     * What the popup shows of its form besides the form, as gateForm() does
+     * for a gate: its name, its brand colours and the id of its heading ('' when
+     * it has none). Null when $config is not a popup's form that can show.
+     * Renders and loads nothing.
+     *
+     * @param array<string, mixed> $config
+     * @return array{name: string, colors: array<string, string>, titleId: string}|null
+     */
+    public function popupForm(array $config): ?array
+    {
+        $form = self::normalize($config);
+        if ($form === null || $form['kind'] !== 'POPUP') {
+            return null;
+        }
+
+        return [
+            'name'    => isset($config['name']) && is_string($config['name']) ? trim($config['name']) : '',
+            'colors'  => $form['colors'],
+            'titleId' => $form['heading'] !== '' ? self::popupTitleId($form['hash']) : '',
+        ];
+    }
+
+    /**
+     * The popup's heading's id: by its hash, not per render, so the dialog
+     * around it can name it before it renders. One popup prints a page.
+     */
+    private static function popupTitleId(string $hash): string
+    {
+        return 'gl-popup-title-' . $hash;
+    }
+
+    /**
      * @param callable(): (array|null) $resolve Finds the config; only called once the page can show a form.
      * @param mixed $block
      * @param array{postId: int, gateId: string}|null $gate The content gate the form sits in, whose post it sends.
+     * @param int|null $postId The post the form sends, when the caller knows it (the popup); else the block's or the loop's.
      */
     private function render(
         callable $resolve,
@@ -202,7 +265,8 @@ class FormRenderer
         string $source,
         int $recipeId,
         string $missingNotice,
-        ?array $gate = null
+        ?array $gate = null,
+        ?int $postId = null
     ): string {
         if ((function_exists('is_feed') && is_feed()) || $this->wprm->isPrintView()) {
             return '';
@@ -218,7 +282,7 @@ class FormRenderer
             return self::notice($missingNotice);
         }
 
-        $postId = $gate !== null ? $gate['postId'] : self::contextPostId($block);
+        $postId = $gate !== null ? $gate['postId'] : ($postId ?? self::contextPostId($block));
 
         // Save to Email sends the page itself, so it needs one to send.
         if ($form['kind'] === 'SAVE_TO_EMAIL' && $postId <= 0) {
@@ -233,7 +297,7 @@ class FormRenderer
 
         // Per request, not per form: one form can sit on a page twice.
         $instance = ++self::$instances;
-        $titleId = 'gl-form-title-' . $instance;
+        $titleId = $source === 'popup' ? self::popupTitleId($form['hash']) : 'gl-form-title-' . $instance;
         $statusId = 'gl-form-status-' . $instance;
 
         // A gate opens in place of its form, so the form never leaves for a
@@ -408,17 +472,17 @@ class FormRenderer
     }
 
     /**
-     * Whether a form rendered from $config asks for consent: a signup or
-     * content-gate form showing its checkbox (design.optIn), which the
-     * visitor must tick. On Save to Email the same checkbox is an optional
-     * opt-in.
+     * Whether a form rendered from $config asks for consent: a signup,
+     * content-gate or popup form showing its checkbox (design.optIn), which
+     * the visitor must tick. On Save to Email the same checkbox is an
+     * optional opt-in.
      *
      * @param mixed $config
      */
     public static function requiresConsent($config): bool
     {
         return is_array($config)
-            && in_array($config['kind'] ?? null, ['SIGNUP', 'CONTENT_GATE'], true)
+            && in_array($config['kind'] ?? null, ['SIGNUP', 'CONTENT_GATE', 'POPUP'], true)
             && self::showsCheckbox($config['design'] ?? null);
     }
 
@@ -503,6 +567,9 @@ class FormRenderer
             $defaults['buttonLabel'] = __('Keep reading', 'grocers-list');
             $defaults['layout'] = 'stacked';
             $defaults['appearance'] = 'boxed';
+        } elseif ($kind === 'POPUP') {
+            // GRO keeps a popup's form stacked and plain: the popup's card is its box.
+            $defaults['layout'] = 'stacked';
         }
 
         return $defaults;

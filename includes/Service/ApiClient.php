@@ -543,6 +543,26 @@ class ApiClient
     }
 
     /**
+     * The creator's popup: { data: GL_ListGrowthFormConfig | null }, the
+     * config of the POPUP form they have on, with its popup settings, or null
+     * when none is on. Returns the raw response, as getForms() does.
+     *
+     * @param string $apiKey
+     * @param string|null $etag Sent as If-None-Match, as for getForms().
+     * @param int $timeout Seconds to wait, as for getForms().
+     * @return array|\WP_Error
+     */
+    static function getPopup(string $apiKey, ?string $etag = null, int $timeout = self::FORM_READ_TIMEOUT)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        return wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/popup", [
+            'headers' => self::formReadHeaders($apiKey, $etag),
+            'timeout' => max(1, $timeout),
+        ]);
+    }
+
+    /**
      * Submit a visitor's GRO form. GRO resolves what to do from the form
      * itself (its tags and its follow-up), so the payload carries only what
      * the visitor typed and the page they were on. Returns the raw response

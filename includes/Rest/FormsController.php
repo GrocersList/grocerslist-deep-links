@@ -42,12 +42,14 @@ class FormsController extends PublicFormController
     /**
      * Submissions per IP per window, by form kind. Each kind's own filter runs
      * first — the signup and Save to Email names are the GL-2436 ones — then
-     * grocerslist_form_rate_limit / _key, which also get the kind.
+     * grocerslist_form_rate_limit / _key, which also get the kind. A popup is
+     * a signup form, counted in a bucket of its own.
      */
     private const SUBMIT_LIMITS = [
         'SIGNUP'        => ['limit' => 20, 'window' => 600, 'filter' => 'grocerslist_email_form_rate_limit'],
         'SAVE_TO_EMAIL' => ['limit' => 10, 'window' => 600, 'filter' => 'grocerslist_save_to_email_rate_limit'],
         'CONTENT_GATE'  => ['limit' => 10, 'window' => 600, 'filter' => ''],
+        'POPUP'         => ['limit' => 20, 'window' => 600, 'filter' => 'grocerslist_email_form_rate_limit'],
     ];
 
     private const INVALIDATE_LIMIT = [
@@ -184,9 +186,13 @@ class FormsController extends PublicFormController
     }
 
     /**
-     * GRO's hint that a form changed: the hash and nothing else. The answer is
-     * the same whatever arrives — a real hint, a forged one, a malformed one
-     * or one over the limit — so it tells a caller nothing.
+     * GRO's hint that a form changed: the hash and nothing else, and popup
+     * true when the form is a popup. The answer is the same whatever arrives
+     * — a real hint, a forged one, a malformed one or one over the limit — so
+     * it tells a caller nothing. A popup hint, or one naming the form of the
+     * popup this site holds, re-reads the popup too (one slot of the limit
+     * either way, so at most two GRO requests); a hash of "popup", the
+     * popup's own id (FormConfigCache::POPUP_ID), re-reads the popup alone.
      *
      * @param \WP_REST_Request $request
      * @return \WP_REST_Response
@@ -194,9 +200,21 @@ class FormsController extends PublicFormController
     public function invalidate($request)
     {
         $hash = $request->get_param('hash');
+        $hash = FormConfigCache::isHash($hash) ? $hash : '';
+        $popup = filter_var($request->get_param('popup'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true;
+        if ($hash === FormConfigCache::POPUP_ID) {
+            $hash = '';
+            $popup = true;
+        }
 
-        if (FormConfigCache::isHash($hash) && $this->overLimit(self::INVALIDATE_LIMIT) === null) {
-            $this->forms->invalidate($hash);
+        if (($hash !== '' || $popup) && $this->overLimit(self::INVALIDATE_LIMIT) === null) {
+            if ($hash !== '') {
+                $this->forms->invalidate($hash);
+            }
+
+            if ($popup || ($hash !== '' && $hash === $this->forms->popupHash())) {
+                $this->forms->invalidatePopup();
+            }
         }
 
         return new \WP_REST_Response(new \stdClass(), 202);

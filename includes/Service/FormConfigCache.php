@@ -79,11 +79,30 @@ use GrocersList\Support\RequestFinisher;
  * Every config read runs through the grocerslist_form_config filter, which is
  * how a site overrides a form — and how a local WordPress renders one without
  * GRO (docs/FORMS.md).
+ *
+ * The creator's popup (getPopup(): the POPUP form they have on, which every
+ * page prints) is kept as a form is, under the id POPUP_ID: GRO's { data }
+ * answer in POPUP_TRANSIENT and POPUP_LKG_OPTION, its fingerprint under the
+ * id, the same windows and the same refreshes, and GRO's hint for it in
+ * invalidatePopup(). Its read runs through grocerslist_popup_config instead.
  */
 class FormConfigCache
 {
     public const LIST_TRANSIENT = 'grocerslist_forms_list';
-    public const KINDS = ['SIGNUP', 'SAVE_TO_EMAIL', 'CONTENT_GATE'];
+    public const KINDS = ['SIGNUP', 'SAVE_TO_EMAIL', 'CONTENT_GATE', 'POPUP'];
+
+    /**
+     * The popup's id where the per-form records keep it: its copy is
+     * POPUP_TRANSIENT, its saved copy POPUP_LKG_OPTION, its fingerprint is
+     * recorded under it in FINGERPRINTS_OPTION, and the purge after a change
+     * to it names it. No GRO form has it as its hash: GRO's are eight hex
+     * digits.
+     */
+    public const POPUP_ID = 'popup';
+
+    /** A form's transient and saved copy, named for POPUP_ID; holding { data: config|null }. */
+    public const POPUP_TRANSIENT = self::PREFIX . self::POPUP_ID;
+    public const POPUP_LKG_OPTION = self::LKG_PREFIX . self::POPUP_ID;
 
     /**
      * Each form this site has shown => md5((string) wp_json_encode($config))
@@ -136,6 +155,9 @@ class FormConfigCache
     /** GRO's answers that say there is nothing to show — not failures to serve a stale copy through. */
     private const FINAL_STATUSES = [401, 403, 404];
 
+    /** GRO's cap on a popup's page URLs (popup.pages.urls). */
+    private const POPUP_MAX_URLS = 50;
+
     private PageCachePurger $purger;
 
     /** @var callable(): int */
@@ -186,7 +208,8 @@ class FormConfigCache
     {
         $config = null;
 
-        if (PluginSettings::getApiKey() !== '' && self::isHash($hash)) {
+        // The popup's id is no form's hash (getPopup()).
+        if (PluginSettings::getApiKey() !== '' && self::isHash($hash) && $hash !== self::POPUP_ID) {
             [$config, $answered] = $this->load(self::PREFIX . $hash);
 
             if ($answered && $config !== null) {
@@ -290,6 +313,65 @@ class FormConfigCache
     }
 
     /**
+     * The creator's popup: the config of the POPUP form they have on in GRO,
+     * its settings read with their defaults (parseConfig()), or null when
+     * none is on, the site is not connected, GRO refuses its key, or GRO
+     * cannot be reached and there is no copy to fall back on. Every page asks
+     * for it (Blocks\PopupRenderer), so it is cached as a form is, under
+     * POPUP_ID, and the first answer GRO gives has its fingerprint recorded,
+     * "none on" too: a popup turned on later then purges the pages cached
+     * without it (invalidatePopup()).
+     *
+     * Through the grocerslist_popup_config filter, as get() goes through
+     * grocerslist_form_config: return a POPUP config to override the popup or
+     * show one without GRO, anything else to show none.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getPopup(): ?array
+    {
+        $config = null;
+
+        if (PluginSettings::getApiKey() !== '') {
+            [$body, $answered] = $this->load(self::POPUP_TRANSIENT);
+
+            if ($answered && $body !== null) {
+                $this->noteFingerprint(self::POPUP_ID, $body);
+            }
+
+            $config = $body['data'] ?? null;
+        }
+
+        $config = self::parseConfig(apply_filters('grocerslist_popup_config', $config));
+
+        return $config !== null && $config['kind'] === 'POPUP' ? $config : null;
+    }
+
+    /**
+     * The hash of the popup this site holds a copy of, from the copy alone
+     * (GRO is not asked); '' when there is none, or GRO said no popup is on.
+     */
+    public function popupHash(): string
+    {
+        $entry = $this->entry(self::POPUP_TRANSIENT) ?? $this->rehydrate(self::POPUP_TRANSIENT);
+        $hash = $entry !== null ? ($entry['body']['data']['hash'] ?? '') : '';
+
+        return self::isHash($hash) ? $hash : '';
+    }
+
+    /**
+     * GRO's hint that the popup changed: one turned on or off, the one on
+     * edited, or the palette its form draws. invalidate() for POPUP_ID, with
+     * the same rules and the same cost: the popup is read again now, and the
+     * page cache purged when it no longer matches its fingerprint — a popup
+     * turned on where none was, or off, included.
+     */
+    public function invalidatePopup(): void
+    {
+        $this->invalidate(self::POPUP_ID);
+    }
+
+    /**
      * GRO's hint that a form changed: an edit, or a change to the brand
      * palette in the creator's email settings, after which GRO sends one for
      * each active form. The hint is anonymous, so it is never data: the
@@ -305,7 +387,8 @@ class FormConfigCache
      * such form" for (or could not answer for) under a minute ago is not
      * asked about again, and one the site has no record of is left alone for
      * as long as the placeholder an earlier hint left lives. The picker's
-     * list is refreshed when the form came, went or changed.
+     * list is refreshed when the form came, went or changed. POPUP_ID is the
+     * popup (invalidatePopup()), which the list does not hold.
      */
     public function invalidate(string $hash): void
     {
@@ -314,6 +397,7 @@ class FormConfigCache
         }
 
         $key = self::PREFIX . $hash;
+        $listed = $hash !== self::POPUP_ID;
         if (PluginSettings::getApiKey() === '') {
             delete_transient($key);
             $this->deleteLkg($key);
@@ -377,7 +461,7 @@ class FormConfigCache
                 unset($fingerprints[$hash]);
                 $this->saveFingerprints($fingerprints);
             }
-            if ($known || $hadBody) {
+            if ($listed && ($known || $hadBody)) {
                 $this->expire(self::LIST_TRANSIENT);
             }
 
@@ -395,7 +479,9 @@ class FormConfigCache
 
         $fingerprints[$hash] = $fingerprint;
         $this->saveFingerprints($fingerprints);
-        $this->expire(self::LIST_TRANSIENT);
+        if ($listed) {
+            $this->expire(self::LIST_TRANSIENT);
+        }
 
         // A form this site has no fingerprint for may never have been on a
         // cached page: the first hint records it and purges nothing, unless
@@ -423,8 +509,8 @@ class FormConfigCache
      * answer nor on a first fetch, so a purge that flushes the object cache,
      * and the transients with it, never leads to another (noteFingerprint()).
      *
-     * @param string $key LIST_TRANSIENT or a form's transient name; anything
-     *                    else is ignored. Optional only so that an event
+     * @param string $key LIST_TRANSIENT, POPUP_TRANSIENT or a form's transient
+     *                    name; anything else is ignored. Optional only so that an event
      *                    scheduled by hand without arguments, which WP-Cron
      *                    runs with none, does nothing rather than fail.
      */
@@ -508,15 +594,107 @@ class FormConfigCache
 
     /**
      * @param mixed $data GRO's decoded 200 body for one form.
-     * @return array<string, mixed>|null
+     * @return array<string, mixed>|null The config as GRO sent it, but for a
+     *                                   popup's settings, read with their
+     *                                   defaults (popupSettings()).
      */
     public static function parseConfig($data): ?array
     {
-        return is_array($data)
-            && self::isHash($data['hash'] ?? null)
-            && in_array($data['kind'] ?? null, self::KINDS, true)
-            ? $data
-            : null;
+        if (!is_array($data)
+            || !self::isHash($data['hash'] ?? null)
+            || !in_array($data['kind'] ?? null, self::KINDS, true)) {
+            return null;
+        }
+
+        if ($data['kind'] === 'POPUP') {
+            $data['popup'] = self::popupSettings($data['popup'] ?? null);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param mixed $data GRO's decoded 200 body for the popup: { data: config|null }.
+     * @return array{data: array<string, mixed>|null}|null data null when no popup is on; null when the body is unusable.
+     */
+    public static function parsePopup($data): ?array
+    {
+        if (!is_array($data) || !array_key_exists('data', $data)) {
+            return null;
+        }
+
+        if ($data['data'] === null) {
+            return ['data' => null];
+        }
+
+        $config = self::parseConfig($data['data']);
+
+        return $config !== null && $config['kind'] === 'POPUP' ? ['data' => $config] : null;
+    }
+
+    /**
+     * A popup's settings (its config's popup), every field usable: the
+     * default GRO starts a popup with for one missing or of the wrong type,
+     * numbers rounded and held to GRO's ranges, and the page URLs trimmed,
+     * POPUP_MAX_URLS at most. GRO checks them when the creator saves; the
+     * config is still only data here, and grocerslist_popup_config can
+     * change it.
+     *
+     * @param mixed $popup
+     * @return array{audience: string, pages: array{mode: string, urls: array<int, string>}, trigger: array{type: string, timeDelaySeconds: int, scrollPercentage: int}, dismissDays: int, image: string}
+     */
+    public static function popupSettings($popup): array
+    {
+        $popup = is_array($popup) ? $popup : [];
+        $pages = isset($popup['pages']) && is_array($popup['pages']) ? $popup['pages'] : [];
+        $trigger = isset($popup['trigger']) && is_array($popup['trigger']) ? $popup['trigger'] : [];
+
+        $urls = [];
+        foreach (isset($pages['urls']) && is_array($pages['urls']) ? $pages['urls'] : [] as $url) {
+            $url = is_string($url) ? trim($url) : '';
+            if ($url !== '') {
+                $urls[] = $url;
+            }
+            if (count($urls) === self::POPUP_MAX_URLS) {
+                break;
+            }
+        }
+
+        return [
+            'audience'    => self::oneOf($popup['audience'] ?? null, ['EVERYONE', 'NOT_SUBSCRIBED'], 'NOT_SUBSCRIBED'),
+            'pages'       => [
+                'mode' => self::oneOf($pages['mode'] ?? null, ['ALL', 'ONLY', 'EXCEPT'], 'ALL'),
+                'urls' => $urls,
+            ],
+            'trigger'     => [
+                'type'             => self::oneOf($trigger['type'] ?? null, ['TIME', 'SCROLL'], 'TIME'),
+                'timeDelaySeconds' => self::between($trigger['timeDelaySeconds'] ?? null, 0, 120, 5),
+                'scrollPercentage' => self::between($trigger['scrollPercentage'] ?? null, 10, 100, 50),
+            ],
+            'dismissDays' => self::between($popup['dismissDays'] ?? null, 0, 365, 7),
+            'image'       => self::oneOf($popup['image'] ?? null, ['PROFILE_PHOTO', 'LOGO', 'NONE'], 'PROFILE_PHOTO'),
+        ];
+    }
+
+    /**
+     * @param mixed $value
+     * @param array<int, string> $allowed
+     */
+    private static function oneOf($value, array $allowed, string $default): string
+    {
+        return in_array($value, $allowed, true) ? $value : $default;
+    }
+
+    /**
+     * Held to the range before it becomes an integer: PHP casts a float past
+     * an integer's range (1e400 decodes as INF) to 0, or to whatever it wraps
+     * to, rather than to the nearer end.
+     *
+     * @param mixed $value
+     */
+    private static function between($value, int $min, int $max, int $default): int
+    {
+        return is_numeric($value) ? (int) max($min, min($max, round((float) $value))) : $default;
     }
 
     /**
@@ -532,7 +710,9 @@ class FormConfigCache
         $forms = [];
         foreach ($data['data'] as $config) {
             $config = self::parseConfig($config);
-            if ($config === null) {
+            // A popup is no form to pick, nor a default to fall back on: it
+            // shows by itself (getPopup()).
+            if ($config === null || $config['kind'] === 'POPUP') {
                 continue;
             }
 
@@ -762,7 +942,7 @@ class FormConfigCache
     /**
      * Asks GRO for $key, given the ETag to revalidate against and the seconds
      * to wait. Null for a site without a key, and for a key that is neither
-     * the list's nor a form's.
+     * the list's, the popup's nor a form's.
      *
      * @return (callable(?string, int): (array|\WP_Error))|null
      */
@@ -775,6 +955,11 @@ class FormConfigCache
 
         if ($key === self::LIST_TRANSIENT) {
             return fn(?string $etag, int $timeout) => ApiClient::getForms($apiKey, $etag, $timeout);
+        }
+
+        // Before the hash: the popup's key is a form's key in shape.
+        if ($key === self::POPUP_TRANSIENT) {
+            return fn(?string $etag, int $timeout) => ApiClient::getPopup($apiKey, $etag, $timeout);
         }
 
         $hash = self::hashOf($key);
@@ -792,11 +977,16 @@ class FormConfigCache
      */
     private function parser(string $key): callable
     {
-        return $key === self::LIST_TRANSIENT ? [self::class, 'parseList'] : [self::class, 'parseConfig'];
+        if ($key === self::LIST_TRANSIENT) {
+            return [self::class, 'parseList'];
+        }
+
+        return $key === self::POPUP_TRANSIENT ? [self::class, 'parsePopup'] : [self::class, 'parseConfig'];
     }
 
     /**
-     * The form hash in a form's transient name; '' for the list's, or anything else.
+     * The form hash in a form's transient name (POPUP_ID in the popup's);
+     * '' for the list's, or anything else.
      */
     private static function hashOf(string $key): string
     {
@@ -838,7 +1028,8 @@ class FormConfigCache
      * and the hash reaching them is always one this site's own content names
      * — a block or shortcode in a post (Blocks\FormRenderer), a submission
      * carrying the signature the site minted for it (Rest\FormsController,
-     * Blocks\FormSignature) or the editor's own preview. That form is going
+     * Blocks\FormSignature), the editor's own preview, or the popup, which
+     * every page asks for (Blocks\PopupRenderer). That form is going
      * to be rendered again, so its "nothing to show" is worth a day: without
      * it every page view more than CONFIG_TTL after the last waits on GRO
      * again. load()'s forced fetch, which is GRO's hint, and refresh() both

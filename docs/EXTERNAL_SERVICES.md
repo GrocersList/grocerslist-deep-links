@@ -8,8 +8,8 @@ paid memberships.
   Holdings, Inc. The plugin calls GRO's API at app.grocerslist.com from the
   site's server, with the site's GRO API key.
 - Purpose: Convert standard affiliate links into native-app deep links, show
-  the creator's GRO forms (signup, Save to Email and content gate) and send
-  their visitors' submissions to GRO, and, when memberships are on, sign
+  the creator's GRO forms (signup, Save to Email, content gate and popup) and
+  send their visitors' submissions to GRO, and, when memberships are on, sign
   members up, log them in and check their membership with GRO.
 - Data Sent for deep links: the Amazon links in a post, when it is saved and
   when the plugin scans the site's existing posts, plus non-PII HTTP metadata.
@@ -19,13 +19,24 @@ paid memberships.
 - GRO forms are designed in GRO. When the site shows a form, and when the
   block editor lists the forms, it fetches that form's design (its copy,
   layout and colours) or the creator's list of forms from GRO with the site's
-  GRO API key; these requests carry no visitor data.
+  GRO API key; these requests carry no visitor data. To show the creator's
+  GRO popup on its pages, the site also fetches from GRO
+  (`GET /api/v1/creator-api/popup`) whether a popup is on and, if so, its
+  design and settings: who it is for, the pages it shows on, when it opens
+  and for how long a closed one stays closed. That request carries no visitor
+  data either; whether a visitor sees the popup is decided in their browser,
+  with cookies the form script sets there for the site itself
+  (`gl_popup_dismissed`, after the visitor closes it or signs up through it,
+  and `gl_known`, when they arrive from a link in one of the creator's GRO
+  emails), which are never sent to GRO.
 - When a visitor submits a GRO form (the GRO Form or GRO Content Gate block,
-  or the `[gro_form]` and `[gro_save_to_email]` shortcodes), the site sends
+  the `[gro_form]` and `[gro_save_to_email]` shortcodes, or the popup), the
+  site sends
   GRO the form's id, that visitor's email address, their first name if the
   form asks for one, whether the page showed the form's checkbox (the Save to
   Email opt-in, or the consent box on a signup form or content gate) and
-  whether they ticked it, and the page they were on: its URL (pointing at the
+  whether they ticked it, and the page they were on (the site's home page for
+  a popup on a page that is no single post): its URL (pointing at the
   WP Recipe Maker recipe card when there is one), its title or recipe name,
   its category names, and its featured or recipe image URL. GRO then does what
   the creator configured for that form in GRO: adds the visitor to the
@@ -40,8 +51,9 @@ paid memberships.
 - When the creator edits a form, or changes the brand colours their forms
   use, GRO sends the site a notice that names that form and carries no
   visitor data (`POST /wp-json/grocerslist/v1/forms/invalidate`), one per
-  form. The site then fetches the form from GRO again and, if it changed,
-  clears its page cache.
+  form, saying too when the form is a popup (and so when the creator turns a
+  popup on or off). The site then fetches the form, or the popup, from GRO
+  again and, if it changed, clears its page cache.
 - Advanced Tracking: when the creator turns on Advanced Tracking for Raptive
   or Mediavine in GRO, GRO's answer to a successful GRO form submission
   includes the visitor's hashed email address (SHA-256 of the address,

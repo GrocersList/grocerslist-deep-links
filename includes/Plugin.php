@@ -17,6 +17,7 @@ use GrocersList\Blocks\GateContent;
 use GrocersList\Blocks\GatedRecipeLinks;
 use GrocersList\Blocks\GatedRecipeMetadata;
 use GrocersList\Blocks\GateRegion;
+use GrocersList\Blocks\PopupRenderer;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\EmailVerificationPage;
 use GrocersList\Frontend\PublicAjaxController;
@@ -125,6 +126,9 @@ class Plugin
         // event that carries the cache key (FormConfigCache::runDeferred()).
         add_action(FormConfigCache::REFRESH_HOOK, [$formConfigCache, 'refresh']);
         $formRenderer = new FormRenderer($formConfigCache, $wprmRecipes);
+
+        $popupRenderer = new PopupRenderer($formConfigCache, $formRenderer, $wprmRecipes);
+        $popupRenderer->register();
 
         $formBlock = new FormBlock($formRenderer);
         $formBlock->register();

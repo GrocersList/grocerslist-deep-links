@@ -8,7 +8,11 @@
 // what it hides, since a page cache gives everyone the same page, so the
 // content comes from the gate route (data-gl-reveal) for a browser the
 // server recognizes, or with the answer to the gate's own form, and takes
-// the gate's place in the page.
+// the gate's place in the page. And it opens the creator's popup, when the
+// page has one (popup.ts).
+
+import { all, attr, create, hasHint, readStored, STORAGE_KEY } from './dom';
+import { popup } from './popup';
 
 interface Answer {
   // What the submit route puts in every 2xx of its own, and nothing else
@@ -38,7 +42,7 @@ interface Answer {
 
 declare global {
   interface Window {
-    grocersList?: { member?: { email?: string } };
+    grocersList?: { member?: { email?: string; isWpUser?: boolean } };
     // What FormRenderer prints before this script: rest_url(), the REST
     // API's root (see restRoot).
     grocerslistForms?: { restRoot?: unknown };
@@ -63,7 +67,6 @@ declare global {
   }
 }
 
-const STORAGE_KEY = 'grocerslist:form';
 const NUMERIC_FIELDS = ['ts', 'postId', 'recipeId', 'gatePostId'];
 // The submitted fields the event's detail passes on as they were sent. The
 // address is not one of them, raw or hashed: anything on the page can
@@ -73,9 +76,6 @@ const EVENT_FIELDS = ['formId', 'postId', 'recipeId'];
 // A status word as the route writes one, matching FormsController's own
 // check of GRO's: lowercase letters and underscores, at most 32.
 const STATUS_WORD = /^[a-z_]{1,32}$/;
-// Set beside the httponly cookie the gate route checks, which no script can
-// read: only whether asking the route is worth a request.
-const HINT_COOKIE = 'gl_forms_subscribed_hint';
 const OPEN = 'gl-gate--open';
 // The block renders a gate as a div. One written as a form is markup a
 // post's author chose, whose controls could stand in for its own methods.
@@ -153,29 +153,6 @@ const REDIRECT_FALLBACK_MS = 4000;
 // route) may print its own <style>, or a <script>, before its markup.
 const UNSEEN = ['LINK', 'META', 'NOSCRIPT', 'SCRIPT', 'STYLE', 'TEMPLATE'];
 
-// An element's attribute as written. A control named getAttribute would
-// stand in for a form's own method (as one named action does for
-// form.action).
-const attr = (element: Element, name: string): string | null =>
-  Element.prototype.getAttribute.call(element, name);
-
-// document's own members, read past the page's markup: a form's name makes
-// the form a property of document that wins over document's own
-// (name="querySelectorAll", name="cookie"…), and a post's author can write
-// a form.
-const all = <E extends Element>(selector: string): E[] =>
-  Array.from(
-    Document.prototype.querySelectorAll.call(document, selector)
-  ) as E[];
-
-const create = (tag: string): HTMLElement =>
-  Document.prototype.createElement.call(document, tag);
-
-const COOKIE = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
-
-const cookies = (): string =>
-  COOKIE && COOKIE.get ? String(COOKIE.get.call(document)) : document.cookie;
-
 const readMessages = (form: HTMLFormElement): Messages => {
   const messages = { ...FALLBACK_MESSAGES };
 
@@ -211,23 +188,6 @@ const readMessages = (form: HTMLFormElement): Messages => {
 // elapsedMs's clock where performance.now() is missing: when this script
 // ran, which is never before the navigation started.
 const loadedAt = Date.now();
-
-interface Stored {
-  email?: string;
-  // false once the address was only used to save a page, opt-in unticked:
-  // it is not on the creator's list, so no "already on the list" line.
-  listed?: boolean;
-}
-
-const readStored = (): Stored => {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Stored) : null;
-    return parsed && typeof parsed.email === 'string' ? parsed : {};
-  } catch {
-    return {};
-  }
-};
 
 const remember = (email: string, listed: boolean): void => {
   const stored = readStored();
@@ -297,9 +257,6 @@ const addressRejected = (problem: Answer | null): boolean => {
   const errors = Array.isArray(problem.errors) ? problem.errors : [];
   return errors.length === 0 || errors.some(error => error?.field === 'email');
 };
-
-const hasHint = (): boolean =>
-  `; ${cookies()}`.indexOf(`; ${HINT_COOKIE}=`) !== -1;
 
 const reducedMotion = (): boolean =>
   typeof window.matchMedia === 'function' &&
@@ -1073,3 +1030,9 @@ window.addEventListener('pageshow', event => {
 
 all<HTMLFormElement>('form[data-gl-form]').forEach(wire);
 unlockAll();
+// Last, with its form wired already; nothing it does stops a form or a gate.
+try {
+  popup();
+} catch {
+  // Nothing for the visitor to see.
+}
