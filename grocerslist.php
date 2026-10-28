@@ -96,6 +96,11 @@ function grocers_list_activate() {
         wp_schedule_event(time(), 'hourly', 'grocerslist_wp_user_cleanup');
     }
 
+    // Schedule the hourly Digest content sync (ContentPublisher::reconcile()).
+    if (!wp_next_scheduled('grocerslist_content_sync')) {
+        wp_schedule_event(time(), 'hourly', 'grocerslist_content_sync');
+    }
+
     // Flush rewrite rules (useful for nginx compatibility)
     flush_rewrite_rules();
 }
@@ -107,13 +112,33 @@ function grocers_list_deactivate() {
     // Clean up any scheduled events if we had any
     wp_clear_scheduled_hook('grocers_list_scheduled_task');
     wp_clear_scheduled_hook('grocerslist_wp_user_cleanup');
+    wp_clear_scheduled_hook('grocerslist_content_sync');
+    wp_clear_scheduled_hook('grocerslist_content_backfill');
+    wp_clear_scheduled_hook('grocerslist_content_terms');
+    // Posts published while the plugin is off reach GRO by the backfill
+    // reactivating it schedules again (ContentPublisher::maybeScheduleBackfill()),
+    // with a fresh set of tries. A backfill this request had started is
+    // dropped (ContentPublisher::cancelPending()).
+    delete_option('grocerslist_content_backfill_version');
+    delete_option('grocerslist_content_backfill_status');
+    delete_option('grocerslist_content_backfill_lock');
+    // ...and what changed meanwhile by the hourly sync, which reaches back to
+    // now once the plugin is active again: the note
+    // ContentPublisher::noteSendingStopped() writes, "<earliest>:<latest>",
+    // by name, as this runs when the class may not load. An earlier stop,
+    // sending turned off, is kept; the note outlives deactivation, as do the
+    // posts deleted while sending was off. A post deleted while the plugin is
+    // off is not seen, and stays in GRO.
+    $earliest = (int) explode(':', (string) get_option('grocerslist_content_catch_up_since', ''))[0];
+    update_option('grocerslist_content_catch_up_since', ($earliest > 0 ? $earliest : time()) . ':' . time(), false);
 
-    // Every pending form-config refresh, whatever cache key it carries:
-    // wp_clear_scheduled_hook() clears only the events whose arguments it is
-    // given. Before WordPress 4.9 they are left to run once, with nothing
-    // hooked to them.
+    // Every pending form-config refresh and content push, whatever argument
+    // it carries: wp_clear_scheduled_hook() clears only the events whose
+    // arguments it is given. Before WordPress 4.9 they are left to run once,
+    // with nothing hooked to them.
     if (function_exists('wp_unschedule_hook')) {
         wp_unschedule_hook('grocerslist_forms_refresh');
+        wp_unschedule_hook('grocerslist_content_push');
     }
 
     // Flush rewrite rules (useful for nginx compatibility)

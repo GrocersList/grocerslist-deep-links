@@ -57,6 +57,10 @@ export class GrocersListApiMock implements IGrocersListApi {
     this.setStateToStorage(state);
   }
 
+  async updateContentSync() {
+    await this.delay(500);
+  }
+
   async triggerMigrate(): Promise<void> {
     console.log('🔧 Mock triggerMigrate');
     await this.delay(500);

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 
+import type { IInitialSync } from './components/ContentSyncSection.tsx';
 import type {
   ICreatorProvisioningSettings,
   ICreatorSettings,
@@ -16,6 +17,11 @@ declare global {
       ajaxUrl: string;
       settings: ICreatorSettings;
       provisioning: ICreatorProvisioningSettings;
+      contentSync?: {
+        enabled: boolean;
+        lastSyncAt: number | null;
+        initialSync?: IInitialSync | null;
+      };
       nonces: Record<string, string>;
     };
     wp: {

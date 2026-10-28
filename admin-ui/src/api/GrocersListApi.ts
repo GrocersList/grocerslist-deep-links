@@ -41,6 +41,12 @@ export class GrocersListApi implements IGrocersListApi {
     });
   }
 
+  async updateContentSync(enabled: boolean) {
+    await this.post('grocers_list_update_content_sync', {
+      enabled: enabled ? '1' : '0',
+    });
+  }
+
   async triggerMigrate() {
     await this.post('grocers_list_trigger_migrate', {});
   }

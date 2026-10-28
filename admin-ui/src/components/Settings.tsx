@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 
 import { ApiKeySection } from '@/components/ApiKey';
+import { ContentSyncSection } from '@/components/ContentSyncSection';
 import { DeepLinksSection } from '@/components/DeepLinksSection';
 import { MembershipsSection } from '@/components/MembershipsSection';
 import { SalesPageSection } from '@/components/SalesPageSection';
@@ -92,6 +93,7 @@ const SettingsConfiguration = () => {
             <MembershipsSection />
             <SalesPageSection addToast={addToast} />
             <DeepLinksSection addToast={addToast} />
+            <ContentSyncSection addToast={addToast} />
 
             {/* Action Buttons */}
             <Stack direction="row" spacing={2} sx={{ mt: 4 }}>

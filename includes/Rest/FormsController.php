@@ -11,6 +11,7 @@ use GrocersList\Service\FormConfigCache;
 use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\GateCookie;
 use GrocersList\Support\Logger;
+use GrocersList\Support\PostPayload;
 use GrocersList\Support\RateLimiter;
 use GrocersList\Support\WprmRecipes;
 
@@ -33,10 +34,6 @@ use GrocersList\Support\WprmRecipes;
  */
 class FormsController extends PublicFormController
 {
-    private const MAX_TITLE_LENGTH = 300;
-    private const MAX_URL_LENGTH = 2048;
-    private const MAX_CATEGORIES = 10;
-    private const MAX_CATEGORY_LENGTH = 100;
     private const MAX_FIRST_NAME_LENGTH = 100;
 
     /**
@@ -61,7 +58,7 @@ class FormsController extends PublicFormController
     ];
 
     private FormConfigCache $forms;
-    private WprmRecipes $wprm;
+    private PostPayload $payload;
     private GateCookie $gateCookie;
     private GateContent $gates;
 
@@ -74,7 +71,7 @@ class FormsController extends PublicFormController
     ) {
         parent::__construct($rateLimiter);
         $this->forms = $forms ?? new FormConfigCache();
-        $this->wprm = $wprm ?? new WprmRecipes();
+        $this->payload = new PostPayload($wprm ?? new WprmRecipes());
         $this->gateCookie = $gateCookie ?? new GateCookie();
         $this->gates = $gates ?? new GateContent();
     }
@@ -282,7 +279,9 @@ class FormsController extends PublicFormController
             );
         }
 
-        $page = $this->page($postId, $recipeId, $kind);
+        // Worked out from the signed ids, never from a URL or title the
+        // visitor posted.
+        $page = $this->payload->page($postId, $recipeId, $kind === 'SAVE_TO_EMAIL');
         if ($page === null) {
             return $this->problem(
                 400,
@@ -296,7 +295,7 @@ class FormsController extends PublicFormController
 
         $firstName = sanitize_text_field((string) $request->get_param('firstName'));
         if ($firstName !== '') {
-            $payload['firstName'] = self::truncate($firstName, self::MAX_FIRST_NAME_LENGTH);
+            $payload['firstName'] = PostPayload::truncate($firstName, self::MAX_FIRST_NAME_LENGTH);
         }
 
         $payload['subscribe'] = $subscribe;
@@ -471,130 +470,6 @@ class FormsController extends PublicFormController
     }
 
     /**
-     * The page the submission came from, worked out here from the signed ids —
-     * never from a URL or title the visitor posted. Signup and content-gate
-     * forms outside any one post (a footer on an archive, say) send the home
-     * page; Save to Email needs a post.
-     *
-     * @return array{url: string, title: string, categories: array<int, string>, imageUrl?: string}|null
-     *         Null when the post is not published, has a password, or is needed and missing.
-     */
-    private function page(int $postId, int $recipeId, string $kind): ?array
-    {
-        if ($postId <= 0) {
-            return $kind === 'SAVE_TO_EMAIL' ? null : self::homePage();
-        }
-
-        $post = get_post($postId);
-        if (!self::isPublic($post)) {
-            return null;
-        }
-
-        $url = (string) get_permalink($post);
-        $title = self::plainText((string) get_the_title($post));
-        $imageUrl = (string) get_the_post_thumbnail_url($post, 'full');
-
-        $recipe = $recipeId > 0 ? $this->wprm->recipe($recipeId, $postId) : null;
-        if ($recipe !== null) {
-            // The recipe's own post is its canonical home; the page the form
-            // sat on stands in when there is none, or it is not public.
-            $parent = $recipe['parentPostId'] > 0 && $recipe['parentPostId'] !== $postId
-                ? get_post($recipe['parentPostId'])
-                : null;
-            if (self::isPublic($parent)) {
-                $url = (string) get_permalink($parent);
-            }
-
-            $url = $url !== '' ? $url . '#wprm-recipe-container-' . $recipeId : '';
-            $name = self::plainText($recipe['name']);
-            $title = $name !== '' ? $name : $title;
-            $imageUrl = $recipe['imageUrl'] !== '' ? $recipe['imageUrl'] : $imageUrl;
-        }
-
-        $url = self::httpUrl($url);
-        if ($url === '') {
-            return null;
-        }
-
-        if ($title === '') {
-            $title = self::plainText((string) get_bloginfo('name'));
-        }
-
-        $page = [
-            'url'        => $url,
-            'title'      => self::truncate($title !== '' ? $title : $url, self::MAX_TITLE_LENGTH),
-            'categories' => self::categories($postId),
-        ];
-
-        $imageUrl = self::httpUrl($imageUrl);
-        if ($imageUrl !== '') {
-            $page['imageUrl'] = $imageUrl;
-        }
-
-        return $page;
-    }
-
-    /**
-     * @return array{url: string, title: string, categories: array<int, string>}|null
-     */
-    private static function homePage(): ?array
-    {
-        $url = self::httpUrl((string) home_url('/'));
-        if ($url === '') {
-            return null;
-        }
-
-        $title = self::plainText((string) get_bloginfo('name'));
-
-        return [
-            'url'        => $url,
-            'title'      => self::truncate($title !== '' ? $title : $url, self::MAX_TITLE_LENGTH),
-            'categories' => [],
-        ];
-    }
-
-    /**
-     * The post's category names, which GRO tags the contact with as
-     * "Category: <name>". Decoded, because WordPress stores "Mac & Cheese" as
-     * "Mac &amp; Cheese", and untranslated: a tag is a record in GRO, the same
-     * whichever locale rendered the page.
-     *
-     * @return array<int, string>
-     */
-    private static function categories(int $postId): array
-    {
-        $categories = get_the_category($postId);
-        $names = [];
-
-        foreach (is_array($categories) ? $categories : [] as $category) {
-            $name = is_object($category) && isset($category->name)
-                ? self::truncate(self::plainText((string) $category->name), self::MAX_CATEGORY_LENGTH)
-                : '';
-
-            if ($name !== '' && !in_array($name, $names, true)) {
-                $names[] = $name;
-            }
-
-            if (count($names) === self::MAX_CATEGORIES) {
-                break;
-            }
-        }
-
-        return $names;
-    }
-
-    /**
-     * @param mixed $post
-     */
-    private static function isPublic($post): bool
-    {
-        return is_object($post)
-            && isset($post->post_status)
-            && $post->post_status === 'publish'
-            && (string) ($post->post_password ?? '') === '';
-    }
-
-    /**
      * The answer the form's checkbox gave. No subscribe param means a page
      * rendered without the checkbox, which subscribes: GRO reads it the same
      * way, since a page cached before the creator turned the checkbox on
@@ -680,48 +555,6 @@ class FormsController extends PublicFormController
         }
 
         return ['subscriberHash' => $hash, 'mediavine' => $mediavine, 'raptive' => $raptive];
-    }
-
-    private static function plainText(string $text): string
-    {
-        $text = html_entity_decode(wp_strip_all_tags($text), ENT_QUOTES, 'UTF-8');
-
-        return trim((string) preg_replace('/\s+/u', ' ', $text));
-    }
-
-    /**
-     * GRO counts length the way JavaScript does, in UTF-16 code units, so a
-     * character outside the Basic Multilingual Plane (most emoji) counts twice.
-     */
-    private static function truncate(string $text, int $maxUnits): string
-    {
-        $out = '';
-        $units = 0;
-
-        foreach (preg_split('//u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $char) {
-            $units += strlen($char) === 4 ? 2 : 1;
-            if ($units > $maxUnits) {
-                break;
-            }
-            $out .= $char;
-        }
-
-        return trim($out);
-    }
-
-    /**
-     * An absolute http(s) URL within GRO's length limit, or '' — anything
-     * else would fail the whole request upstream over an optional field.
-     */
-    private static function httpUrl(string $url): string
-    {
-        if (strpos($url, '//') === 0) {
-            $url = set_url_scheme($url);
-        }
-
-        return strlen($url) <= self::MAX_URL_LENGTH && preg_match('#^https?://\S+$#i', $url) === 1
-            ? $url
-            : '';
     }
 
     /**

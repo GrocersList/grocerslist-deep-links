@@ -4,6 +4,7 @@ namespace GrocersList\Admin;
 
 use GrocersList\Jobs\MigrationVisitor;
 use GrocersList\Service\ApiClient;
+use GrocersList\Service\ContentPublisher;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\UrlMappingService;
 use GrocersList\Settings\PluginSettings;
@@ -12,10 +13,12 @@ class AjaxController
 {
     private CreatorSettingsFetcher $creatorSettingsFetcher;
     private SalesPage $salesPage;
+    private ContentPublisher $contentPublisher;
 
-    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher, SalesPage $salesPage) {
+    public function __construct(CreatorSettingsFetcher $creatorSettingsFetcher, SalesPage $salesPage, ?ContentPublisher $contentPublisher = null) {
         $this->creatorSettingsFetcher = $creatorSettingsFetcher;
         $this->salesPage = $salesPage;
+        $this->contentPublisher = $contentPublisher ?? new ContentPublisher();
     }
 
     public function register(): void
@@ -24,6 +27,7 @@ class AjaxController
             'grocers_list_get_state' => 'getState',
             'grocers_list_update_api_key' => 'updateApiKey',
             'grocers_list_update_use_linksta_links' => 'updateUseLinkstaLinks',
+            'grocers_list_update_content_sync' => 'updateContentSync',
             'grocers_list_clear_cache' => 'clearCache',
             'grocers_list_clear_settings' => 'clearSettings',
             'grocers_list_get_migration_status' => 'getMigrationStatus',
@@ -50,7 +54,14 @@ class AjaxController
 
         $this->checkPermission('grocers_list_clear_settings');
 
+        $wasSending = PluginSettings::getContentSyncEnabled() && PluginSettings::getApiKey() !== '';
         PluginSettings::reset();
+
+        // With no key nothing goes to GRO: what changes meanwhile reaches it
+        // by the hourly sync's catch-up once a key is saved again.
+        if ($wasSending) {
+            ContentPublisher::noteSendingStopped();
+        }
 
         // remove all mappings (effectively undo-ing migration):
         UrlMappingService::reset_mappings();
@@ -105,6 +116,16 @@ class AjaxController
         // API key change may indicate new Creator, clear creator-settings cached value
         $this->creatorSettingsFetcher->deleteCreatorSettingsTransient();
 
+        // ...whose GRO account gets the site's newest posts for its Digests,
+        // from this request: admin_init ran before the key was saved. Saved
+        // after the settings were cleared, the hourly sync's catch-up runs
+        // soon too, as when sending is turned back on.
+        ContentPublisher::resetBackfill();
+        $this->contentPublisher->maybeScheduleBackfill();
+        if (ContentPublisher::catchUpDue()) {
+            ContentPublisher::syncSoon();
+        }
+
         wp_send_json_success(['message' => 'API key updated']);
     }
 
@@ -117,6 +138,36 @@ class AjaxController
             && sanitize_text_field(wp_unslash($_POST['useLinkstaLinks'])) === '1';
         PluginSettings::setUseLinkstaLinks($enabled);
         wp_send_json_success(['message' => 'Use Linksta Links setting updated']);
+    }
+
+    public function updateContentSync(): void
+    {
+        check_ajax_referer('grocers_list_update_content_sync', 'security');
+
+        $this->checkPermission('grocers_list_update_content_sync');
+
+        $enabled = isset($_POST['enabled']) ? sanitize_text_field(wp_unslash($_POST['enabled'])) : '';
+
+        if (!in_array($enabled, ['0', '1'], true)) {
+            wp_send_json_error(['error' => 'Invalid enabled parameter - must be "0" or "1"'], 400);
+            return;
+        }
+
+        $wasEnabled = PluginSettings::getContentSyncEnabled();
+        PluginSettings::setContentSyncEnabled($enabled === '1');
+
+        // What changed while it was off reaches GRO by the backfill, started
+        // from this request (admin_init ran with sending off), and by the
+        // hourly sync's catch-up, run soon.
+        if ($enabled === '1' && !$wasEnabled) {
+            ContentPublisher::resetBackfill();
+            $this->contentPublisher->maybeScheduleBackfill();
+            ContentPublisher::syncSoon();
+        } elseif ($enabled === '0' && $wasEnabled) {
+            ContentPublisher::noteSendingStopped();
+        }
+
+        wp_send_json_success(['enabled' => $enabled === '1', 'message' => 'Content sync setting updated']);
     }
 
     private function checkPermission(string $nonceAction): void

@@ -11,12 +11,17 @@ class PluginSettings {
 
     private const KEY_API = 'api_key';
     private const KEY_LINKSTA = 'use_linksta_links';
+    private const KEY_CONTENT_SYNC = 'content_sync_enabled';
+    private const KEY_CONTENT_LAST_SYNC = 'content_last_sync_at';
 
     static function all_keys() {
         return [
             // settings:
             self::KEY_API,
             self::KEY_LINKSTA,
+            self::KEY_CONTENT_SYNC,
+            // content sync:
+            self::KEY_CONTENT_LAST_SYNC,
             // migration:
             'migration_migrated_posts',
             'migration_total_posts',
@@ -67,6 +72,30 @@ class PluginSettings {
     static function setUseLinkstaLinks(bool $enabled): bool {
         $boolVal = $enabled ? '1' : '0';
         return self::update_option(self::KEY_LINKSTA, $boolVal);
+    }
+
+    /**
+     * Whether published posts go to GRO for Digests: on unless turned off.
+     * Not read through get_option() above, which takes a stored '0' for no
+     * value and answers the default.
+     */
+    static function getContentSyncEnabled(): bool {
+        return (string) get_option(self::PREFIX . self::KEY_CONTENT_SYNC, '1') !== '0';
+    }
+
+    static function setContentSyncEnabled(bool $enabled): bool {
+        return self::update_option(self::KEY_CONTENT_SYNC, $enabled ? '1' : '0');
+    }
+
+    /**
+     * When GRO last accepted posts from the site, as a Unix time; 0 for never.
+     */
+    static function getContentLastSyncAt(): int {
+        return (int) self::get_option(self::KEY_CONTENT_LAST_SYNC, '');
+    }
+
+    static function setContentLastSyncAt(int $time): bool {
+        return self::update_option(self::KEY_CONTENT_LAST_SYNC, (string) $time);
     }
 
     static function reset(): void {

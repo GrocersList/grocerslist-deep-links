@@ -24,6 +24,7 @@ use GrocersList\Frontend\PublicAjaxController;
 use GrocersList\Frontend\WprmPrintIntegration;
 use GrocersList\Rest\FormsController;
 use GrocersList\Rest\GateController;
+use GrocersList\Service\ContentPublisher;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\FormConfigCache;
 use GrocersList\Service\MemberService;
@@ -34,6 +35,7 @@ use GrocersList\Support\ElevatedUserRemediation;
 use GrocersList\Support\GateCookie;
 use GrocersList\Support\Logger;
 use GrocersList\Support\PluginVersionPurge;
+use GrocersList\Support\PostPayload;
 use GrocersList\Support\SalesPagePattern;
 use GrocersList\Support\WprmRecipes;
 
@@ -71,7 +73,15 @@ class Plugin
         $salesPage = new SalesPage($salesPagePattern);
         $salesPage->register();
 
-        $ajaxController = new AjaxController($creatorSettingsFetcher, $salesPage);
+        $wprmRecipes = new WprmRecipes();
+
+        // Published posts to GRO for the creator's Digests: on save (deferred
+        // to shutdown), the hourly grocerslist_content_sync, and a one-time
+        // backfill, which the settings' AJAX handlers start too. Registered
+        // below.
+        $contentPublisher = new ContentPublisher(new PostPayload($wprmRecipes), $wprmRecipes);
+
+        $ajaxController = new AjaxController($creatorSettingsFetcher, $salesPage, $contentPublisher);
         $ajaxController->register();
 
         $publicAjaxController = new PublicAjaxController();
@@ -119,7 +129,6 @@ class Plugin
         $categoryGating = new CategoryGating();
         $categoryGating->register();
 
-        $wprmRecipes = new WprmRecipes();
         $formConfigCache = new FormConfigCache();
         // A server with no finish function cannot send the page before its
         // stale form configs are refreshed, so the refresh runs as a WP-Cron
@@ -166,6 +175,8 @@ class Plugin
 
         $elevatedUserRemediation = new ElevatedUserRemediation();
         $elevatedUserRemediation->register();
+
+        $contentPublisher->register();
 
         self::$registered = true;
     }

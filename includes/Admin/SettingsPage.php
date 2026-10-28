@@ -2,7 +2,9 @@
 
 namespace GrocersList\Admin;
 
+use GrocersList\Service\ContentPublisher;
 use GrocersList\Service\CreatorSettingsFetcher;
+use GrocersList\Settings\PluginSettings;
 use GrocersList\Support\Config;
 
 class SettingsPage {
@@ -56,6 +58,7 @@ class SettingsPage {
                 'grocers_list_get_state' => wp_create_nonce('grocers_list_get_state'),
                 'grocers_list_update_api_key' => wp_create_nonce('grocers_list_update_api_key'),
                 'grocers_list_update_use_linksta_links' => wp_create_nonce('grocers_list_update_use_linksta_links'),
+                'grocers_list_update_content_sync' => wp_create_nonce('grocers_list_update_content_sync'),
                 'grocers_list_mark_setup_complete' => wp_create_nonce('grocers_list_mark_setup_complete'),
                 'grocers_list_clear_cache' => wp_create_nonce('grocers_list_clear_cache'),
                 'grocers_list_clear_settings' => wp_create_nonce('grocers_list_clear_settings'),
@@ -73,7 +76,15 @@ class SettingsPage {
                 'grocers_list_remove_sales_page' => wp_create_nonce('grocers_list_remove_sales_page'),
             ],
             'settings' => $creatorSettings->settings ?? null,
-            'provisioning' => $creatorSettings->provisioning ?? null
+            'provisioning' => $creatorSettings->provisioning ?? null,
+            // Beside GRO's creator settings, not in them: the admin UI reads
+            // `settings` being there as the API key working. Nested, so
+            // wp_localize_script() keeps the boolean a boolean.
+            'contentSync' => [
+                'enabled' => PluginSettings::getContentSyncEnabled(),
+                'lastSyncAt' => PluginSettings::getContentLastSyncAt() ?: null,
+                'initialSync' => ContentPublisher::backfillReport(),
+            ],
         ];
 
         wp_localize_script('grocers-list-admin-ui', 'grocersList', $window_grocersList);

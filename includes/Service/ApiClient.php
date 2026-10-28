@@ -597,6 +597,89 @@ class ApiClient
     }
 
     /**
+     * Send GRO the site's public posts for the creator's Digests. A batch is
+     * one action: publish and update entries carry PostPayload::post()'s
+     * shape, unpublish entries only their sourceKey. GRO answers 202 with
+     * { accepted: n }.
+     *
+     * @param array<int, array<string, mixed>> $posts At most 50.
+     * @param string $action publish, update or unpublish.
+     * @return array|\WP_Error GRO's decoded body on a 2xx; a WP_Error without
+     *                         a key, on a transport failure, and for any
+     *                         other status (its data carries the status).
+     */
+    static function postContentPosts(array $posts, string $action)
+    {
+        return self::postContent('posts', [
+            'action' => $action,
+            'posts' => array_values($posts),
+        ], __FUNCTION__);
+    }
+
+    /**
+     * Send GRO the site's category and tag names, which the Digest setup
+     * offers to filter by. Each list is the site's whole list and replaces
+     * the one GRO holds; an empty one means the site has none. GRO answers
+     * 200 with { accepted: { categories: n, tags: n } }.
+     *
+     * @param array<int, string> $categories At most 500 names of up to 100 characters.
+     * @param array<int, string> $tags At most 500 names of up to 100 characters.
+     * @return array|\WP_Error GRO's decoded body on a 2xx; a WP_Error without
+     *                         a key, on a transport failure, and for any
+     *                         other status (its data carries the status).
+     */
+    static function postContentTerms(array $categories, array $tags)
+    {
+        return self::postContent('terms', [
+            'categories' => array_values($categories),
+            'tags' => array_values($tags),
+        ], __FUNCTION__);
+    }
+
+    /**
+     * POST $body as JSON to GRO's content route $route with the site's key:
+     * the request postContentPosts() and postContentTerms() make.
+     *
+     * @param array<string, mixed> $body
+     * @param string $caller The method the debug log names.
+     * @return array|\WP_Error GRO's decoded body on a 2xx; a WP_Error without
+     *                         a key, on a transport failure, and for any
+     *                         other status (its data carries the status).
+     */
+    private static function postContent(string $route, array $body, string $caller)
+    {
+        $apiKey = PluginSettings::getApiKey();
+        if (!$apiKey) return new \WP_Error('grocerslist_missing_api_key', 'Missing API key');
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/content/" . $route, [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+            ],
+            'body' => wp_json_encode($body),
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response)) {
+            Logger::debug($caller . " transport error: " . $response->get_error_message());
+
+            return $response;
+        }
+
+        $status = (int) wp_remote_retrieve_response_code($response);
+        if ($status < 200 || $status >= 300) {
+            Logger::debug($caller . " non-2xx status " . $status . ": " . wp_remote_retrieve_body($response));
+
+            return new \WP_Error('grocerslist_content_not_accepted', 'GRO answered ' . $status, ['status' => $status]);
+        }
+
+        $decoded = json_decode((string) wp_remote_retrieve_body($response), true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
      * @return array<string, string>
      */
     private static function formReadHeaders(string $apiKey, ?string $etag): array

@@ -1,21 +1,57 @@
 ## External Services
 
 This plugin connects to GRO (formerly Grocers List) APIs to generate deep links
-for affiliate URLs, to show the creator's GRO forms, and to run the creator's
-paid memberships.
+for affiliate URLs, to show the creator's GRO forms, to send the site's
+published posts to GRO for the creator's Digest emails, and to run the
+creator's paid memberships.
 
 - Service: GRO, formerly Grocers List (https://gro.co), provided by GRO
   Holdings, Inc. The plugin calls GRO's API at app.grocerslist.com from the
   site's server, with the site's GRO API key.
 - Purpose: Convert standard affiliate links into native-app deep links, show
   the creator's GRO forms (signup, Save to Email, content gate and popup) and
-  send their visitors' submissions to GRO, and, when memberships are on, sign
+  send their visitors' submissions to GRO, give GRO the site's published posts
+  to build the creator's Digest emails from, and, when memberships are on, sign
   members up, log them in and check their membership with GRO.
 - Data Sent for deep links: the Amazon links in a post, when it is saved and
   when the plugin scans the site's existing posts, plus non-PII HTTP metadata.
   GRO answers with short links on linksta.io that open in the Amazon app, and
   the site's pages show those in place of the Amazon links, so a visitor who
   taps one passes through GRO's link service on the way to Amazon.
+- Data Sent for Digests: GRO builds the creator's Digest emails, roundups of
+  their newest posts, from the site's posts. When a post, a page or a post of
+  another public type that the site's search shows (not, say, a page builder's
+  templates) is published or updated, the plugin sends GRO
+  (`POST /api/v1/creator-api/content/posts`, with the site's GRO API key) that
+  post's public details: its title, URL, excerpt (or, without one, the
+  description Yoast SEO or Rank Math keeps for it; for a members-only post,
+  only an excerpt written for it, never its opening words), featured image URL,
+  category and tag names, post type, publish and last-modified dates, whether
+  it is for members only, and for a post with a WP Recipe Maker recipe, the
+  recipe's courses, cuisines, keywords, total time, rating and servings. When
+  a category's membership setting changes, or a category or tag is renamed or
+  deleted, it sends that category's or tag's posts again. Once an hour it
+  sends again the posts published, edited or unpublished in the last day that
+  GRO did not take, and once, after the plugin is updated or connected to a
+  GRO account (and again when the creator turns this back on or reactivates
+  the plugin), it sends the 20 newest posts, trying again an hour later until
+  GRO has taken them, five tries in all at most. When sending resumes (the
+  creator turns this back on, reactivates the plugin, or saves the GRO API key
+  after clearing the plugin's settings), the hourly sync reaches back to when
+  it stopped: the posts published, edited or unpublished meanwhile go
+  too, and for each post GRO had that was deleted while sending was off (the
+  500 most recent), its id alone, so GRO drops it. A post deleted while the
+  plugin is deactivated is not seen, and stays in GRO. It also sends GRO the
+  names of the site's categories and tags
+  (`POST /api/v1/creator-api/content/terms`): all of them, whether or not a
+  post has them, up to 500 of each, so the creator can pick them when setting
+  up a Digest in GRO. They go when a category or tag is added, renamed or
+  deleted, once an hour, and before the 20 newest posts, and are only the
+  names, as the site has written them. Only published posts without a password are
+  sent, never a draft, a private post, the author or any visitor data; when a
+  post is unpublished, trashed or deleted, the plugin sends GRO only its id so
+  GRO drops it. The creator can turn this off in the plugin's settings ("Send
+  new posts to GRO").
 - GRO forms are designed in GRO. When the site shows a form, and when the
   block editor lists the forms, it fetches that form's design (its copy,
   layout and colours) or the creator's list of forms from GRO with the site's

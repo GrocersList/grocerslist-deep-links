@@ -124,6 +124,10 @@ An overview of our features:
 - Faster for returning subscribers: what a content gate reveals is now rendered once and reused for a few minutes instead of being rebuilt for every visit. Editing the post, or a WP Recipe Maker recipe inside the gate, shows up straight away.
 - Requires PHP 7.4 or newer. Tested up to WordPress 7.1.
 
+#### - Unreleased - Posts for GRO Digests
+
+- GRO Digests: the plugin now sends GRO your published posts (title, link, excerpt, featured image, categories and tags, dates, whether they are for members only, and WP Recipe Maker recipe details) when you publish, update or unpublish them, so GRO can build Digest emails from your newest posts, and the names of all your categories and tags, so you can pick any of them when you set up a Digest. Posts you publish, edit or unpublish that do not reach GRO straight away are sent again within the hour. Your 20 newest posts are sent once after updating, and tried again hourly if they do not reach GRO, five tries in all at most; the plugin's settings show how that went. Turn it off with "Send new posts to GRO" in the plugin's settings. Turned back on, it sends the posts published, edited, unpublished or deleted (the 500 most recently deleted) while it was off; reactivated, the posts published, edited or unpublished while the plugin was deactivated.
+
 ### Resources:
 
 - [How we use external services and what data we collect](https://github.com/GrocersList/grocerslist-deep-links/blob/main/docs/EXTERNAL_SERVICES.md)
