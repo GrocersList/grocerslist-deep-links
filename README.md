@@ -8,32 +8,70 @@ Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
 
-Earn more revenue from your website by offering paid memberships, exclusive content, and amazon deep links.
+GRO is a platform to grow your email list, send emails and sequences, gate content, sell memberships, and earn more with Amazon deep links.
 
 == Description ==
 
-[GRO](https://gro.co) is a suite of tools built for food and recipe bloggers. The plugin makes it super easy to start earning more revenue form your website traffic through our two plugin based services:
+[GRO](https://gro.co) brings together the tools creators need to grow an audience and earn more from their traffic, all inside WordPress:
+
+- **Email Marketing Suite**: build your list and send emails from one place
+- **Embedded Forms**: capture subscribers anywhere on your site
+- **Save to Email Forms**: let readers email themselves a post or recipe
+- **Gated Content Forms**: unlock content in exchange for an email address
+- **Emails & Email Sequences**: send broadcasts and automated sequences
+- **Paid Memberships**: offer an ad-free or members-only experience
+- **Amazon Deep Links**: open affiliate links in the Amazon app
+
+## Email Marketing Suite
+
+Grow and engage your audience without stitching together separate tools. Every subscriber captured through a GRO form lands in your GRO email list, ready for broadcasts and automated sequences.
+
+## Embedded Forms
+
+Add a signup form to any post, page, or sidebar with the GRO Form block or a shortcode. Forms include built-in spam protection and an optional consent checkbox.
+
+## Save to Email Forms
+
+Give readers an easy way to keep your content. A save form sends the post or recipe straight to their inbox, and adds them to your list at the same time.
+
+## Gated Content Forms
+
+Use the GRO Content Gate block to put part of a post behind an email signup. Readers enter their email to unlock the rest, so your best content grows your list.
+
+## Emails & Email Sequences
+
+Send one-off emails to your subscribers, or set up sequences that go out automatically, such as a welcome series for new signups or follow-ups for readers who saved a post.
 
 ## Paid Memberships
 
-Offer website visitors access to an ad-free cooking experience by joining your membership program. Offer paid members exclusive access to specific recipe posts, or exclusive recipe cards. Easily set your membership price, customize your membership display settings, and we will handle the paid membership checkout, member logins, and member exclusive content gating. Open up a predictable, recurring revenue stream on top of your existing content site, rather than pushing your audience into substack.
+- Set a membership price for an ad-free experience on Raptive or Mediavine
+- Make specific posts or pages exclusive to members
+- Handle checkout and member logins through GRO, with payments processed by Stripe
+- Sync paying members to email tools such as Kit, Flodesk, MailerLite, and Mailchimp
 
-## Amazon Deep links
+## Amazon Deep Links
 
-Earn more from the existing Amazon affiliate links published on your posts. Connect the plugin to your existing GRO account, and we’ll quickly find all amazon links published on your site.
-We’ll then automatically convert them into deep links for Amazon. When clicked, it will bring the visitor into their Amazon app on their phone, where they have the highest likelihood of converting. Driving clicks into the Amazon app, rather than into Amazon in the browser, converts 3-5X more.
+- Scan your existing posts for Amazon links
+- Convert published Amazon links into deep links that open in the Amazon app, which convert 3-5X more than browser links
 
 <hr>
 
 == Features ==
 
-An overview of our features:
+- Email marketing suite built into WordPress
+- Embedded signup forms (block and shortcode)
+- Save to email forms for posts and recipes
+- Gated content forms with the GRO Content Gate block
+- Email broadcasts and automated email sequences
+- Spam protection and optional consent checkbox on all forms
+- Paid memberships with ad-free and members-only content
+- Member sync to Kit, Flodesk, MailerLite, and Mailchimp
+- Amazon link scanning and app deep-link conversion
 
-- Set a price for your paid membership, which will get your audience access to an ad-free experience on Raptive or Mediavine.
-- Option to set specific recipes, or specific recipe cards as member benefits.
-- Automatically sync paying members to Kit (formerly ConvertKit) and Flodesk.
-- Quickly scan all your WordPress posts to find previously published Amazon links.
-- Automatically convert all published Amazon links into deep links that open in the Amazon app.
+== Blocks ==
+
+- **GRO Form**: embed a signup or save to email form
+- **GRO Content Gate**: gate content behind an email signup
 
 == Changelog ==
 

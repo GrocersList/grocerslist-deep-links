@@ -2,7 +2,7 @@
 /*
 Plugin Name: GRO
 Plugin URI: https://gro.co
-Description: GRO is a suite of tools for bloggers — monetize your site with paid memberships and Amazon deep links.
+Description: GRO is a platform to grow your email list, send emails and sequences, gate content, sell memberships, and earn more with Amazon deep links.
 Requires at least: 4.4
 Requires PHP: 7.4
 Tested up to: 7.1
