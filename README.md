@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 7.1
-Stable tag: 1.30.0
+Stable tag: 1.31.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -145,7 +145,7 @@ Send one-off emails to your subscribers, or set up sequences that go out automat
 
 #### - 09/10/2026 - 1.29.0 - Expand server side CSS for gated-recipe-cards with lock icon
 
-#### - 10/15/2026 - 1.30.0 - GRO Forms and the GRO Content Gate
+#### - 10/08/2026 - 1.30.0 - GRO Forms and the GRO Content Gate
 
 - New GRO Form block: show the signup and Save to Email forms you set up in GRO, in your brand colors. Edits you make to a form in GRO show on your site automatically, usually within seconds — for a form inside a content gate, within about five minutes.
 - New `[gro_form]` and `[gro_save_to_email]` shortcodes for your GRO forms. Both also work inside WP Recipe Maker recipe card templates.
@@ -162,9 +162,10 @@ Send one-off emails to your subscribers, or set up sequences that go out automat
 - Faster for returning subscribers: what a content gate reveals is now rendered once and reused for a few minutes instead of being rebuilt for every visit. Editing the post, or a WP Recipe Maker recipe inside the gate, shows up straight away.
 - Requires PHP 7.4 or newer. Tested up to WordPress 7.1.
 
-#### - Unreleased - Posts for GRO Digests
+#### - 10/29/2026 - 1.31.0 - GRO Popup and Posts for GRO Digests
 
-- GRO Digests: the plugin now sends GRO your published posts (title, link, excerpt, featured image, categories and tags, dates, whether they are for members only, and WP Recipe Maker recipe details) when you publish, update or unpublish them, so GRO can build Digest emails from your newest posts, and the names of all your categories and tags, so you can pick any of them when you set up a Digest. Posts you publish, edit or unpublish that do not reach GRO straight away are sent again within the hour. Your 20 newest posts are sent once after updating, and tried again hourly if they do not reach GRO, five tries in all at most; the plugin's settings show how that went. Turn it off with "Send new posts to GRO" in the plugin's settings. Turned back on, it sends the posts published, edited, unpublished or deleted (the 500 most recently deleted) while it was off; reactivated, the posts published, edited or unpublished while the plugin was deactivated.
+- New GRO Popup: turn on a Popup form in GRO and it shows on your site's pages, with nothing to add in WordPress.
+- Posts for GRO Digests: the plugin sends your published posts, categories and tags to GRO so it can build Digest emails from your newest posts. Turn it off with "Send new posts to GRO" in the plugin's settings.
 
 ### Resources:
 
