@@ -47,64 +47,95 @@ export const Icon = ({
 );
 
 // The form with the front end's markup, inside the wrapper that carries
-// toPreview()'s classes and colours: its inputs disabled, its button not one.
-export const FormPreview = ({ config }: { config: FormConfig }) => {
-  const preview = toPreview(config);
+// toPreview()'s classes and colours (toPreview(config, inGate) for a content
+// gate's): the banner and the picture before the form, as FormRenderer
+// prints them, never in a content gate; its inputs disabled, its button not
+// one.
+export const FormPreview = ({
+  config,
+  inGate = false,
+}: {
+  config: FormConfig;
+  inGate?: boolean;
+}) => {
+  const preview = toPreview(config, inGate);
   const title = preview.heading !== '' || preview.showIcon;
   const description = !preview.compact && preview.description !== '';
 
   return (
-    <div className="gl-form__form">
-      {(title || description) && (
-        <div className="gl-form__copy">
-          {title && (
-            <p className="gl-form__title">
-              {preview.showIcon && <Icon kind={preview.kind} />}
-              {preview.heading !== '' && (
-                <span className="gl-form__title-text">{preview.heading}</span>
-              )}
-            </p>
+    <>
+      {(preview.banner !== '' || preview.picture !== null) && (
+        <div
+          className={
+            preview.banner !== ''
+              ? 'gl-form__header gl-form__header--banner'
+              : 'gl-form__header'
+          }
+        >
+          {preview.banner !== '' && (
+            <img className="gl-form__banner" src={preview.banner} alt="" />
           )}
-          {description && (
-            <p className="gl-form__description">{preview.description}</p>
+          {preview.picture !== null && (
+            <img
+              className="gl-form__picture"
+              src={preview.picture.url}
+              alt=""
+            />
           )}
         </div>
       )}
-      <div className="gl-form__fields">
-        <div className="gl-form__row">
-          {preview.collectFirstName && (
-            <label className="gl-form__field gl-form__field--name">
+      <div className="gl-form__form">
+        {(title || description) && (
+          <div className="gl-form__copy">
+            {title && (
+              <p className="gl-form__title">
+                {preview.showIcon && <Icon kind={preview.kind} />}
+                {preview.heading !== '' && (
+                  <span className="gl-form__title-text">{preview.heading}</span>
+                )}
+              </p>
+            )}
+            {description && (
+              <p className="gl-form__description">{preview.description}</p>
+            )}
+          </div>
+        )}
+        <div className="gl-form__fields">
+          <div className="gl-form__row">
+            {preview.collectFirstName && (
+              <label className="gl-form__field gl-form__field--name">
+                <input
+                  type="text"
+                  placeholder={preview.namePlaceholder}
+                  aria-label={preview.namePlaceholder}
+                  disabled
+                />
+              </label>
+            )}
+            <label className="gl-form__field gl-form__field--email">
               <input
-                type="text"
-                placeholder={preview.namePlaceholder}
-                aria-label={preview.namePlaceholder}
+                type="email"
+                placeholder={preview.emailPlaceholder}
+                aria-label={preview.emailPlaceholder}
                 disabled
               />
             </label>
+            <span className="gl-form__submit wp-block-button__link wp-element-button">
+              {preview.buttonLabel}
+            </span>
+          </div>
+          {preview.optIn !== null && (
+            <label className="gl-form__optin">
+              <input
+                type="checkbox"
+                defaultChecked={preview.optIn.checked}
+                disabled
+              />
+              <span>{preview.optIn.label}</span>
+            </label>
           )}
-          <label className="gl-form__field gl-form__field--email">
-            <input
-              type="email"
-              placeholder={preview.emailPlaceholder}
-              aria-label={preview.emailPlaceholder}
-              disabled
-            />
-          </label>
-          <span className="gl-form__submit wp-block-button__link wp-element-button">
-            {preview.buttonLabel}
-          </span>
         </div>
-        {preview.optIn !== null && (
-          <label className="gl-form__optin">
-            <input
-              type="checkbox"
-              defaultChecked={preview.optIn.checked}
-              disabled
-            />
-            <span>{preview.optIn.label}</span>
-          </label>
-        )}
       </div>
-    </div>
+    </>
   );
 };

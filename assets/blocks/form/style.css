@@ -13,6 +13,16 @@
  *   --stacked | --inline | --split | --compact     design.layout
  *   --boxed | --plain                               design.appearance
  *   --icon                                          design.showIcon
+ *   --banner    the form has a banner (design.bannerUrl), the creator's own
+ *               image across its top
+ *   --image-avatar | --image-logo
+ *               the form's picture (design.image, at design.imageUrl): the
+ *               creator's profile photo or their logo. None when the form
+ *               has no picture or GRO has no http(s) URL for it.
+ *               Neither --banner nor --image-* is ever on a popup's form,
+ *               whose banner and picture are the popup's
+ *               (assets/blocks/popup), on a content gate's own form, or on
+ *               any form in a content gate, which shows neither
  *   --brand     brand colours are on (design.useBrandColors). The wrapper's
  *               style attribute then sets --gl-form-accent (the button and
  *               the icon; design.accentColor when set, else brand.accent),
@@ -25,6 +35,24 @@
  *               the accent's WCAG 2 relative luminance: #fff up to about
  *               L = 0.1791 (docs/FORMS.md has the whole formula). Without
  *               --brand the theme styles the button.
+ * .gl-form__header          the banner and the picture, before the <form>
+ *                           (the wrapper's first child) in every layout;
+ *                           only on a form with either
+ *   .gl-form__header--banner  it holds a banner
+ * .gl-form__banner          the banner, an <img> across the form, cropped
+ *                           to a 3:1 strip from its centre (a browser
+ *                           without aspect-ratio gets the strip from the
+ *                           header's padding). On a boxed form it runs to
+ *                           the box's edges and takes its top corners (the
+ *                           box's padding moves onto the <form>)
+ * .gl-form__picture         the picture, an <img> after the banner. With a
+ *                           banner, a 72px circle over the banner's bottom
+ *                           left corner, half on it, ringed in the box's
+ *                           colour, or the page's on a plain form (a logo
+ *                           contained in it, on that colour); without one,
+ *                           centred above the copy: the photo in a 72px
+ *                           circle, the logo at its own shape, at most 200
+ *                           by 48px
  * .gl-form__form            the <form>. The view script sets aria-busy on
  *                           it while it submits and adds .gl-form--done once
  *                           it has.
@@ -142,6 +170,132 @@
   width: 1.25em;
   height: 1.25em;
   color: var(--gl-form-accent, currentColor);
+}
+
+/* The picture sits in the header, over the banner's edge when there is one. */
+.gl-form .gl-form__header {
+  position: relative;
+  margin: 0 0 16px;
+}
+
+/* Whatever the theme puts round its images: a shadow too, which would spill
+   past a banner's edges onto the box's. */
+.gl-form .gl-form__banner,
+.gl-form .gl-form__picture {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Across the form, cropped to a 3:1 strip from its centre. */
+.gl-form .gl-form__banner {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  object-fit: cover;
+}
+
+/* The same strip in a browser without aspect-ratio (Safari before 15, on an
+   iPad that stopped updating): the header is a third of its width tall, and
+   the banner fills it. */
+@supports not (aspect-ratio: 1 / 1) {
+  .gl-form .gl-form__header--banner {
+    padding-top: calc(100% / 3);
+  }
+
+  .gl-form .gl-form__banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+  }
+}
+
+/* Without a banner, the picture is centred above the copy. */
+.gl-form--image-avatar .gl-form__picture {
+  width: 72px;
+  max-width: none;
+  height: 72px;
+  margin: 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.gl-form--image-logo .gl-form__picture {
+  width: auto;
+  max-width: min(200px, 100%);
+  height: auto;
+  max-height: 48px;
+  margin: 0 auto;
+}
+
+/* With one, it is a 72px circle over the banner's bottom left corner, half
+   on it, ringed in the box's colour (the page's on a plain form, below); a
+   logo is contained in its circle, on that colour. The copy clears it by
+   12px. */
+.gl-form__header--banner .gl-form__picture {
+  position: absolute;
+  bottom: -36px;
+  left: 16px;
+  box-sizing: border-box;
+  width: 72px;
+  max-width: none;
+  height: 72px;
+  max-height: none;
+  margin: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px
+    var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  object-fit: cover;
+}
+
+.gl-form--image-logo .gl-form__header--banner .gl-form__picture {
+  padding: 8px;
+  background: var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  object-fit: contain;
+}
+
+/* A plain form paints no background, so its ring and a logo's circle are the
+   page's colour: the brand's would be a disc of it on the page. Each rule is
+   the one above with .gl-form--plain in front, so it outranks it. */
+.gl-form--plain .gl-form__header--banner .gl-form__picture {
+  box-shadow: 0 0 0 4px var(--wp--preset--color--base, #fff);
+}
+
+.gl-form--plain.gl-form--image-logo
+  .gl-form__header--banner
+  .gl-form__picture {
+  background: var(--wp--preset--color--base, #fff);
+}
+
+.gl-form--image-avatar .gl-form__header--banner,
+.gl-form--image-logo .gl-form__header--banner {
+  margin-bottom: 48px;
+}
+
+/* A banner runs to the edges of a boxed form: the box's padding, the same
+   as .gl-form--boxed's, moves onto the form under the header, and the banner
+   takes the box's top corners. A negative margin could not undo the
+   padding: its 5% would be of the box's width, not of what the box holds. */
+.gl-form--boxed.gl-form--banner {
+  padding: 0;
+}
+
+.gl-form--boxed.gl-form--banner .gl-form__form {
+  padding: var(--gl-form-padding, clamp(0.75em, 5%, 1.25em));
+  padding-top: 0;
+}
+
+.gl-form--boxed.gl-form--compact.gl-form--banner .gl-form__form {
+  padding: var(--gl-form-padding, 0.625em 0.75em);
+  padding-top: 0;
+}
+
+.gl-form--boxed.gl-form--banner .gl-form__banner {
+  border-radius: var(--gl-form-radius, 12px) var(--gl-form-radius, 12px) 0 0;
 }
 
 .gl-form__fields {

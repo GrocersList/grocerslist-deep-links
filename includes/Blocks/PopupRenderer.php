@@ -35,7 +35,10 @@ class PopupRenderer
     private const CLOSE_ICON = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"'
         . ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 
-    /** popup.image => the picture's brand field and the dialog's modifier. */
+    /**
+     * popup.image => the brand field holding its URL in a config from a GRO
+     * before popup.imageUrl, and the dialog's modifier.
+     */
     private const IMAGES = [
         'PROFILE_PHOTO' => ['field' => 'avatarUrl', 'slug' => 'avatar'],
         'LOGO'          => ['field' => 'logoUrl', 'slug' => 'logo'],
@@ -206,7 +209,10 @@ class PopupRenderer
         $popup = $config['popup'];
         $hash = $config['hash'];
         $version = isset($config['version']) && is_int($config['version']) ? $config['version'] : 0;
-        [$slug, $imageUrl] = self::image($popup['image'], $config['brand'] ?? null);
+        [$slug, $imageUrl] = self::image($popup, $config['brand'] ?? null);
+        $banner = isset($config['design']) && is_array($config['design'])
+            ? FormRenderer::imageUrl($config['design']['bannerUrl'] ?? null)
+            : '';
 
         if ($frame['titleId'] !== '') {
             $label = ' aria-labelledby="' . esc_attr($frame['titleId']) . '"';
@@ -221,7 +227,8 @@ class PopupRenderer
             $style .= $property . ':' . $color . ';';
         }
 
-        return '<dialog class="gl-popup gl-popup--image-' . $slug . '" id="gl-popup-' . esc_attr($hash) . '" hidden'
+        return '<dialog class="gl-popup' . ($banner !== '' ? ' gl-popup--banner' : '') . ' gl-popup--image-' . $slug . '"'
+            . ' id="gl-popup-' . esc_attr($hash) . '" hidden'
             . ' data-gl-popup="' . esc_attr($hash . '.' . $version) . '"'
             . ' data-gl-audience="' . strtolower($popup['audience']) . '"'
             . ' data-gl-trigger="' . strtolower($popup['trigger']['type']) . '"'
@@ -234,31 +241,53 @@ class PopupRenderer
             . '<button type="button" class="gl-popup__close" aria-label="' . esc_attr(__('Close', 'grocers-list')) . '">'
             . self::CLOSE_ICON . '</button>'
             . '<div class="gl-popup__card">'
-            . ($imageUrl !== '' ? '<img class="gl-popup__image" src="' . esc_url($imageUrl) . '" alt="" loading="lazy">' : '')
+            . self::header($banner, $imageUrl)
             . $form
             . '</div></dialog>';
     }
 
     /**
-     * The picture above the form: the creator's profile photo or logo, as
-     * popup.image picks, when GRO has an http(s) URL for it; else none.
+     * Above the form: with a banner (the form's design.bannerUrl), a header
+     * holding it and the picture, which sits over the banner's bottom corner;
+     * without one, the picture alone, as it has been since the popup shipped,
+     * so a popup without a banner prints as it did.
+     */
+    private static function header(string $banner, string $imageUrl): string
+    {
+        if ($banner === '') {
+            return $imageUrl !== '' ? '<img class="gl-popup__image" src="' . esc_url($imageUrl) . '" alt="" loading="lazy">' : '';
+        }
+
+        return '<div class="gl-popup__header gl-popup__header--banner">'
+            . '<img class="gl-popup__banner" src="' . esc_url($banner) . '" alt="" loading="lazy">'
+            . ($imageUrl !== '' ? '<img class="gl-popup__picture" src="' . esc_url($imageUrl) . '" alt="" loading="lazy">' : '')
+            . '</div>';
+    }
+
+    /**
+     * The picture above the form, as popup.image picks: the creator's profile
+     * photo or their logo, at popup.imageUrl, the URL GRO resolved for it,
+     * when that is an http(s) URL; else none. In a config from a GRO before
+     * popup.imageUrl, they are brand.avatarUrl and brand.logoUrl.
      *
+     * @param array<string, mixed> $popup FormConfigCache::popupSettings()
      * @param mixed $brand
      * @return array{0: string, 1: string} The dialog's modifier, and the URL ('' for none).
      */
-    private static function image(string $image, $brand): array
+    private static function image(array $popup, $brand): array
     {
-        $picked = self::IMAGES[$image] ?? null;
-        $url = $picked !== null && is_array($brand) && isset($brand[$picked['field']]) && is_string($brand[$picked['field']])
-            ? trim($brand[$picked['field']])
-            : '';
-        $parts = $url !== '' ? wp_parse_url($url) : false;
+        $picked = self::IMAGES[$popup['image']] ?? null;
+        if ($picked === null) {
+            return ['none', ''];
+        }
 
-        return is_array($parts)
-            && isset($parts['scheme'], $parts['host'])
-            && in_array(strtolower($parts['scheme']), ['http', 'https'], true)
-            && $parts['host'] !== ''
-            ? [$picked['slug'], $url]
-            : ['none', ''];
+        if (array_key_exists('imageUrl', $popup)) {
+            $url = $popup['imageUrl'];
+        } else {
+            $url = is_array($brand) ? ($brand[$picked['field']] ?? null) : null;
+        }
+        $url = FormRenderer::imageUrl($url);
+
+        return $url !== '' ? [$picked['slug'], $url] : ['none', ''];
     }
 }

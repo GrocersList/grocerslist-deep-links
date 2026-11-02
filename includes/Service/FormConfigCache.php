@@ -109,12 +109,13 @@ class FormConfigCache
      * of its config as of the last page-cache purge for it (or the first time
      * GRO sent it): what an invalidation hint compares GRO's config with.
      * Over the whole config, because GRO resolves its brand (palette colours,
-     * avatar, handle) at read time and never moves its version for that; and
-     * over the decoded array, not GRO's bytes or ETag, so the same config has
-     * the same fingerprint however its JSON was spaced or escaped and whatever
-     * ETag came with it. An option, not part of the transient, because it has
-     * to outlive it — a persistent object cache can drop a transient at any
-     * time, and some page-cache purges flush that cache too.
+     * avatar, handle) and a picture's URL at read time and never moves its
+     * version for that; and over the decoded array, not GRO's bytes or ETag,
+     * so the same config has the same fingerprint however its JSON was spaced
+     * or escaped and whatever ETag came with it. An option, not part of the
+     * transient, because it has to outlive it — a persistent object cache can
+     * drop a transient at any time, and some page-cache purges flush that
+     * cache too.
      */
     public const FINGERPRINTS_OPTION = 'grocerslist_form_fingerprints';
 
@@ -636,12 +637,15 @@ class FormConfigCache
      * A popup's settings (its config's popup), every field usable: the
      * default GRO starts a popup with for one missing or of the wrong type,
      * numbers rounded and held to GRO's ranges, and the page URLs trimmed,
-     * POPUP_MAX_URLS at most. GRO checks them when the creator saves; the
-     * config is still only data here, and grocerslist_popup_config can
-     * change it.
+     * POPUP_MAX_URLS at most. The picture's URL (imageUrl, a string or null)
+     * is kept only when GRO sends it, so a config from a GRO before it reads
+     * as it did, its picture in brand (Blocks\PopupRenderer); with it, an
+     * image other than these three is NONE. GRO checks them when the creator
+     * saves; the config is still only data here, and grocerslist_popup_config
+     * can change it.
      *
      * @param mixed $popup
-     * @return array{audience: string, pages: array{mode: string, urls: array<int, string>}, trigger: array{type: string, timeDelaySeconds: int, scrollPercentage: int}, dismissDays: int, image: string}
+     * @return array{audience: string, pages: array{mode: string, urls: array<int, string>}, trigger: array{type: string, timeDelaySeconds: int, scrollPercentage: int}, dismissDays: int, image: string, imageUrl?: string|null}
      */
     public static function popupSettings($popup): array
     {
@@ -660,7 +664,7 @@ class FormConfigCache
             }
         }
 
-        return [
+        $settings = [
             'audience'    => self::oneOf($popup['audience'] ?? null, ['EVERYONE', 'NOT_SUBSCRIBED'], 'NOT_SUBSCRIBED'),
             'pages'       => [
                 'mode' => self::oneOf($pages['mode'] ?? null, ['ALL', 'ONLY', 'EXCEPT'], 'ALL'),
@@ -674,6 +678,18 @@ class FormConfigCache
             'dismissDays' => self::between($popup['dismissDays'] ?? null, 0, 365, 7),
             'image'       => self::oneOf($popup['image'] ?? null, ['PROFILE_PHOTO', 'LOGO', 'NONE'], 'PROFILE_PHOTO'),
         ];
+
+        if (array_key_exists('imageUrl', $popup)) {
+            $settings['imageUrl'] = is_string($popup['imageUrl']) ? $popup['imageUrl'] : null;
+            // It is the URL GRO resolved for the picture it names, so one this
+            // plugin has no word for (the creator's own image, from a GRO
+            // before banners) is no picture, as on a form, not a profile photo.
+            if ($settings['image'] !== ($popup['image'] ?? null)) {
+                $settings['image'] = 'NONE';
+            }
+        }
+
+        return $settings;
     }
 
     /**

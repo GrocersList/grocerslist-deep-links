@@ -31,6 +31,12 @@ class FormRenderer
     private const LAYOUTS = ['stacked', 'inline', 'split', 'compact'];
     private const APPEARANCES = ['boxed', 'plain'];
 
+    /** design.image => the picture's modifier, gl-form--image-<slug>. */
+    private const IMAGE_SLUGS = [
+        'PROFILE_PHOTO' => 'avatar',
+        'LOGO'          => 'logo',
+    ];
+
     /** GRO's cap on design.redirectUrl. */
     private const MAX_REDIRECT_LENGTH = 2048;
 
@@ -305,7 +311,14 @@ class FormRenderer
         // default signup form unless it names another, and that can have one.
         $redirect = $gate === null ? $form['redirectUrl'] : '';
 
+        // Nor does a gate show a banner or a picture, whichever form it holds.
+        if ($gate !== null) {
+            $form['banner'] = '';
+            $form['picture'] = null;
+        }
+
         $html = '<div ' . self::wrapperAttributes($form, $source) . '>'
+            . self::header($form)
             . '<form class="gl-form__form" method="post" action="' . esc_url(rest_url('grocerslist/v1/forms/submit')) . '" novalidate'
             . ' data-gl-form="gl-form" data-gl-kind="' . self::KIND_SLUGS[$form['kind']] . '"'
             // Where the form was rendered, for the detail of the event its
@@ -443,6 +456,11 @@ class FormRenderer
         $brand = isset($config['brand']) && is_array($config['brand']) ? $config['brand'] : [];
         $optIn = isset($design['optIn']) && is_array($design['optIn']) ? $design['optIn'] : [];
         $useBrandColors = !array_key_exists('useBrandColors', $design) || !empty($design['useBrandColors']);
+        // A popup's banner and picture are the popup's (PopupRenderer), above
+        // its form. A content gate's form has neither wherever it shows, as
+        // GRO refuses them on one: a copy saved before that, or a filter's,
+        // may still carry them.
+        $header = $kind !== 'POPUP' && $kind !== 'CONTENT_GATE';
 
         return [
             'hash'             => $config['hash'],
@@ -459,6 +477,8 @@ class FormRenderer
                 ? $design['appearance']
                 : $defaults['appearance'],
             'showIcon'         => !empty($design['showIcon']),
+            'banner'           => $header ? self::imageUrl($design['bannerUrl'] ?? null) : '',
+            'picture'          => $header ? self::picture($design) : null,
             'optIn'            => self::showsCheckbox($design),
             'optInRequired'    => self::requiresConsent($config),
             'optInLabel'       => self::text($optIn['label'] ?? null, $defaults['optInLabel']),
@@ -538,6 +558,44 @@ class FormRenderer
         }
 
         return $codePoints + (int) preg_match_all('/[\x{10000}-\x{10FFFF}]/u', $text);
+    }
+
+    /**
+     * The picture, as design.image picks it (the creator's profile photo or
+     * their logo), at design.imageUrl, the URL GRO resolved for it; null for
+     * none, an image GRO has no word for included. GRO sends the two only for
+     * a form with a picture, so a config without them renders as it did.
+     *
+     * @param array<string, mixed> $design
+     * @return array{slug: string, url: string}|null
+     */
+    private static function picture(array $design): ?array
+    {
+        $slug = isset($design['image']) && is_string($design['image']) ? (self::IMAGE_SLUGS[$design['image']] ?? '') : '';
+        $url = $slug !== '' ? self::imageUrl($design['imageUrl'] ?? null) : '';
+
+        return $url !== '' ? ['slug' => $slug, 'url' => $url] : null;
+    }
+
+    /**
+     * A banner's or a picture's URL, trimmed, when it is an http(s) URL with
+     * a host; else ''. GRO's are its CDN's; the config is still only data
+     * here, and the grocerslist_form_config and grocerslist_popup_config
+     * filters can change it.
+     *
+     * @param mixed $url
+     */
+    public static function imageUrl($url): string
+    {
+        $url = is_string($url) ? trim($url) : '';
+        $parts = $url !== '' ? wp_parse_url($url) : false;
+
+        return is_array($parts)
+            && isset($parts['scheme'], $parts['host'])
+            && in_array(strtolower($parts['scheme']), ['http', 'https'], true)
+            && $parts['host'] !== ''
+            ? $url
+            : '';
     }
 
     /**
@@ -630,6 +688,8 @@ class FormRenderer
             . ' gl-form--' . $form['layout']
             . ' gl-form--' . $form['appearance']
             . ($form['showIcon'] ? ' gl-form--icon' : '')
+            . ($form['banner'] !== '' ? ' gl-form--banner' : '')
+            . ($form['picture'] !== null ? ' gl-form--image-' . $form['picture']['slug'] : '')
             . ($form['colors'] ? ' gl-form--brand' : '');
 
         $style = '';
@@ -644,6 +704,31 @@ class FormRenderer
         }
 
         return 'class="' . esc_attr($classes) . '"' . ($style !== '' ? ' style="' . esc_attr($style) . '"' : '');
+    }
+
+    /**
+     * The banner and the picture, the wrapper's first child: before the
+     * <form>, not in it, because the split and compact layouts lay the form's
+     * parts out in a row, and on a boxed form the banner reaches the box's
+     * edges by handing the box's padding to the form
+     * (assets/blocks/form/style.css). '' for a form with neither.
+     *
+     * @param array<string, mixed> $form
+     */
+    private static function header(array $form): string
+    {
+        if ($form['banner'] === '' && $form['picture'] === null) {
+            return '';
+        }
+
+        return '<div class="gl-form__header' . ($form['banner'] !== '' ? ' gl-form__header--banner' : '') . '">'
+            . ($form['banner'] !== ''
+                ? '<img class="gl-form__banner" src="' . esc_url($form['banner']) . '" alt="" loading="lazy">'
+                : '')
+            . ($form['picture'] !== null
+                ? '<img class="gl-form__picture" src="' . esc_url($form['picture']['url']) . '" alt="" loading="lazy">'
+                : '')
+            . '</div>';
     }
 
     /**

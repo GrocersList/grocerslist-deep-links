@@ -206,7 +206,7 @@ const Edit = ({
     (formId !== '' && config === undefined) ||
     (formId === '' && defaultGateForm(forms) !== undefined);
   const lock = <Icon kind="CONTENT_GATE" className="gl-gate-editor__icon" />;
-  const preview = config ? toPreview(config) : null;
+  const preview = config ? toPreview(config, true) : null;
   const teaserText =
     teaser === DEFAULT_TEASER
       ? __('The rest of this post is one click away.', 'grocers-list')
@@ -251,7 +251,7 @@ const Edit = ({
           <p className="gl-gate__teaser">{teaserText}</p>
         )}
         <div className={preview.classes} style={preview.style}>
-          <FormPreview config={config} />
+          <FormPreview config={config} inGate />
         </div>
       </div>
     );

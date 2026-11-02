@@ -19,16 +19,30 @@
  *                         not_subscribed), data-gl-trigger (time | scroll),
  *                         data-gl-delay (seconds), data-gl-scroll (percent of
  *                         the page) and data-gl-dismiss-days
+ *   --banner              the popup has a banner (the form's
+ *                         design.bannerUrl), across the top of the card
  *   --image-avatar | --image-logo | --image-none
- *                         the picture above the form: the creator's profile
- *                         photo, their logo, or none (as when the one picked
- *                         has no URL)
+ *                         the picture (popup.image, at popup.imageUrl): the
+ *                         creator's profile photo, their logo, or none (as
+ *                         when the one picked has no URL)
  * .gl-popup__close        the close button, over the card's top right corner;
- *                         a 44px target
+ *                         a 44px target. Over a banner it wears the card's
+ *                         background, so it shows on any banner
  * .gl-popup__card         the card: the form's box, scrolling inside itself
  *                         when the form is taller than the screen allows
- * .gl-popup__image        the picture: the photo in a 72px circle, the logo
- *                         at its own shape, at most 200 by 48px
+ * .gl-popup__image        without a banner, the picture above the form: the
+ *                         photo in a 72px circle, the logo at its own shape,
+ *                         at most 200 by 48px
+ * .gl-popup__header       with a banner, in its place: the banner and the
+ *                         picture
+ *   .gl-popup__header--banner  it holds a banner (always, on a popup)
+ * .gl-popup__banner       the banner, an <img> across the top of the card to
+ *                         its edges, taking its top corners, cropped to a 3:1
+ *                         strip from its centre
+ * .gl-popup__picture      the picture, an <img> after the banner: a 72px
+ *                         circle over the banner's bottom left corner, half
+ *                         on it, ringed in the card's colour (a logo
+ *                         contained in it)
  * html.gl-popup-open      the page while the popup is open: it does not
  *                         scroll behind it. The view script sets the same
  *                         overflow inline, which holds where a CSS optimizer
@@ -137,6 +151,82 @@ html.gl-popup-open {
   max-width: 200px;
   height: auto;
   max-height: 48px;
+}
+
+/* The picture sits in the header, over the banner's edge. */
+.gl-popup .gl-popup__header {
+  position: relative;
+}
+
+/* Over the card's padding (24px) to its edges. */
+.gl-popup .gl-popup__header--banner {
+  margin: -24px -24px 16px;
+}
+
+/* Whatever the theme puts round its images, a shadow included. */
+.gl-popup .gl-popup__banner,
+.gl-popup .gl-popup__picture {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Across the card, round its top corners, cropped to a 3:1 strip from its
+   centre. */
+.gl-popup .gl-popup__banner {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  border-radius: 16px 16px 0 0;
+  object-fit: cover;
+}
+
+/* A 72px circle over the banner's bottom left corner, half on it, ringed in
+   the card's colour; a logo is contained in its circle, on that colour. The
+   copy clears it by 12px. */
+.gl-popup .gl-popup__picture {
+  position: absolute;
+  bottom: -36px;
+  left: 16px;
+  box-sizing: border-box;
+  width: 72px;
+  max-width: none;
+  height: 72px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px
+    var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  object-fit: cover;
+}
+
+.gl-popup--image-logo .gl-popup__picture {
+  padding: 8px;
+  background: var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  object-fit: contain;
+}
+
+.gl-popup--image-avatar .gl-popup__header--banner,
+.gl-popup--image-logo .gl-popup__header--banner {
+  margin-bottom: 48px;
+}
+
+/* Over a banner, the close button wears the card's background, hover tint
+   and all. */
+.gl-popup--banner .gl-popup__close,
+.gl-popup--banner .gl-popup__close:hover {
+  background-color: var(
+    --gl-form-background,
+    var(--wp--preset--color--base, #fff)
+  );
+}
+
+.gl-popup--banner .gl-popup__close:hover {
+  background-image: linear-gradient(
+    rgba(127, 127, 127, 0.16),
+    rgba(127, 127, 127, 0.16)
+  );
 }
 
 /* The card is the form's box. */
