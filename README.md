@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 7.1
-Stable tag: 1.31.0
+Stable tag: 1.32.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -166,6 +166,11 @@ Send one-off emails to your subscribers, or set up sequences that go out automat
 
 - New GRO Popup: turn on a Popup form in GRO and it shows on your site's pages, with nothing to add in WordPress.
 - Posts for GRO Digests: the plugin sends your published posts, categories and tags to GRO so it can build Digest emails from your newest posts. Turn it off with "Send new posts to GRO" in the plugin's settings.
+
+#### - 11/02/2026 - 1.32.0 - Add custom image options to GRO Forms
+
+- Add custom image options to GRO Forms: a banner and your profile photo or logo, on your forms and your popup.
+- GRO Popup: page rules can list up to 100 pages (was 50).
 
 ### Resources:
 

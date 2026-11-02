@@ -64,7 +64,10 @@ creator's paid memberships.
   with cookies the form script sets there for the site itself
   (`gl_popup_dismissed`, after the visitor closes it or signs up through it,
   and `gl_known`, when they arrive from a link in one of the creator's GRO
-  emails), which are never sent to GRO.
+  emails), which are never sent to GRO. The banner and the profile photo or
+  logo a form or the popup shows are images visitors' browsers load from GRO's
+  media server (`media.gro.co`), as they do any image on the page; a logo GRO
+  could not copy there loads from its original address.
 - When a visitor submits a GRO form (the GRO Form or GRO Content Gate block,
   the `[gro_form]` and `[gro_save_to_email]` shortcodes, or the popup), the
   site sends
