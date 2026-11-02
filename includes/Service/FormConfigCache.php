@@ -157,7 +157,7 @@ class FormConfigCache
     private const FINAL_STATUSES = [401, 403, 404];
 
     /** GRO's cap on a popup's page URLs (popup.pages.urls). */
-    private const POPUP_MAX_URLS = 50;
+    private const POPUP_MAX_URLS = 100;
 
     private PageCachePurger $purger;
 
