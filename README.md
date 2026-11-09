@@ -172,6 +172,10 @@ Send one-off emails to your subscribers, or set up sequences that go out automat
 - Add custom image options to GRO Forms: a banner and your profile photo or logo, on your forms and your popup.
 - GRO Popup: page rules can list up to 100 pages (was 50).
 
+#### - Unreleased - GRO forms on any theme
+
+- Breaking: the GRO form's submit button no longer carries the theme's `wp-block-button__link` / `wp-element-button` classes; custom CSS should target `.gl-form__submit` instead.
+
 ### Resources:
 
 - [How we use external services and what data we collect](https://github.com/GrocersList/grocerslist-deep-links/blob/main/docs/EXTERNAL_SERVICES.md)

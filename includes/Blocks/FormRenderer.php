@@ -352,7 +352,7 @@ class FormRenderer
             . '<input type="email" name="email" required autocomplete="email" inputmode="email" enterkeyhint="send" maxlength="254"'
             . ' aria-describedby="' . $statusId . '" placeholder="' . esc_attr($form['emailPlaceholder']) . '">'
             . '</label>'
-            . '<button type="submit" class="gl-form__submit wp-block-button__link wp-element-button">'
+            . '<button type="submit" class="gl-form__submit">'
             . esc_html($form['buttonLabel']) . '</button>'
             . '</div>';
 
@@ -714,7 +714,8 @@ class FormRenderer
             . ($form['showIcon'] ? ' gl-form--icon' : '')
             . ($form['banner'] !== '' ? ' gl-form--banner' : '')
             . ($form['picture'] !== null ? ' gl-form--image-' . $form['picture']['slug'] : '')
-            . ($form['colors'] ? ' gl-form--brand' : '');
+            . ($form['colors'] ? ' gl-form--brand' : '')
+            . (ThemePalette::hasBaseAndContrast() ? ' gl-form--theme-pair' : '');
 
         $style = '';
         foreach ($form['colors'] as $property => $color) {

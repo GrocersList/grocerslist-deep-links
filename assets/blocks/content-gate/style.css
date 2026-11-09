@@ -14,6 +14,12 @@
  *                         data-gl-preview
  *   --below               hides everything below it in the post
  *   --inside              hides the blocks inside it
+ *   --theme-pair          the theme's palette has both a base and a contrast
+ *                         colour, as on the gate's form (the form sheet's
+ *                         --theme-pair): its rule reads them into
+ *                         --gl-form-theme-base and --gl-form-theme-contrast,
+ *                         which the card's and the badge's colours fall back
+ *                         through to #fff and #1e1e1e
  * .gl-gate__preview       the picture (aria-hidden, inert): the theme's own
  *                         paragraphs and lists, and boxes for media, in the
  *                         shape of the hidden blocks, with nothing from them
@@ -42,12 +48,23 @@
  *                         form's brand colours as the form's own
  *                         --gl-form-* custom properties
  *                         (assets/blocks/form/style.css), so the card and
- *                         the badge wear them
+ *                         the badge wear them; without them the card is
+ *                         white with near-black text and the badge
+ *                         near-black with a white lock, or the theme's base
+ *                         and contrast with --theme-pair
  * .gl-gate__badge         the lock over the card's top edge
  * .gl-gate__teaser        the sentence above the form
  *
  * The form in the card is a GRO form, styled by assets/blocks/form/style.css,
- * whose own box gives way to the card's.
+ * whose own box gives way to the card's. This sheet's rules for the form's
+ * parts are one class past the form sheet's rules for the same part
+ * (.gl-gate__card .gl-form .gl-form__form .gl-form__copy against .gl-form
+ * .gl-form__form .gl-form__copy), so they win wherever either sheet lands.
+ * The teaser and the badge's lock are GRO's to draw too, whatever the theme
+ * does to paragraphs and svgs: they sit in the post as the form does, so
+ * their rules are as deep as the form sheet's, (0,3,0) and more, the card
+ * named twice, past a theme's .site-main .entry-content p (0,2,1).
+ * blocks/tests/theme-proof.test.ts holds this sheet to both.
  *
  * .gl-gate-marker         what a signed-in editor sees where a gate starts,
  *                         in place of the gate (visitors never get it): what
@@ -79,6 +96,13 @@
   box-sizing: border-box;
   max-width: 100%;
   isolation: isolate;
+}
+
+/* The theme's pair (the header's --theme-pair). Brand colours on the card
+   still win: each colour reads these as its own fallback. */
+.gl-gate.gl-gate--theme-pair {
+  --gl-form-theme-base: var(--wp--preset--color--base);
+  --gl-form-theme-contrast: var(--wp--preset--color--contrast);
 }
 
 /* The wash tints towards the text colour: darker on a light theme, lighter
@@ -351,18 +375,21 @@ li:nth-child(3n) > .gl-gate__line:only-child {
   pointer-events: none;
 }
 
+/* As wide as 34 of the post's own text size, as its padding and the form in
+   it are sized: a rem would take the theme's root size instead, which a
+   theme setting html { font-size: 62.5% } makes 10px, a 340px card. */
 .gl-gate__card {
-  --gl-gate-card: var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  --gl-gate-card: var(--gl-form-background, var(--gl-form-theme-base, #fff));
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  max-width: 34rem;
+  max-width: 34em;
   margin: 0;
   padding: 2.5em clamp(1em, 6%, 2em) clamp(1.25em, 5%, 1.75em);
   border: 1px solid rgba(127, 127, 127, 0.18);
   border-radius: 16px;
   background: var(--gl-gate-card);
-  color: var(--gl-form-text, var(--wp--preset--color--contrast, #1e1e1e));
+  color: var(--gl-form-text, var(--gl-form-theme-contrast, #1e1e1e));
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.08),
     0 18px 44px -14px rgba(0, 0, 0, 0.38);
@@ -381,28 +408,96 @@ li:nth-child(3n) > .gl-gate__line:only-child {
   height: 2.75em;
   border: 0.3em solid var(--gl-gate-card);
   border-radius: 50%;
-  background: var(--gl-form-accent, #1e1e1e);
-  color: var(--gl-form-accent-text, #fff);
+  /* The button's colours: the form's accent, else near-black with white,
+     or the theme's pair. */
+  background: var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
+  color: var(--gl-form-accent-text, var(--gl-form-theme-base, #fff));
   transform: translate(-50%, -50%);
 }
 
-.gl-gate__badge svg {
+/* The shapes' fill and stroke are the <svg>'s attributes, which any theme
+   rule for an svg or a path outranks, so they are set here too. */
+.gl-gate__card.gl-gate__card .gl-gate__badge svg {
+  display: block;
+  flex: none;
   width: 1.35em;
   height: 1.35em;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+  opacity: 1;
+  filter: none;
+  transform: none;
 }
 
-.gl-gate__card .gl-gate__teaser {
+.gl-gate__card.gl-gate__card .gl-gate__badge svg * {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: none;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+/* The sentence above the form, centred, in the card's colour. A theme's
+   paragraph styles (a size, a line height, capitals, spacing, an indent, a
+   colour, a drop cap, an ornament) stop here, as they do at the form's own
+   copy (assets/blocks/form/style.css). */
+.gl-gate__card.gl-gate__card .gl-gate__teaser {
+  display: block;
+  max-width: none;
   margin: 0 0 0.75em;
+  padding: 0;
+  font: inherit;
   font-size: 0.9375em;
   font-weight: 600;
   line-height: 1.4;
+  letter-spacing: normal;
+  word-spacing: normal;
   text-align: center;
+  text-indent: 0;
+  text-transform: none;
+  text-shadow: none;
+  color: inherit;
   opacity: 0.85;
   overflow-wrap: anywhere;
 }
 
-/* The card is the form's box. */
-.gl-gate__card .gl-form {
+.gl-gate__card.gl-gate__card .gl-gate__teaser::before,
+.gl-gate__card.gl-gate__card .gl-gate__teaser::after {
+  content: none;
+}
+
+.gl-gate__card.gl-gate__card .gl-gate__teaser::first-letter {
+  float: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+/* The card is the form's box: .gl-form three times, one class past the
+   form's own box, .gl-form.gl-form.gl-form--boxed. The block editor draws
+   the card with no .gl-gate round it. */
+.gl-gate__card .gl-form.gl-form.gl-form {
   margin: 0;
   padding: 0;
   border: 0;
@@ -411,17 +506,17 @@ li:nth-child(3n) > .gl-gate__line:only-child {
   color: inherit;
 }
 
-.gl-gate__card .gl-form__copy {
+.gl-gate__card .gl-form .gl-form__form .gl-form__copy {
   align-items: center;
   text-align: center;
 }
 
-.gl-gate__card .gl-form__title {
+.gl-gate__card .gl-form .gl-form__form .gl-form__title {
   justify-content: center;
 }
 
 /* The badge is the card's lock. */
-.gl-gate__card .gl-form__icon {
+.gl-gate__card .gl-form .gl-form__form .gl-form__icon {
   display: none;
 }
 

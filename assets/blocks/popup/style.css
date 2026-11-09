@@ -13,8 +13,10 @@
  *                         Its style attribute carries the form's brand
  *                         colours as the form's own --gl-form-* custom
  *                         properties (assets/blocks/form/style.css), so the
- *                         card and the close button wear them. What the
- *                         browser decides on, it carries as data-gl-popup
+ *                         card and the close button wear them; without them
+ *                         the card is white with near-black text, or the
+ *                         theme's base and contrast with --theme-pair. What
+ *                         the browser decides on, it carries as data-gl-popup
  *                         (<hash>.<version>), data-gl-audience (everyone |
  *                         not_subscribed), data-gl-trigger (time | scroll),
  *                         data-gl-delay (seconds), data-gl-scroll (percent of
@@ -25,6 +27,12 @@
  *                         the picture (popup.image, at popup.imageUrl): the
  *                         creator's profile photo, their logo, or none (as
  *                         when the one picked has no URL)
+ *   --theme-pair          the theme's palette has both a base and a contrast
+ *                         colour, as on the popup's form (the form sheet's
+ *                         --theme-pair): its rule reads them into
+ *                         --gl-form-theme-base and --gl-form-theme-contrast,
+ *                         which the card's colours fall back through to #fff
+ *                         and #1e1e1e
  * .gl-popup__close        the close button, over the card's top right corner;
  *                         a 44px target. Over a banner it wears the card's
  *                         background, so it shows on any banner
@@ -50,7 +58,12 @@
  *
  * The form in the card is a GRO form (.gl-form--popup, stacked and plain),
  * styled by assets/blocks/form/style.css, whose own box gives way to the
- * card's.
+ * card's. This sheet's rules for the form's parts are one class past the
+ * form sheet's rules for the same part (.gl-popup .gl-form .gl-form__form
+ * .gl-form__copy against .gl-form .gl-form__form .gl-form__copy), so they
+ * win wherever either sheet lands; blocks/tests/theme-proof.test.ts holds
+ * them to it. The close button and its icon, the picture and the banner are
+ * GRO's to draw too, whatever the theme does to buttons, svgs and images.
  *
  * --gl-popup-css, set to 1 on .gl-popup by the first rule, is the sheet's
  * sentinel: the view script reads it off the dialog and, when it is not
@@ -80,7 +93,14 @@ dialog.gl-popup {
   overflow: visible;
   border: 0;
   background: transparent;
-  color: var(--gl-form-text, var(--wp--preset--color--contrast, #1e1e1e));
+  color: var(--gl-form-text, var(--gl-form-theme-contrast, #1e1e1e));
+}
+
+/* The theme's pair (the header's --theme-pair). Brand colours on the dialog
+   still win: each colour reads these as its own fallback. */
+.gl-popup.gl-popup--theme-pair {
+  --gl-form-theme-base: var(--wp--preset--color--base);
+  --gl-form-theme-contrast: var(--wp--preset--color--contrast);
 }
 
 .gl-popup::backdrop {
@@ -98,7 +118,7 @@ html.gl-popup-open {
   overflow: auto;
   padding: 24px;
   border-radius: 16px;
-  background: var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  background: var(--gl-form-background, var(--gl-form-theme-base, #fff));
   color: inherit;
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.08),
@@ -110,6 +130,8 @@ html.gl-popup-open {
 
 /* Over the corner of the card, whatever the theme does to buttons. */
 .gl-popup .gl-popup__close {
+  -webkit-appearance: none;
+  appearance: none;
   position: absolute;
   top: 8px;
   right: 8px;
@@ -117,18 +139,38 @@ html.gl-popup-open {
   display: flex;
   align-items: center;
   justify-content: center;
+  float: none;
   box-sizing: border-box;
   width: 44px;
   min-width: 0;
+  max-width: none;
   height: 44px;
+  min-height: 0;
   margin: 0;
   padding: 0;
+  overflow: visible;
   border: 0;
   border-radius: 50%;
   background: transparent;
   box-shadow: none;
   color: inherit;
+  font: inherit;
+  line-height: 1;
+  letter-spacing: normal;
+  text-decoration: none;
+  text-shadow: none;
+  text-transform: none;
+  white-space: normal;
+  opacity: 1;
+  filter: none;
+  transform: none;
+  transition: none;
   cursor: pointer;
+}
+
+.gl-popup .gl-popup__close::before,
+.gl-popup .gl-popup__close::after {
+  content: none;
 }
 
 .gl-popup .gl-popup__close:hover {
@@ -141,18 +183,55 @@ html.gl-popup-open {
   outline-offset: -4px;
 }
 
-.gl-popup__close svg {
+/* The shapes' fill and stroke are the <svg>'s attributes, which any theme
+   rule for an svg or a path outranks, so they are set here too. */
+.gl-popup .gl-popup__close svg {
   display: block;
+  flex: none;
   width: 24px;
   height: 24px;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+  opacity: 1;
+  filter: none;
+  transform: none;
 }
 
-/* Whatever the theme puts round its images. */
+.gl-popup .gl-popup__close svg * {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: none;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+/* Whatever the theme puts round its images: a frame, rounded corners, a
+   shadow, a backdrop. The photo's circle, next, comes after this rule at its
+   depth, which it needs to win. */
 .gl-popup .gl-popup__image {
   display: block;
   margin: 0 auto 16px;
   padding: 0;
   border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .gl-popup--image-avatar .gl-popup__image {
@@ -180,13 +259,16 @@ html.gl-popup-open {
   margin: -24px -24px 16px;
 }
 
-/* Whatever the theme puts round its images, a shadow included. */
+/* Whatever the theme puts round its images, a shadow and a backdrop
+   included. The rules after this one, at its depth, draw the banner's
+   corners, the picture's circle and ring, and a logo's backdrop. */
 .gl-popup .gl-popup__banner,
 .gl-popup .gl-popup__picture {
   display: block;
   margin: 0;
   padding: 0;
   border: 0;
+  background: none;
   box-shadow: none;
 }
 
@@ -214,13 +296,13 @@ html.gl-popup-open {
   height: 72px;
   border-radius: 50%;
   box-shadow: 0 0 0 4px
-    var(--gl-form-background, var(--wp--preset--color--base, #fff));
+    var(--gl-form-background, var(--gl-form-theme-base, #fff));
   object-fit: cover;
 }
 
 .gl-popup--image-logo .gl-popup__picture {
   padding: 8px;
-  background: var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  background: var(--gl-form-background, var(--gl-form-theme-base, #fff));
   object-fit: contain;
 }
 
@@ -233,10 +315,7 @@ html.gl-popup-open {
    and all. */
 .gl-popup--banner .gl-popup__close,
 .gl-popup--banner .gl-popup__close:hover {
-  background-color: var(
-    --gl-form-background,
-    var(--wp--preset--color--base, #fff)
-  );
+  background-color: var(--gl-form-background, var(--gl-form-theme-base, #fff));
 }
 
 .gl-popup--banner .gl-popup__close:hover {
@@ -246,8 +325,9 @@ html.gl-popup-open {
   );
 }
 
-/* The card is the form's box. */
-.gl-popup .gl-form {
+/* The card is the form's box: one class past the form's own box,
+   .gl-form.gl-form.gl-form--boxed. */
+.gl-popup .gl-popup__card .gl-form.gl-form {
   margin: 0;
   padding: 0;
   border: 0;
@@ -257,28 +337,25 @@ html.gl-popup-open {
 }
 
 /* Centred under the picture, and clear of the close button either side. */
-.gl-popup .gl-form__copy {
+.gl-popup .gl-form .gl-form__form .gl-form__copy {
   align-items: center;
   padding: 0 32px;
   text-align: center;
 }
 
-.gl-popup .gl-form__title {
+.gl-popup .gl-form .gl-form__form .gl-form__title {
   justify-content: center;
 }
 
-.gl-popup .gl-form__status {
+.gl-popup .gl-form .gl-form__form .gl-form__status {
   text-align: center;
 }
 
 /* A field's ring in the card's text colour: the form's own is the field's
    dark text, which a dark brand background swallows. */
-.gl-popup .gl-form .gl-form__field input[type='email']:focus-visible,
-.gl-popup .gl-form .gl-form__field input[type='text']:focus-visible {
-  outline-color: var(
-    --gl-form-text,
-    var(--wp--preset--color--contrast, #1e1e1e)
-  );
+.gl-popup .gl-form .gl-form__form .gl-form__field input[type='email']:focus,
+.gl-popup .gl-form .gl-form__form .gl-form__field input[type='text']:focus {
+  outline-color: var(--gl-form-text, var(--gl-form-theme-contrast, #1e1e1e));
 }
 
 /* A phone: a sheet along the bottom of the screen, as wide as it is. */

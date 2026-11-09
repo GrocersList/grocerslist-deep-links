@@ -141,3 +141,5 @@ The detail never carries the visitor's email address, raw or hashed, and nothing
 = 1.32.0 =
 * Add custom image options to GRO Forms: a banner and your profile photo or logo, on your forms and your popup.
 * GRO Popup: page rules can list up to 100 pages (was 50).
+= Unreleased =
+* Breaking: the GRO form's submit button no longer carries the theme's `wp-block-button__link` / `wp-element-button` classes; custom CSS should target `.gl-form__submit` instead.

@@ -4,7 +4,9 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import esLintBase from '../../eslint.config.js';
 
 export default [
-  { ignores: ['dist', 'eslint.config.js'] },
+  // tests/harness is a page a browser opens from the file system, with the
+  // fixtures theme-proof.test.ts writes into it.
+  { ignores: ['dist', 'eslint.config.js', 'tests/harness'] },
   ...esLintBase,
   {
     files: ['**/*.{ts,tsx}'],

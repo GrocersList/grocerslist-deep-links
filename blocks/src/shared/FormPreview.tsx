@@ -120,9 +120,7 @@ export const FormPreview = ({
                 disabled
               />
             </label>
-            <span className="gl-form__submit wp-block-button__link wp-element-button">
-              {preview.buttonLabel}
-            </span>
+            <span className="gl-form__submit">{preview.buttonLabel}</span>
           </div>
           {preview.optIn !== null && (
             <label className="gl-form__optin">

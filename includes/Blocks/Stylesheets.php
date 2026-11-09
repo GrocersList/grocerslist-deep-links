@@ -17,10 +17,10 @@ namespace GrocersList\Blocks;
  * loses one all the same, the view script finds its sentinel (the file's
  * first rule) missing and loads the file as a <link>.
  *
- * They print in one order, whichever asks first: the popup's and the gate's
- * override the form's at equal specificity (.gl-gate__card .gl-form), so the
- * form's comes first, and asking for either of them prints it too when it
- * has not printed yet.
+ * They print in one order, whichever asks first: the form's, then the
+ * popup's and the gate's, which override it (their rules for a form's parts
+ * outrank its own, assets/blocks/form/style.css), and asking for either of
+ * them prints the form's too when it has not printed yet.
  *
  * Minified as they print, onto one line: wpautop keeps a line break only
  * inside <pre>, and a theme that runs it again over the rendered post turns

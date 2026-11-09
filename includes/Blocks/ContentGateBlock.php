@@ -326,7 +326,8 @@ class ContentGateBlock
     private static function wrapperAttributes(array $attrs, string $gateId, int $postId, bool $preview): string
     {
         $attributes = [
-            'class'        => 'gl-gate gl-gate--' . (self::hidesBelow($attrs) ? GateRegion::BELOW : GateRegion::INSIDE),
+            'class'        => 'gl-gate gl-gate--' . (self::hidesBelow($attrs) ? GateRegion::BELOW : GateRegion::INSIDE)
+                . (ThemePalette::hasBaseAndContrast() ? ' gl-gate--theme-pair' : ''),
             'data-gl-gate' => $gateId,
             'data-gl-post' => (string) $postId,
         ];

@@ -59,7 +59,7 @@ export const hasHint = (): boolean =>
   `; ${cookies()}`.indexOf(`; ${HINT_COOKIE}=`) !== -1;
 
 // The plugin's stylesheets, in the order they print (the popup's and the
-// gate's override the form's at equal specificity). Each one's first rule
+// gate's override the form's). Each one's first rule
 // sets --gl-<name>-css: 1 on .gl-<name>, a sentinel: a root without it is on
 // a page that lost the sheet.
 const SHEETS = ['form', 'popup', 'gate'];
@@ -144,7 +144,7 @@ const restored = (name: string): boolean =>
 // name's stylesheet as a <link> where Stylesheets prints the sheets: just
 // before the page's first root, and the form's before the popup's and the
 // gate's, inline or put back, wherever those are. So the popup's and the
-// gate's follow the form's, as the ties between them need, whichever of them
+// gate's follow the form's, whose rules theirs override, whichever of them
 // the page kept. Put in through Element.prototype: the first root can be a
 // form a post's author wrote with the class, and a control named before
 // would stand in for the form's own.

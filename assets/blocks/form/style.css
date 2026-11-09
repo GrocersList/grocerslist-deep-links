@@ -34,7 +34,20 @@
  *               1.05 / (L + 0.05) >= (L + 0.05) / 0.05, else #000, L being
  *               the accent's WCAG 2 relative luminance: #fff up to about
  *               L = 0.1791 (docs/FORMS.md has the whole formula). Without
- *               --brand the theme styles the button.
+ *               --brand none is set: the button is near-black (#1e1e1e)
+ *               with white text, or the theme's own pair with --theme-pair,
+ *               and the icon takes the title's colour
+ *   --theme-pair
+ *               the theme's palette has both a base and a contrast colour
+ *               (ThemePalette.php). What brand colours leave unset is then
+ *               the theme's: the button's fill, border and focus ring its
+ *               contrast, the button's text and the picture's ring its
+ *               base. Both or neither: one taken without the other can be
+ *               dark text on a dark button (a dark style variation's base,
+ *               #111, on #1e1e1e). The modifier's own rule is the only one
+ *               to read the presets, into --gl-form-theme-base and
+ *               --gl-form-theme-contrast (no settings), which every other
+ *               rule falls back through to #fff and #1e1e1e
  * .gl-form__header          the banner and the picture, before the <form>
  *                           (the wrapper's first child) in every layout;
  *                           only on a form with either
@@ -68,8 +81,7 @@
  * .gl-form__field           a <label> round one input:
  *   .gl-form__field--name   the first name, when the form asks for one
  *   .gl-form__field--email  the email address
- * .gl-form__submit          the button; also .wp-block-button__link and
- *                           .wp-element-button, the theme's button classes
+ * .gl-form__submit          the button, with no class of the theme's
  * .gl-form__optin           the form's checkbox and its label
  *                           (design.optIn): the optional opt-in on Save to
  *                           Email, the required consent on signup and content
@@ -90,10 +102,30 @@
  *   split    the copy beside the inputs while both fit, one column after
  *   compact  one slim bar: the icon and title, then the input and button
  *
- * Type and colours otherwise come from the theme. The box, the inputs and
- * the spacing can be tuned through the --gl-form-* custom properties below.
- * Element rules carry the .gl-form prefix so they outrank theme and WP
- * Recipe Maker paragraph, label and input styles.
+ * GRO draws the form. The theme supplies the font family, which every part
+ * inherits, and the page behind a plain form; the type, the button, the
+ * inputs, the checkbox and the icon are this sheet's, whatever the theme
+ * does to paragraphs, labels, inputs, buttons and svgs. So every rule but
+ * the sentinel, the wrapper's own two and the keyframes is at least three
+ * classes, (0,3,0), past a theme's .entry-content input[type=email] or
+ * .site-main .entry-content p (0,2,1): a part inside the <form> through
+ * .gl-form .gl-form__form, the wrapper and its direct children through
+ * .gl-form named twice. Each part's rule sets what a theme commonly sets on
+ * that element (a size, a weight, capitals, letter spacing, an indent, a
+ * float, a fill), and the button's and the inputs' every state too. A theme
+ * rule of four classes, an id or !important still wins. The popup's and the
+ * content gate's rules for a form's parts are one class more
+ * (assets/blocks/popup, assets/blocks/content-gate), so they win wherever
+ * their sheet lands. blocks/tests/theme-proof.test.ts holds the three
+ * sheets to this; blocks/tests/harness/hostile.html shows the forms under a
+ * hostile theme. The box, the inputs and the spacing can be tuned through
+ * the --gl-form-* custom properties below.
+ *
+ * Within this sheet, a layout's or a modifier's rule is mostly as deep as
+ * the rule it changes and wins by coming after it: --boxed's box before
+ * --compact's and --banner's, a part's own rule before its layout's or its
+ * picture's. The order is part of the cascade: put a new rule after the
+ * one it changes.
  *
  * --gl-form-css, set to 1 on .gl-form by the first rule, is no setting but
  * the sheet's sentinel: the view script reads it off the page's first form
@@ -126,10 +158,17 @@
   margin: 1.5em 0;
 }
 
+/* The theme's pair (the header's --theme-pair). Brand colours on the
+   wrapper still win: each colour reads these as its own fallback. */
+.gl-form.gl-form.gl-form--theme-pair {
+  --gl-form-theme-base: var(--wp--preset--color--base);
+  --gl-form-theme-contrast: var(--wp--preset--color--contrast);
+}
+
 /* The padding shrinks with the space around it: recipe card templates can
    leave the box only a few hundred pixels on a phone. Brand colours set the
    background and text; without them the box tints whatever it sits on. */
-.gl-form--boxed {
+.gl-form.gl-form.gl-form--boxed {
   background: var(--gl-form-background, rgba(127, 127, 127, 0.08));
   color: var(--gl-form-text, currentColor);
   border: var(--gl-form-border, 1px solid rgba(127, 127, 127, 0.25));
@@ -137,41 +176,58 @@
   padding: var(--gl-form-padding, clamp(0.75em, 5%, 1.25em));
 }
 
-.gl-form--boxed.gl-form--compact {
+.gl-form.gl-form--boxed.gl-form--compact {
   padding: var(--gl-form-padding, 0.625em 0.75em);
 }
 
-/* A theme that colours paragraphs itself would otherwise put its text colour
-   on the brand background. */
-.gl-form--brand.gl-form--boxed .gl-form__title,
-.gl-form--brand.gl-form--boxed .gl-form__description,
-.gl-form--brand.gl-form--boxed .gl-form__optin,
-.gl-form--brand.gl-form--boxed .gl-form__status {
-  color: inherit;
-}
-
-.gl-form .gl-form__form {
+/* Whatever a theme gives forms: a margin, a box, a type size. */
+.gl-form.gl-form .gl-form__form {
   display: flex;
   flex-direction: column;
   gap: var(--gl-form-gap, 0.75em);
+  width: auto;
+  max-width: none;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font: inherit;
+  color: inherit;
 }
 
-.gl-form__copy {
+.gl-form .gl-form__form .gl-form__copy {
   display: flex;
   flex-direction: column;
   gap: 0.25em;
   min-width: 0;
+  margin: 0;
+  padding: 0;
+  text-align: start;
 }
 
-.gl-form .gl-form__title,
-.gl-form .gl-form__description,
-.gl-form .gl-form__status {
+/* The theme's paragraph styles (a size, a line height, capitals, spacing,
+   an indent, a colour) stop here. The title and the description take the
+   copy's alignment, which the popup and the content gate centre. */
+.gl-form .gl-form__form .gl-form__title,
+.gl-form .gl-form__form .gl-form__title-text,
+.gl-form .gl-form__form .gl-form__description,
+.gl-form .gl-form__form .gl-form__status {
+  max-width: none;
   margin: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: inherit;
+  text-indent: 0;
+  text-transform: none;
+  text-shadow: none;
+  color: inherit;
   overflow-wrap: anywhere;
 }
 
-.gl-form .gl-form__title {
+.gl-form .gl-form__form .gl-form__title {
   display: flex;
   align-items: center;
   gap: 0.5em;
@@ -180,36 +236,107 @@
   line-height: 1.3;
 }
 
-.gl-form .gl-form__description {
+.gl-form .gl-form__form .gl-form__description {
+  display: block;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.5;
   white-space: pre-line;
 }
 
-.gl-form__icon {
+.gl-form .gl-form__form .gl-form__status {
+  display: block;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: start;
+}
+
+/* A theme's ornaments on paragraphs, and its drop cap. */
+.gl-form .gl-form__form .gl-form__title::before,
+.gl-form .gl-form__form .gl-form__title::after,
+.gl-form .gl-form__form .gl-form__description::before,
+.gl-form .gl-form__form .gl-form__description::after,
+.gl-form .gl-form__form .gl-form__status::before,
+.gl-form .gl-form__form .gl-form__status::after {
+  content: none;
+}
+
+.gl-form .gl-form__form .gl-form__title::first-letter,
+.gl-form .gl-form__form .gl-form__description::first-letter,
+.gl-form .gl-form__form .gl-form__status::first-letter {
+  float: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+/* The shapes' fill and stroke are the <svg>'s attributes, which any theme
+   rule for an svg or a path outranks, so they are set here too. */
+.gl-form .gl-form__form .gl-form__icon {
+  display: block;
   flex: none;
   width: 1.25em;
   height: 1.25em;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
   color: var(--gl-form-accent, currentColor);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+.gl-form .gl-form__form .gl-form__icon * {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: none;
+  opacity: 1;
+  filter: none;
+  transform: none;
 }
 
 /* The picture sits in the header, over the banner's edge when there is one. */
-.gl-form .gl-form__header {
+.gl-form.gl-form .gl-form__header {
   position: relative;
   margin: 0 0 16px;
+  padding: 0;
 }
 
 /* Whatever the theme puts round its images: a shadow too, which would spill
-   past a banner's edges onto the box's. */
-.gl-form .gl-form__banner,
-.gl-form .gl-form__picture {
+   past a banner's edges onto the box's, rounded corners and a backdrop. */
+.gl-form .gl-form__header .gl-form__banner,
+.gl-form .gl-form__header .gl-form__picture {
   display: block;
   margin: 0;
   padding: 0;
   border: 0;
+  border-radius: 0;
+  background: none;
   box-shadow: none;
 }
 
 /* Across the form, cropped to a 3:1 strip from its centre. */
-.gl-form .gl-form__banner {
+.gl-form .gl-form__header .gl-form__banner {
   width: 100%;
   max-width: none;
   height: auto;
@@ -221,11 +348,11 @@
    iPad that stopped updating): the header is a third of its width tall, and
    the banner fills it. */
 @supports not (aspect-ratio: 1 / 1) {
-  .gl-form .gl-form__header--banner {
+  .gl-form.gl-form .gl-form__header--banner {
     padding-top: calc(100% / 3);
   }
 
-  .gl-form .gl-form__banner {
+  .gl-form .gl-form__header .gl-form__banner {
     position: absolute;
     top: 0;
     left: 0;
@@ -234,7 +361,7 @@
 }
 
 /* Without a banner, the picture is centred above the copy. */
-.gl-form--image-avatar .gl-form__picture {
+.gl-form--image-avatar .gl-form__header .gl-form__picture {
   width: 72px;
   max-width: none;
   height: 72px;
@@ -243,7 +370,7 @@
   object-fit: cover;
 }
 
-.gl-form--image-logo .gl-form__picture {
+.gl-form--image-logo .gl-form__header .gl-form__picture {
   width: auto;
   max-width: min(200px, 100%);
   height: auto;
@@ -255,7 +382,7 @@
    on it, ringed in the box's colour (the page's on a plain form, below); a
    logo is contained in its circle, on that colour. The copy clears it by
    12px. */
-.gl-form__header--banner .gl-form__picture {
+.gl-form .gl-form__header--banner .gl-form__picture {
   position: absolute;
   bottom: -36px;
   left: 16px;
@@ -267,31 +394,30 @@
   margin: 0;
   border-radius: 50%;
   box-shadow: 0 0 0 4px
-    var(--gl-form-background, var(--wp--preset--color--base, #fff));
+    var(--gl-form-background, var(--gl-form-theme-base, #fff));
   object-fit: cover;
 }
 
 .gl-form--image-logo .gl-form__header--banner .gl-form__picture {
   padding: 8px;
-  background: var(--gl-form-background, var(--wp--preset--color--base, #fff));
+  background: var(--gl-form-background, var(--gl-form-theme-base, #fff));
   object-fit: contain;
 }
 
 /* A plain form paints no background, so its ring and a logo's circle are the
-   page's colour: the brand's would be a disc of it on the page. Each rule is
-   the one above with .gl-form--plain in front, so it outranks it. */
-.gl-form--plain .gl-form__header--banner .gl-form__picture {
-  box-shadow: 0 0 0 4px var(--wp--preset--color--base, #fff);
+   page's colour, white or the theme's base: the brand's would be a disc of it
+   on the page. Each rule is the one above with .gl-form--plain added, so it
+   outranks it. */
+.gl-form.gl-form--plain .gl-form__header--banner .gl-form__picture {
+  box-shadow: 0 0 0 4px var(--gl-form-theme-base, #fff);
 }
 
-.gl-form--plain.gl-form--image-logo
-  .gl-form__header--banner
-  .gl-form__picture {
-  background: var(--wp--preset--color--base, #fff);
+.gl-form--plain.gl-form--image-logo .gl-form__header--banner .gl-form__picture {
+  background: var(--gl-form-theme-base, #fff);
 }
 
-.gl-form--image-avatar .gl-form__header--banner,
-.gl-form--image-logo .gl-form__header--banner {
+.gl-form.gl-form--image-avatar .gl-form__header--banner,
+.gl-form.gl-form--image-logo .gl-form__header--banner {
   margin-bottom: 48px;
 }
 
@@ -299,7 +425,7 @@
    as .gl-form--boxed's, moves onto the form under the header, and the banner
    takes the box's top corners. A negative margin could not undo the
    padding: its 5% would be of the box's width, not of what the box holds. */
-.gl-form--boxed.gl-form--banner {
+.gl-form.gl-form--boxed.gl-form--banner {
   padding: 0;
 }
 
@@ -317,152 +443,307 @@
   border-radius: var(--gl-form-radius, 12px) var(--gl-form-radius, 12px) 0 0;
 }
 
-.gl-form__fields {
+.gl-form .gl-form__form .gl-form__fields {
   display: flex;
   flex-direction: column;
   gap: 0.5em;
   min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 
-.gl-form__row {
+.gl-form .gl-form__form .gl-form__row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5em;
+  margin: 0;
+  padding: 0;
 }
 
 /* The inputs share the row and the button keeps its own width beside them,
    stretching only once it wraps onto a line of its own. A first name, an
-   email and the button still fit one row in a ~640px column. */
-.gl-form .gl-form__field {
+   email and the button still fit one row in a ~640px column. A theme's
+   label style (small capitals, a float) stops here. */
+.gl-form .gl-form__form .gl-form__field {
   display: block;
   flex: 999 1 10em;
+  float: none;
+  width: auto;
   min-width: 0;
+  max-width: none;
+  height: auto;
   margin: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: start;
+  text-transform: none;
+  color: inherit;
 }
 
-.gl-form .gl-form__submit {
+/* The button is GRO's, in every state: the form's accent with brand colours
+   on, else near-black with white text, or the theme's pair. */
+.gl-form .gl-form__form .gl-form__submit {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-block;
   flex: 1 0 auto;
+  float: none;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
   max-width: 100%;
+  height: auto;
+  min-height: 0;
   margin: 0;
+  padding: 0.6em 1.2em;
+  overflow: visible;
+  border: 1px solid
+    var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
+  border-radius: 6px;
+  outline: none;
+  background: var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
+  box-shadow: none;
+  color: var(--gl-form-accent-text, var(--gl-form-theme-base, #fff));
+  font: inherit;
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: center;
+  text-decoration: none;
+  text-indent: 0;
+  text-shadow: none;
+  text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  opacity: 1;
+  filter: none;
+  transform: none;
+  transition: filter 0.15s ease-out;
+  cursor: pointer;
 }
 
-.gl-form--stacked .gl-form__row {
+.gl-form .gl-form__form .gl-form__submit::before,
+.gl-form .gl-form__form .gl-form__submit::after {
+  content: none;
+}
+
+.gl-form .gl-form__form .gl-form__submit:hover,
+.gl-form .gl-form__form .gl-form__submit:focus,
+.gl-form .gl-form__form .gl-form__submit:active {
+  border-color: var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
+  background: var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
+  color: var(--gl-form-accent-text, var(--gl-form-theme-base, #fff));
+  text-decoration: none;
+}
+
+.gl-form--brand .gl-form__form .gl-form__submit:hover {
+  filter: brightness(0.92);
+}
+
+/* A keyboard focus rings it in its fill, a click does not: the ring is on
+   :focus and :not(:focus-visible) takes it off, so a browser without
+   :focus-visible (Safari before 15.4), which drops that rule, still shows
+   it. */
+.gl-form .gl-form__form .gl-form__submit:focus {
+  outline: 2px solid
+    var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
+  outline-offset: 2px;
+}
+
+.gl-form .gl-form__form .gl-form__submit:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.gl-form .gl-form__form[aria-busy='true'] .gl-form__submit {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.gl-form--stacked .gl-form__form .gl-form__row {
   flex-direction: column;
 }
 
 /* A flex basis would be a height in a column. */
-.gl-form--stacked .gl-form__field,
-.gl-form--stacked .gl-form__submit {
+.gl-form--stacked .gl-form__form .gl-form__field,
+.gl-form--stacked .gl-form__form .gl-form__submit {
   flex: none;
 }
 
-.gl-form .gl-form__field input[type='email'],
-.gl-form .gl-form__field input[type='text'] {
+.gl-form .gl-form__form .gl-form__field input[type='email'],
+.gl-form .gl-form__form .gl-form__field input[type='text'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  float: none;
   box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   max-width: none;
+  height: auto;
+  min-height: 0;
   margin: 0;
   padding: var(--gl-form-input-padding, 0.6em 0.8em);
   font: inherit;
   /* 16px stops iOS Safari zooming the page when the field takes focus. */
   font-size: max(16px, 1em);
+  font-weight: 400;
   line-height: 1.2;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: start;
+  text-indent: 0;
+  text-shadow: none;
+  text-transform: none;
   color: var(--gl-form-input-color, #1e1e1e);
+  -webkit-text-fill-color: currentColor;
   background: var(--gl-form-input-background, #fff);
   border: var(--gl-form-input-border, 1px solid rgba(127, 127, 127, 0.6));
   border-radius: var(--gl-form-input-radius, 6px);
   box-shadow: none;
+  opacity: 1;
+  transition: none;
 }
 
-.gl-form .gl-form__field input[type='email']:focus-visible,
-.gl-form .gl-form__field input[type='text']:focus-visible {
+.gl-form .gl-form__form .gl-form__field input[type='email']:hover,
+.gl-form .gl-form__form .gl-form__field input[type='text']:hover,
+.gl-form .gl-form__form .gl-form__field input[type='email']:focus,
+.gl-form .gl-form__form .gl-form__field input[type='text']:focus {
+  color: var(--gl-form-input-color, #1e1e1e);
+  background: var(--gl-form-input-background, #fff);
+  border: var(--gl-form-input-border, 1px solid rgba(127, 127, 127, 0.6));
+  box-shadow: none;
+}
+
+/* A field rings on any focus: it takes typing however it was focused, so
+   every browser with :focus-visible shows a ring on a click too, and one
+   without (Safari before 15.4) still gets this one. */
+.gl-form .gl-form__form .gl-form__field input[type='email']:focus,
+.gl-form .gl-form__form .gl-form__field input[type='text']:focus {
   outline: 2px solid currentColor;
   outline-offset: 1px;
 }
 
-/* Zero specificity on purpose: whatever the theme does for .wp-element-button
-   or button wins. This only keeps it a real-looking button where nothing
-   styles it, such as a classic theme on a WordPress without global styles. */
-:where(.gl-form__submit) {
-  display: inline-block;
-  box-sizing: border-box;
-  padding: 0.6em 1.2em;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: #1e1e1e;
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-  text-decoration: none;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  cursor: pointer;
-}
-
-/* Brand colours beat the theme's button colours, hover and focus included. */
-.gl-form--brand .gl-form__submit,
-.gl-form--brand .gl-form__submit:hover,
-.gl-form--brand .gl-form__submit:focus {
-  background: var(--gl-form-accent, #1e1e1e);
-  border-color: var(--gl-form-accent, #1e1e1e);
-  color: var(--gl-form-accent-text, #fff);
-}
-
-.gl-form--brand .gl-form__submit:hover {
-  filter: brightness(0.92);
-}
-
-.gl-form--brand .gl-form__submit:focus-visible {
-  outline: 2px solid var(--gl-form-accent, currentColor);
-  outline-offset: 2px;
-}
-
-.gl-form__form[aria-busy='true'] .gl-form__submit {
-  opacity: 0.6;
-  pointer-events: none;
+/* The field's own colour, faded: the plain value is the fallback for a
+   browser without color-mix(). */
+.gl-form .gl-form__form .gl-form__field input[type='email']::placeholder,
+.gl-form .gl-form__form .gl-form__field input[type='text']::placeholder {
+  color: #737373;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+  -webkit-text-fill-color: currentColor;
+  opacity: 1;
+  font-style: normal;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 /* At least 24px tall, a target size WCAG 2.2 counts (2.5.8, the box and its
    label being one target): a one-line label sits centred in it, and a longer
    one keeps the box beside its first line. */
-.gl-form .gl-form__optin {
+.gl-form .gl-form__form .gl-form__optin {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   align-content: center;
   gap: 0.5em;
+  float: none;
+  width: auto;
   min-height: 24px;
+  max-width: none;
   margin: 0;
+  padding: 0;
+  font: inherit;
   font-size: 0.875em;
-  font-weight: inherit;
+  font-weight: 400;
   line-height: 1.4;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: start;
+  text-transform: none;
+  color: inherit;
   overflow-wrap: anywhere;
   cursor: pointer;
 }
 
-.gl-form .gl-form__optin input {
+/* A theme that draws its own checkboxes on a label's ::before, or on the
+   text after the box, would put a second box beside the real one. */
+.gl-form .gl-form__form .gl-form__field::before,
+.gl-form .gl-form__form .gl-form__field::after,
+.gl-form .gl-form__form .gl-form__optin::before,
+.gl-form .gl-form__form .gl-form__optin::after,
+.gl-form .gl-form__form .gl-form__optin span::before,
+.gl-form .gl-form__form .gl-form__optin span::after {
+  content: none;
+}
+
+/* The opt-in's text, the span after the box: the room a theme pads before
+   that text to draw its own box in would stand empty beside the real one.
+   Its type is the label's. */
+.gl-form .gl-form__form .gl-form__optin span {
+  display: block;
+  position: static;
+  float: none;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-indent: 0;
+  text-transform: inherit;
+  text-shadow: none;
+  color: inherit;
+}
+
+/* The browser's own box: a theme that hides checkboxes to draw its own
+   leaves this one looking unticked, or not there at all, and a required
+   consent box nobody can see. Its 1em is the label's size, not a theme's
+   for inputs. Visibility inherits rather than shows, so a form inside
+   something the theme hides stays hidden whole. */
+.gl-form .gl-form__form .gl-form__optin input[type='checkbox'] {
+  -webkit-appearance: checkbox;
+  appearance: auto;
+  display: block;
+  visibility: inherit;
+  position: static;
+  flex: none;
+  float: none;
+  width: 1em;
+  height: 1em;
+  min-width: 0;
+  min-height: 0;
   margin: 0.2em 0 0;
+  padding: 0;
+  clip-path: none;
+  font: inherit;
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
 /* The box wears the form's accent, as the button does; without brand
    colours it stays the theme's, or the browser's. */
-.gl-form--brand .gl-form__optin input {
+.gl-form--brand .gl-form__form .gl-form__optin input[type='checkbox'] {
   accent-color: var(--gl-form-accent);
 }
 
-.gl-form__status:empty {
+.gl-form .gl-form__form .gl-form__status:empty {
   display: none;
 }
 
 /* The view script focuses the status so screen readers read the result; it is
    not a control, so it gets no focus ring. */
-.gl-form__status:focus {
+.gl-form .gl-form__form .gl-form__status:focus {
   outline: none;
 }
 
-.gl-form--done .gl-form__status {
+.gl-form .gl-form__form.gl-form--done .gl-form__status {
   font-weight: 600;
 }
 
@@ -470,7 +751,7 @@
    right-to-left page scroll sideways. FormRenderer::HONEYPOT_STYLE repeats
    this declaration inline, for a page whose optimizer dequeued or deferred
    this stylesheet; keep the two the same. */
-.gl-form__hp {
+.gl-form .gl-form__form .gl-form__hp {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -481,7 +762,7 @@
 }
 
 /* For themes that ship no .screen-reader-text of their own. */
-.gl-form .screen-reader-text {
+.gl-form .gl-form__form .screen-reader-text {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -505,59 +786,59 @@
    fields without copy fill theirs. Each input's label is centred on the line
    it shares with the button: stretched, it would leave its input at the top.
    The button still stretches to match a taller input. */
-.gl-form--split .gl-form__form {
+.gl-form.gl-form--split .gl-form__form {
   flex-flow: row wrap;
   align-items: center;
   column-gap: 1.5em;
 }
 
-.gl-form--split .gl-form__copy {
+.gl-form--split .gl-form__form .gl-form__copy {
   flex: 1 1 10.5em;
 }
 
-.gl-form--split .gl-form__fields {
+.gl-form--split .gl-form__form .gl-form__fields {
   flex: 1 1 12em;
 }
 
-.gl-form--split .gl-form__status {
+.gl-form--split .gl-form__form .gl-form__status {
   flex: 1 1 100%;
 }
 
-.gl-form--split .gl-form__field {
+.gl-form--split .gl-form__form .gl-form__field {
   align-self: center;
 }
 
 /* Compact: one slim bar, the icon and title then the field and button,
    which wraps onto more lines only when it has to. */
-.gl-form--compact .gl-form__form {
+.gl-form.gl-form--compact .gl-form__form {
   flex-flow: row wrap;
   align-items: center;
   gap: 0.5em 0.75em;
 }
 
-.gl-form--compact .gl-form__copy {
+.gl-form--compact .gl-form__form .gl-form__copy {
   flex: 0 1 auto;
 }
 
-.gl-form--compact .gl-form__title {
+.gl-form--compact .gl-form__form .gl-form__title {
   font-size: var(--gl-form-title-size, 1em);
 }
 
-.gl-form--compact .gl-form__fields {
+.gl-form--compact .gl-form__form .gl-form__fields {
   flex: 1 1 16em;
 }
 
 /* A shorter field keeps the button on the bar beside it. */
-.gl-form--compact .gl-form__field {
+.gl-form--compact .gl-form__form .gl-form__field {
   flex-basis: 8em;
 }
 
-.gl-form--compact .gl-form__status {
+.gl-form--compact .gl-form__form .gl-form__status {
   flex: 1 1 100%;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .gl-form--done .gl-form__status {
+  .gl-form .gl-form__form.gl-form--done .gl-form__status {
     animation: gl-form-done 300ms ease-out;
   }
 

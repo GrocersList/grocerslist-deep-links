@@ -229,7 +229,8 @@ class PopupRenderer
             $style .= $property . ':' . $color . ';';
         }
 
-        return '<dialog class="gl-popup' . ($banner !== '' ? ' gl-popup--banner' : '') . ' gl-popup--image-' . $slug . '"'
+        return '<dialog class="gl-popup' . ($banner !== '' ? ' gl-popup--banner' : '') . ' gl-popup--image-' . $slug
+            . (ThemePalette::hasBaseAndContrast() ? ' gl-popup--theme-pair' : '') . '"'
             . ' id="gl-popup-' . esc_attr($hash) . '" hidden'
             . ' data-gl-popup="' . esc_attr($hash . '.' . $version) . '"'
             . ' data-gl-audience="' . strtolower($popup['audience']) . '"'
