@@ -3,7 +3,7 @@ Contributors: grocerslist
 Tags: email marketing, forms, memberships, content gating, affiliate
 Requires at least: 4.4
 Tested up to: 7.1
-Stable tag: 1.32.0
+Stable tag: 1.33.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -141,5 +141,7 @@ The detail never carries the visitor's email address, raw or hashed, and nothing
 = 1.32.0 =
 * Add custom image options to GRO Forms: a banner and your profile photo or logo, on your forms and your popup.
 * GRO Popup: page rules can list up to 100 pages (was 50).
-= Unreleased =
+= 1.33.0 =
+* GRO Forms keep their look on any theme, even with a CSS optimizer such as WP Rocket's Remove Unused CSS on.
+* With brand colors off, a form's button now uses your site's default colors (or near-black and white), not your theme's button style.
 * Breaking: the GRO form's submit button no longer carries the theme's `wp-block-button__link` / `wp-element-button` classes; custom CSS should target `.gl-form__submit` instead.
