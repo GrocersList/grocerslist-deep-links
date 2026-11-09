@@ -262,6 +262,11 @@ class ContentGateBlock
         $this->forms->enqueueAssets();
         self::enqueueStyles($block);
 
+        // Asked for before the form renders, which would print the form's
+        // inside the card: the gate's rules override the form's, so the
+        // form's must come first.
+        $sheets = Stylesheets::printOnce('form', 'content-gate');
+
         $preview = is_user_logged_in() && current_user_can('edit_posts');
         $teaser = self::teaser($attrs['teaser'] ?? self::DEFAULT_TEASER);
         $form = $this->forms->gateForm($formId);
@@ -277,7 +282,7 @@ class ContentGateBlock
 
         $html .= $this->forms->renderGateForm($formId, $postId, $gateId) . '</div></div></div>';
 
-        return $preview ? self::previewMarker($attrs, $gateId) . $html : $html;
+        return $sheets . ($preview ? self::previewMarker($attrs, $gateId) . $html : $html);
     }
 
     /**
@@ -292,13 +297,13 @@ class ContentGateBlock
      */
     private function editorView(array $attrs, string $formId, string $gateId, $block, $content): string
     {
-        self::enqueueStyle();
-
         $connected = PluginSettings::getApiKey() !== '';
         $form = $connected ? $this->forms->gateForm($formId) : null;
         $below = self::hidesBelow($attrs);
 
-        $html = self::marker($attrs, $gateId, $form !== null ? $form['name'] : '', $below)
+        // The markers' rules are in the gate's sheet.
+        $html = Stylesheets::printOnce('form', 'content-gate')
+            . self::marker($attrs, $gateId, $form !== null ? $form['name'] : '', $below)
             . self::editorNotice($connected, $gateId, $formId, $form)
             . self::innerHtml($block, $content);
 
@@ -456,29 +461,15 @@ class ContentGateBlock
     }
 
     /**
-     * The gate's stylesheet alone: an editor's marker needs it.
-     */
-    private static function enqueueStyle(): void
-    {
-        wp_enqueue_style(
-            self::STYLE,
-            plugins_url('assets/blocks/content-gate/style.css', dirname(__DIR__, 2) . '/grocerslist.php'),
-            [],
-            Config::getPluginVersion()
-        );
-    }
-
-    /**
-     * The gate's stylesheet, and those of the blocks it hides: a block theme
-     * loads a block's styles only when the block renders, and these render
-     * later, in the gate route. Only the handles are read; nothing renders.
+     * The stylesheets of the blocks the gate hides: a block theme loads a
+     * block's styles only when the block renders, and these render later, in
+     * the gate route. Only the handles are read; nothing renders. (The gate's
+     * own prints inline, Stylesheets.)
      *
      * @param mixed $block
      */
     private static function enqueueStyles($block): void
     {
-        self::enqueueStyle();
-
         $inner = self::parsedBlock($block)['innerBlocks'] ?? [];
 
         if (is_array($inner) && $inner && class_exists('WP_Block_Type_Registry')) {
@@ -510,8 +501,10 @@ class ContentGateBlock
                     $handles = array_merge($handles, $type->view_style_handles);
                 }
 
+                // Never the plugin's own, which print inline (Stylesheets): a
+                // browser's stale copy, printed late, would follow them and win.
                 foreach ($handles as $handle) {
-                    if (is_string($handle) && $handle !== '') {
+                    if (is_string($handle) && $handle !== '' && !in_array($handle, [FormRenderer::STYLE, self::STYLE], true)) {
                         wp_enqueue_style($handle);
                     }
                 }

@@ -295,6 +295,27 @@ const open = (gate: HTMLElement, html: string, focus: boolean): void => {
   const template = create('template') as HTMLTemplateElement;
   template.innerHTML = html;
   const content = template.content;
+  // The content rendered in a request of its own (the gate or the submit
+  // route), so it carries the sheets the page printed already: a second copy
+  // of the form's, after the page's gate or popup sheet, would undo their
+  // overrides of it across the page. Only GRO's own go, and only those the
+  // page has, under their id or put back as <id>-restored; one the page
+  // lacks stays, and another plugin's <style> stays whatever its id.
+  Array.from(
+    content.querySelectorAll('style[id], link[rel~="stylesheet"][id]')
+  ).forEach(sheet => {
+    const own = /^(gl-(?:form|popup|gate)-css)(?:-restored)?$/.exec(
+      attr(sheet, 'id') || ''
+    );
+    if (
+      own &&
+      [own[1], `${own[1]}-restored`].some(
+        id => Document.prototype.getElementById.call(document, id) !== null
+      )
+    ) {
+      sheet.remove();
+    }
+  });
   const forms = Array.from(
     content.querySelectorAll<HTMLFormElement>('form[data-gl-form]')
   );

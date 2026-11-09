@@ -73,10 +73,12 @@ class FormBlock
             ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n', 'wp-api-fetch'],
             $version
         );
+        // The canvas gets the form's stylesheet from here: block.json names
+        // none, since a page prints it inline (Stylesheets).
         wp_register_style(
             self::EDITOR_STYLE,
             plugins_url('assets/blocks/form/editor.css', $pluginFile),
-            [],
+            [FormRenderer::STYLE],
             $version
         );
 

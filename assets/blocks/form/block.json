@@ -20,6 +20,5 @@
     "spacing": { "margin": true }
   },
   "editorScript": "grocerslist-form-editor",
-  "editorStyle": "grocerslist-form-editor-style",
-  "style": "grocerslist-form-style"
+  "editorStyle": "grocerslist-form-editor-style"
 }

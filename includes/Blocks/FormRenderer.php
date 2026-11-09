@@ -42,8 +42,8 @@ class FormRenderer
 
     /**
      * The honeypot's own hiding, repeating .gl-form__hp in
-     * assets/blocks/form/style.css: an optimizer that dequeues or defers the
-     * block stylesheet would otherwise show readers a "Website" box, and a
+     * assets/blocks/form/style.css: an optimizer that strips or defers the
+     * form's stylesheet would otherwise show readers a "Website" box, and a
      * filled one is dropped without a word. Clipped in place with no left or
      * right offset, as the rule is: an offset makes a right-to-left page
      * scroll sideways.
@@ -79,9 +79,11 @@ class FormRenderer
     }
 
     /**
-     * The handles the block's metadata names. Rendering enqueues them with
-     * their sources as well, so a shortcode works on WordPress versions
-     * without the block API, where nothing registers them.
+     * The stylesheet, for the block editor's canvas (the form's and the
+     * content gate's editor styles depend on it; a page prints it inline,
+     * Stylesheets), and the view script, which rendering enqueues with its
+     * source as well, so a shortcode works on WordPress versions without the
+     * block API, where nothing registers it.
      */
     public function registerAssets(): void
     {
@@ -387,20 +389,27 @@ class FormRenderer
 
         $html .= '</form></div>';
 
-        return (string) apply_filters('grocerslist_form_html', $html, $config, [
+        $html = (string) apply_filters('grocerslist_form_html', $html, $config, [
             'postId'   => $postId,
             'recipeId' => $recipeId,
             'source'   => $source,
         ]);
+
+        // The stylesheet before the first form a request renders. Not before
+        // the popup's or a gate's: PopupRenderer and ContentGateBlock print
+        // the sheets before the dialog or the card that wraps this form, and
+        // the popup's and the gate's must follow the form's.
+        return $html === '' || in_array($source, ['popup', 'gate'], true) ? $html : Stylesheets::printOnce('form') . $html;
     }
 
     /**
-     * Also the content gate's: its view logic lives in the same script, and
-     * lets a returning subscriber in even where the gate's form cannot show.
+     * The view script, which is the content gate's too: its view logic lives
+     * in the same script, and lets a returning subscriber in even where the
+     * gate's form cannot show. The stylesheet prints with the markup
+     * (Stylesheets).
      */
     public function enqueueAssets(): void
     {
-        wp_enqueue_style(self::STYLE, self::assetUrl('assets/blocks/form/style.css'), [], Config::getPluginVersion());
         wp_enqueue_script(self::VIEW_SCRIPT, self::assetUrl('blocks/dist/form/view.js'), [], Config::getPluginVersion(), true);
         $this->printRestRoot();
     }

@@ -18,6 +18,7 @@ use GrocersList\Blocks\GatedRecipeLinks;
 use GrocersList\Blocks\GatedRecipeMetadata;
 use GrocersList\Blocks\GateRegion;
 use GrocersList\Blocks\PopupRenderer;
+use GrocersList\Blocks\Stylesheets;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\EmailVerificationPage;
 use GrocersList\Frontend\PublicAjaxController;
@@ -138,6 +139,12 @@ class Plugin
 
         $popupRenderer = new PopupRenderer($formConfigCache, $formRenderer, $wprmRecipes);
         $popupRenderer->register();
+
+        // The forms' stylesheets print inline, in the head where the page
+        // needs them by then (the popup's when it prints); this also tells
+        // the CSS optimizers to leave them be.
+        $stylesheets = new Stylesheets($popupRenderer);
+        $stylesheets->register();
 
         $formBlock = new FormBlock($formRenderer);
         $formBlock->register();

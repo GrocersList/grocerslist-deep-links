@@ -4,7 +4,6 @@ namespace GrocersList\Blocks;
 
 use GrocersList\Service\FormConfigCache;
 use GrocersList\Settings\PluginSettings;
-use GrocersList\Support\Config;
 use GrocersList\Support\WprmRecipes;
 
 /**
@@ -27,8 +26,6 @@ use GrocersList\Support\WprmRecipes;
  */
 class PopupRenderer
 {
-    public const STYLE = 'grocerslist-popup-style';
-
     /** Shows the popup on any page, whatever its rules say, and opens it at once (docs/FORMS.md). */
     public const PREVIEW_PARAM = 'gl_popup_preview';
 
@@ -68,14 +65,25 @@ class PopupRenderer
     }
 
     /**
-     * In the head, on a page that will print the popup: its stylesheet, and
-     * the form's style and view script as a rendered form has them.
+     * In the head, on a page that will print the popup: the form's view
+     * script, as a rendered form has it. The stylesheets print in the head
+     * (Stylesheets::printHead(), which asks prints()) or with the dialog
+     * (render()).
      */
     public function enqueueAssets(): void
     {
         if ($this->popup() !== null) {
-            $this->enqueue();
+            $this->forms->enqueueAssets();
         }
+    }
+
+    /**
+     * Whether this page prints the popup, as worked out for enqueueAssets()
+     * on wp_enqueue_scripts.
+     */
+    public function prints(): bool
+    {
+        return $this->popup() !== null;
     }
 
     public function render(): void
@@ -96,22 +104,16 @@ class PopupRenderer
         }
 
         // Again, for a theme that never runs wp_head: WordPress prints a
-        // stylesheet enqueued this late with the footer scripts.
-        $this->enqueue();
-
-        $this->printed = true;
-        echo self::dialog($config, $frame, $form);
-    }
-
-    private function enqueue(): void
-    {
+        // script enqueued this late with the footer scripts.
         $this->forms->enqueueAssets();
-        wp_enqueue_style(
-            self::STYLE,
-            plugins_url('assets/blocks/popup/style.css', dirname(__DIR__, 2) . '/grocerslist.php'),
-            [FormRenderer::STYLE],
-            Config::getPluginVersion()
-        );
+
+        // The form's sheet and the popup's, before the dialog rather than
+        // inside it (the popup's form prints none of its own): the popup's
+        // rules override the form's, so must come after them. Asked for once
+        // the form is there: where a site filters it away, neither is used
+        // up, and a form that renders later still prints the form's.
+        $this->printed = true;
+        echo Stylesheets::printOnce('form', 'popup') . self::dialog($config, $frame, $form);
     }
 
     /**
