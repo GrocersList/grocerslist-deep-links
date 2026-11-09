@@ -11,7 +11,15 @@
 // the gate's place in the page. And it opens the creator's popup, when the
 // page has one (popup.ts).
 
-import { all, attr, create, hasHint, readStored, STORAGE_KEY } from './dom';
+import {
+  all,
+  attr,
+  create,
+  hasHint,
+  readStored,
+  restoreSheets,
+  STORAGE_KEY,
+} from './dom';
 import { popup } from './popup';
 
 interface Answer {
@@ -44,8 +52,9 @@ declare global {
   interface Window {
     grocersList?: { member?: { email?: string; isWpUser?: boolean } };
     // What FormRenderer prints before this script: rest_url(), the REST
-    // API's root (see restRoot).
-    grocerslistForms?: { restRoot?: unknown };
+    // API's root (see restRoot), and the stylesheets' URLs by name (see
+    // sheetUrl in dom.ts).
+    grocerslistForms?: { restRoot?: unknown; css?: Record<string, unknown> };
     // Raptive's command queue, which its script runs once it has loaded,
     // and its Identity API.
     adthrive?: {
@@ -349,6 +358,8 @@ const open = (gate: HTMLElement, html: string, focus: boolean): void => {
   gate.replaceWith(content);
 
   forms.forEach(wire);
+  // What it revealed can hold a form or a gate the page has no sheet for.
+  restoreSheets();
 
   if (!reducedMotion()) {
     elements.forEach(element => {
@@ -1050,6 +1061,8 @@ window.addEventListener('pageshow', event => {
 });
 
 all<HTMLFormElement>('form[data-gl-form]').forEach(wire);
+// A stylesheet the page lost comes back as a <link>; the forms work without.
+restoreSheets();
 unlockAll();
 // Last, with its form wired already; nothing it does stops a form or a gate.
 try {

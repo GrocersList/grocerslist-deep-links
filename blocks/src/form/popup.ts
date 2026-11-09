@@ -4,7 +4,15 @@
 // the same page, so whether this visitor sees it, and when, is decided here
 // (docs/FORMS.md → The popup).
 
-import { all, attr, cookies, hasHint, readStored, setCookie } from './dom';
+import {
+  all,
+  attr,
+  cookies,
+  hasHint,
+  readStored,
+  restoreSheets,
+  setCookie,
+} from './dom';
 
 // A visitor who came from one of the creator's GRO emails: GRO knows them.
 const KNOWN_COOKIE = 'gl_known';
@@ -112,6 +120,8 @@ export const popup = (): void => {
       return;
     }
     shown = true;
+    // Its sheets, should the page have lost them since it loaded.
+    restoreSheets();
     // Shown before it opens: a hidden modal would still block the page.
     dialog.removeAttribute('hidden');
     try {

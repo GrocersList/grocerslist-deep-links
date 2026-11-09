@@ -69,7 +69,7 @@ class FormRenderer
 
     private static int $instances = 0;
 
-    /** Whether the view script has the REST root (printRestRoot()) yet. */
+    /** Whether the view script has the REST root and the stylesheets' URLs (printRestRoot()) yet. */
     private bool $restRootPrinted = false;
 
     public function __construct(?FormConfigCache $forms = null, ?WprmRecipes $wprm = null)
@@ -423,6 +423,13 @@ class FormRenderer
      * render, as their routes are. WordPress 4.4 has no
      * wp_add_inline_script(), and the view script then reads a route from its
      * tail, as on a page cached without the root (docs/FORMS.md).
+     *
+     * With it, the stylesheets' URLs, as their <link>s had them: the view
+     * script loads one itself where the page lost its inline copy
+     * (Stylesheets), and without these takes them from its own src. The
+     * version goes on with add_query_arg(), as WordPress versions a <link>:
+     * a CDN's, a domain mapper's or a multilingual plugin's plugins_url
+     * filter may have given the URL a query already.
      */
     private function printRestRoot(): void
     {
@@ -430,9 +437,17 @@ class FormRenderer
             return;
         }
 
-        $root = wp_json_encode(['restRoot' => rest_url()]);
-        if (is_string($root)) {
-            $this->restRootPrinted = wp_add_inline_script(self::VIEW_SCRIPT, 'window.grocerslistForms = ' . $root . ';', 'before');
+        $version = Config::getPluginVersion();
+        $data = wp_json_encode([
+            'restRoot' => rest_url(),
+            'css'      => [
+                'form'  => add_query_arg('ver', $version, self::assetUrl('assets/blocks/form/style.css')),
+                'popup' => add_query_arg('ver', $version, self::assetUrl('assets/blocks/popup/style.css')),
+                'gate'  => add_query_arg('ver', $version, self::assetUrl('assets/blocks/content-gate/style.css')),
+            ],
+        ]);
+        if (is_string($data)) {
+            $this->restRootPrinted = wp_add_inline_script(self::VIEW_SCRIPT, 'window.grocerslistForms = ' . $data . ';', 'before');
         }
     }
 

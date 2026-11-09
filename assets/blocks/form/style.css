@@ -94,7 +94,26 @@
  * the spacing can be tuned through the --gl-form-* custom properties below.
  * Element rules carry the .gl-form prefix so they outrank theme and WP
  * Recipe Maker paragraph, label and input styles.
+ *
+ * --gl-form-css, set to 1 on .gl-form by the first rule, is no setting but
+ * the sheet's sentinel: the view script reads it off the page's first form
+ * and, when it is not there (an optimizer took the inline copy away, or a
+ * theme threw away the render that printed it), loads this file itself
+ * (docs/FORMS.md, "The stylesheets"). Keep it the first rule, and plain.
+ * --gl-form-css-states, set by the second rule on a <form> the view script
+ * marked done, is a second one: no page is served with one, so an optimizer
+ * that keeps only the rules the page's HTML uses drops it with the rules for
+ * the states the view script sets (--done, aria-busy), and keeps the first.
+ * The view script reads it off a probe of its own. Keep it the second rule.
  */
+
+.gl-form {
+  --gl-form-css: 1;
+}
+
+.gl-form .gl-form__form.gl-form--done {
+  --gl-form-css-states: 1;
+}
 
 .gl-form {
   box-sizing: border-box;

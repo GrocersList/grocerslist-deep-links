@@ -51,7 +51,24 @@
  * The form in the card is a GRO form (.gl-form--popup, stacked and plain),
  * styled by assets/blocks/form/style.css, whose own box gives way to the
  * card's.
+ *
+ * --gl-popup-css, set to 1 on .gl-popup by the first rule, is the sheet's
+ * sentinel: the view script reads it off the dialog and, when it is not
+ * there, loads this file itself (docs/FORMS.md, "The stylesheets"). Keep it
+ * the first rule, and plain. --gl-popup-css-states, set by the second rule
+ * on the open popup, is a second one: no page is served with the popup
+ * open, so an optimizer that keeps only the rules the page's HTML uses drops
+ * it with the [open] rules and html.gl-popup-open, and keeps the first. The
+ * view script reads it off a probe of its own. Keep it the second rule.
  */
+
+.gl-popup {
+  --gl-popup-css: 1;
+}
+
+.gl-popup[open] {
+  --gl-popup-css-states: 1;
+}
 
 dialog.gl-popup {
   box-sizing: border-box;

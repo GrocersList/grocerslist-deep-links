@@ -13,7 +13,9 @@ namespace GrocersList\Blocks;
  * alone stays with the form. Each element carries the attributes Autoptimize,
  * LiteSpeed and other minifiers skip an element by, and register() puts their
  * ids, the marker their CSS starts with and the files' path on the
- * optimizers' own lists (docs/FORMS.md, "The stylesheets").
+ * optimizers' own lists (docs/FORMS.md, "The stylesheets"). Where a page
+ * loses one all the same, the view script finds its sentinel (the file's
+ * first rule) missing and loads the file as a <link>.
  *
  * They print in one order, whichever asks first: the popup's and the gate's
  * override the form's at equal specificity (.gl-gate__card .gl-form), so the

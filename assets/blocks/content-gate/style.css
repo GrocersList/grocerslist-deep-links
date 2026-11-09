@@ -58,7 +58,19 @@
  * .gl-gate-marker__icon, __text, __link   its parts
  * .gl-gate-start          the first revealed element while it holds the focus
  *                         the view script moves there after a submit
+ *
+ * --gl-gate-css, set to 1 on .gl-gate by the first rule, is the sheet's
+ * sentinel: the view script reads it off the page's first gate and, when it
+ * is not there, loads this file itself (docs/FORMS.md, "The stylesheets").
+ * Keep it the first rule, and plain. It has no second one, as the form's
+ * and the popup's have: its one rule for a state the view script sets,
+ * .gl-gate-start:focus, is not worth loading the file again, and an
+ * optimizer that keeps only the rules the page's HTML uses drops it unseen.
  */
+
+.gl-gate {
+  --gl-gate-css: 1;
+}
 
 .gl-gate {
   --gl-gate-wash: rgba(127, 127, 127, 0.16);
