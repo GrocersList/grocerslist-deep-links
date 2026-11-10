@@ -48,6 +48,7 @@ Send one-off emails to your subscribers, or set up sequences that go out automat
 * Make specific posts or pages exclusive to members
 * Handle checkout and member logins through GRO, with payments processed by Stripe
 * Sync paying members to email tools such as Kit, Flodesk, MailerLite, and Mailchimp
+* Let fans buy a membership as a gift for someone else, delivered right away or on a date they pick
 
 = Amazon Deep Links =
 

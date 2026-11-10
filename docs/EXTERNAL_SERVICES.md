@@ -12,7 +12,8 @@ creator's paid memberships.
   the creator's GRO forms (signup, Save to Email, content gate and popup) and
   send their visitors' submissions to GRO, give GRO the site's published posts
   to build the creator's Digest emails from, and, when memberships are on, sign
-  members up, log them in and check their membership with GRO.
+  members up, log them in, check their membership with GRO, and sell and
+  redeem membership gifts.
 - Data Sent for deep links: the Amazon links in a post, when it is saved and
   when the plugin scans the site's existing posts, plus non-PII HTTP metadata.
   GRO answers with short links on linksta.io that open in the Amazon app, and
@@ -131,6 +132,27 @@ creator's paid memberships.
   with, and every hour it asks GRO which members have left so it can remove
   those accounts. It also tells GRO when a visitor sees a members-only gate
   or taps the membership bar, without any visitor data.
+- Membership gifts: when the creator offers memberships as gifts, a visitor
+  signed in to their member account can buy one for someone else. The plugin
+  sends GRO (`POST /api/v1/creator-api/followers/membership-gifts`) the
+  recipient's name and email address, the page to bring the buyer back to
+  after paying (the recipient's link opens it too) and, when given, the
+  buyer's message to the recipient, how many months the gift lasts, and a
+  date to deliver it on, with the buyer's time zone. GRO keeps the gift and
+  sends the buyer to Stripe to pay; once they have paid, it emails the
+  recipient the gift, with the message and a link to redeem it on the site
+  (on the chosen date, if there is one), and emails the buyer a receipt. Back
+  on the site, the buyer's page asks GRO for that gift by its id
+  (`GET /api/v1/creator-api/followers/membership-gifts/<id>`); GRO answers
+  with its details and, once it is paid for, its gift code, so the buyer can
+  also pass it on themselves. When someone opens a gift link and signs in or
+  signs up, the plugin sends GRO the gift code
+  (`POST /api/v1/creator-api/followers/membership-gifts/redeem`) in the
+  request body, never in a URL, and GRO starts the gifted membership on that
+  account. Each of these requests carries the sign-in token GRO gave the
+  visitor's browser, so GRO knows which member is buying, checking or
+  redeeming the gift. The site's server only passes these requests on and
+  keeps none of their data.
 
 Legal:
 

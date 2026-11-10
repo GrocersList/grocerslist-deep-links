@@ -377,7 +377,12 @@ class PublicAjaxController
             $redirectUrl = is_string($referer) ? self::ownSiteUrl($referer) : '';
         }
 
-        $response = ApiClient::buyMembershipGift($api_key, $jwt, $recipientName, $recipientEmail, $recipientMessage, $termMonths, $redirectUrl);
+        // Plain text, not validated here: GRO owns the date and zone rules,
+        // and passResponseCode() relays its 400 for a bad value.
+        $deliverAt = isset($_POST['deliverAt']) ? sanitize_text_field(wp_unslash($_POST['deliverAt'])) : '';
+        $timezone = isset($_POST['timezone']) ? sanitize_text_field(wp_unslash($_POST['timezone'])) : '';
+
+        $response = ApiClient::buyMembershipGift($api_key, $jwt, $recipientName, $recipientEmail, $recipientMessage, $termMonths, $redirectUrl, $deliverAt, $timezone);
 
         ApiClient::passResponseCode($response);
     }

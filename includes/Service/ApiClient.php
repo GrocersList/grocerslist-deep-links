@@ -358,9 +358,11 @@ class ApiClient
      * @param string $recipientMessage
      * @param int|null $termMonths Omitted from the request when null so the server default applies.
      * @param string $redirectUrl
+     * @param string $deliverAt ISO 8601 date-time with a timezone designator. Omitted when empty, which GRO reads as deliver now.
+     * @param string $timezone IANA zone name, e.g. America/New_York. Omitted when empty.
      * @return array|\WP_Error
      */
-    static function buyMembershipGift(string $apiKey, string $jwt, string $recipientName, string $recipientEmail, string $recipientMessage = '', ?int $termMonths = null, string $redirectUrl = '')
+    static function buyMembershipGift(string $apiKey, string $jwt, string $recipientName, string $recipientEmail, string $recipientMessage = '', ?int $termMonths = null, string $redirectUrl = '', string $deliverAt = '', string $timezone = '')
     {
         if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
 
@@ -376,6 +378,12 @@ class ApiClient
         }
         if ($redirectUrl !== '') {
             $body['redirectUrl'] = $redirectUrl;
+        }
+        if ($deliverAt !== '') {
+            $body['deliverAt'] = $deliverAt;
+        }
+        if ($timezone !== '') {
+            $body['timezone'] = $timezone;
         }
 
         $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/membership-gifts", [
