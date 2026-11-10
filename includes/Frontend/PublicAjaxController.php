@@ -6,6 +6,7 @@ use GrocersList\Service\ApiClient;
 use GrocersList\Service\CreatorSettingsFetcher;
 use GrocersList\Service\MemberService;
 use GrocersList\Settings\PluginSettings;
+use GrocersList\Support\Logger;
 
 class PublicAjaxController
 {
@@ -29,6 +30,9 @@ class PublicAjaxController
             'grocers_list_reset_password' => 'resetPassword',
             'grocers_list_checkout_follower' => 'checkoutFollower',
             'grocers_list_check_follower_membership_status' => 'checkFollowerMembershipStatus',
+            'grocers_list_buy_membership_gift' => 'buyMembershipGift',
+            'grocers_list_get_membership_gift' => 'getMembershipGift',
+            'grocers_list_redeem_membership_gift' => 'redeemMembershipGift',
         ];
 
         foreach ($actions as $hook => $method) {
@@ -60,6 +64,9 @@ class PublicAjaxController
                 'grocers_list_reset_password' => wp_create_nonce('grocers_list_reset_password'),
                 'grocers_list_checkout_follower' => wp_create_nonce('grocers_list_checkout_follower'),
                 'grocers_list_check_follower_membership_status' => wp_create_nonce('grocers_list_check_follower_membership_status'),
+                'grocers_list_buy_membership_gift' => wp_create_nonce('grocers_list_buy_membership_gift'),
+                'grocers_list_get_membership_gift' => wp_create_nonce('grocers_list_get_membership_gift'),
+                'grocers_list_redeem_membership_gift' => wp_create_nonce('grocers_list_redeem_membership_gift'),
             ],
         ]);
     }
@@ -87,26 +94,7 @@ class PublicAjaxController
         $response = ApiClient::getInitMemberships($api_key, $jwt, $gated);
         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
         if ($this->memberService->shouldUpdateMemberData($creatorSettings->creatorAccountId, $updateWpUser)) {
-            $redirectUrl = $this->refererWithoutEventId();
-            $followerResponse = ApiClient::checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
-
-            // Attempt to create or update a WP subscriber with metadata when API call succeeds
-            if (!is_wp_error($followerResponse)) {
-                $status = wp_remote_retrieve_response_code($followerResponse);
-                $_body = wp_remote_retrieve_body($followerResponse);
-                $body = is_string($_body) ? json_decode($_body, true) : $_body;
-
-
-                if ($status >= 200 && $status < 300 && is_array($body)) {
-                    $resp_email = isset($body['email']) ? sanitize_email($body['email']) : '';
-                    $subscription_status = isset($body['subscriptionStatus']) ? sanitize_text_field($body['subscriptionStatus']) : '';
-                    $is_paid_member = isset($body['isPaidMember']) ? rest_sanitize_boolean($body['isPaidMember']) : '';
-                    $is_past_due = isset($body['isPastDue']) ? rest_sanitize_boolean($body['isPastDue']) : '';
-                    $subscription_management_link = isset($body['subscriptionManagementLink']) ? sanitize_text_field($body['subscriptionManagementLink']) : '';
-
-                    $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $jwt);
-                }
-            }
+            $this->updateMemberData($api_key, $jwt, $creatorSettings->creatorAccountId);
         }
 
         ApiClient::passResponseCode($response);
@@ -340,6 +328,161 @@ class PublicAjaxController
         ApiClient::passResponseCode($response);
     }
 
+    public function buyMembershipGift(): void
+    {
+        check_ajax_referer('grocers_list_buy_membership_gift', 'security');
+
+        $api_key = PluginSettings::getApiKey();
+
+        if (empty($api_key)) {
+            wp_send_json_error(['error' => 'No API key configured in plugin settings'], 401);
+            return;
+        }
+
+        $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
+        $recipientName = self::plainText(self::postedString('recipientName'), false);
+        $recipientEmail = trim(self::postedString('recipientEmail'));
+        $recipientMessage = self::plainText(self::postedString('recipientMessage'), true);
+
+        if (empty($recipientName) || empty($recipientEmail)) {
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Recipient name and email are required',
+                'status' => 400,
+            ], 400);
+            return;
+        }
+
+        // Refused, not repaired: sanitize_email() alone turns
+        // "pat smith@gmail.com" into "patsmith@gmail.com", someone else, and
+        // the paid gift would go to them.
+        $recipientEmail = is_email($recipientEmail) ? sanitize_email($recipientEmail) : '';
+        if ($recipientEmail === '') {
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Invalid params',
+                'detail' => 'Recipient email is not a valid email address',
+                'status' => 400,
+            ], 400);
+            return;
+        }
+
+        $term_months_raw = isset($_POST['termMonths']) ? sanitize_text_field(wp_unslash($_POST['termMonths'])) : '';
+        $termMonths = is_numeric($term_months_raw) ? intval($term_months_raw) : null;
+
+        $redirectUrl = self::ownSiteUrl(self::postedString('redirectUrl'));
+        if ($redirectUrl === '') {
+            $referer = $this->refererWithoutEventId();
+            $redirectUrl = is_string($referer) ? self::ownSiteUrl($referer) : '';
+        }
+
+        $response = ApiClient::buyMembershipGift($api_key, $jwt, $recipientName, $recipientEmail, $recipientMessage, $termMonths, $redirectUrl);
+
+        ApiClient::passResponseCode($response);
+    }
+
+    public function getMembershipGift(): void
+    {
+        check_ajax_referer('grocers_list_get_membership_gift', 'security');
+
+        $api_key = PluginSettings::getApiKey();
+
+        if (empty($api_key)) {
+            wp_send_json_error(['error' => 'No API key configured in plugin settings'], 401);
+            return;
+        }
+
+        $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
+        $membershipGiftId = isset($_POST['membershipGiftId']) ? sanitize_text_field(wp_unslash($_POST['membershipGiftId'])) : '';
+
+        if (empty($membershipGiftId)) {
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Membership gift id is required',
+                'status' => 400,
+            ], 400);
+            return;
+        }
+
+        $response = ApiClient::getMembershipGift($api_key, $jwt, $membershipGiftId);
+
+        ApiClient::passResponseCode($response);
+    }
+
+    public function redeemMembershipGift(): void
+    {
+        check_ajax_referer('grocers_list_redeem_membership_gift', 'security');
+
+        $api_key = PluginSettings::getApiKey();
+
+        if (empty($api_key)) {
+            wp_send_json_error(['error' => 'No API key configured in plugin settings'], 401);
+            return;
+        }
+
+        $jwt = isset($_POST['jwt']) ? sanitize_text_field(wp_unslash($_POST['jwt'])) : '';
+        $code = isset($_POST['code']) ? sanitize_text_field(wp_unslash($_POST['code'])) : '';
+
+        if (empty($code)) {
+            wp_send_json_error([
+                'type' => 'about:blank',
+                'title' => 'Missing params',
+                'detail' => 'Code is required',
+                'status' => 400,
+            ], 400);
+            return;
+        }
+
+        $response = ApiClient::redeemMembershipGift($api_key, $jwt, $code);
+
+        if (!is_wp_error($response)) {
+            $status = wp_remote_retrieve_response_code($response);
+            if ($status >= 200 && $status < 300) {
+                // So the page the widget reloads to already shows the recipient
+                // as a member. The gift is redeemed whatever this does, so a
+                // failure is logged and GRO's answer relayed as it is.
+                try {
+                    $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
+                    $this->updateMemberData($api_key, $jwt, $creatorSettings->creatorAccountId ?? null);
+                } catch (\Throwable $e) {
+                    Logger::debug('redeemMembershipGift member refresh failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        ApiClient::passResponseCode($response);
+    }
+
+    /**
+     * Writes the membership GRO's /followers/me reports for $jwt onto the
+     * visitor's WordPress user, through MemberService::createOrUpdateMember().
+     */
+    private function updateMemberData(string $api_key, string $jwt, ?string $creatorAccountId): void
+    {
+        $redirectUrl = $this->refererWithoutEventId();
+        $followerResponse = ApiClient::checkFollowerMembershipStatus($api_key, $jwt, $redirectUrl);
+
+        // Attempt to create or update a WP subscriber with metadata when API call succeeds
+        if (!is_wp_error($followerResponse)) {
+            $status = wp_remote_retrieve_response_code($followerResponse);
+            $_body = wp_remote_retrieve_body($followerResponse);
+            $body = is_string($_body) ? json_decode($_body, true) : $_body;
+
+
+            if ($status >= 200 && $status < 300 && is_array($body)) {
+                $resp_email = isset($body['email']) ? sanitize_email($body['email']) : '';
+                $subscription_status = isset($body['subscriptionStatus']) ? sanitize_text_field($body['subscriptionStatus']) : '';
+                $is_paid_member = isset($body['isPaidMember']) ? rest_sanitize_boolean($body['isPaidMember']) : '';
+                $is_past_due = isset($body['isPastDue']) ? rest_sanitize_boolean($body['isPastDue']) : '';
+                $subscription_management_link = isset($body['subscriptionManagementLink']) ? sanitize_text_field($body['subscriptionManagementLink']) : '';
+
+                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorAccountId, $jwt);
+            }
+        }
+    }
+
     /**
      * The page the visitor came from, without the GRO form event id.
      *
@@ -380,6 +523,76 @@ class PublicAjaxController
         return is_string($referer) && strpos($referer, 'gl_eid') !== false
             ? remove_query_arg('gl_eid', $referer)
             : $referer;
+    }
+
+    /**
+     * $_POST[$key], unslashed, when it is a string; else '' (a field posted
+     * as key[]=… is an array).
+     */
+    private static function postedString(string $key): string
+    {
+        $value = isset($_POST[$key]) ? wp_unslash($_POST[$key]) : '';
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * $text as the visitor typed it, trimmed, without invalid UTF-8 or
+     * control characters; on one line unless $multiline, which keeps line
+     * breaks (as "\n") and tabs.
+     *
+     * Not sanitize_text_field() or sanitize_textarea_field(): they make text
+     * safe to print as HTML, and GRO stores these values as they are and
+     * escapes them where it renders them. They would HTML-encode a bare "<",
+     * so "Love you <3" reached the recipient as "Love you &lt;3", and drop
+     * anything shaped like a tag or a %xx octet.
+     */
+    private static function plainText(string $text, bool $multiline): string
+    {
+        $text = (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_check_invalid_utf8($text));
+        $text = $multiline
+            ? str_replace(["\r\n", "\r"], "\n", $text)
+            : (string) preg_replace('/[\r\n\t ]+/', ' ', $text);
+
+        return trim($text);
+    }
+
+    /**
+     * $url when wp_validate_redirect() lets it through and it is an absolute
+     * http(s) URL, with no user name or password, on this site's own host
+     * (the Site Address's or the WordPress Address's); else ''.
+     *
+     * GRO keeps a gift's redirectUrl and builds the recipient's activation
+     * link and the buyer's receipt on it, so a foreign host would put someone
+     * else's link in an email sent in the creator's name.
+     * wp_validate_redirect() alone also passes a relative path, which GRO
+     * refuses with a 400, and any host an allowed_redirect_hosts filter adds.
+     */
+    private static function ownSiteUrl(string $url): string
+    {
+        $url = wp_validate_redirect(esc_url_raw($url), '');
+        $parts = $url !== '' ? wp_parse_url($url) : false;
+
+        return is_array($parts)
+            && isset($parts['scheme'], $parts['host'])
+            && in_array(strtolower($parts['scheme']), ['http', 'https'], true)
+            && $parts['host'] !== ''
+            && !isset($parts['user'])
+            && !isset($parts['pass'])
+            && in_array(strtolower($parts['host']), [self::hostOf(home_url()), self::hostOf(site_url())], true)
+            ? $url
+            : '';
+    }
+
+    /**
+     * $url's host, lowercased; '' for none. wp_parse_url() takes no
+     * component argument before WordPress 4.7.
+     */
+    private static function hostOf(string $url): string
+    {
+        $parts = wp_parse_url($url);
+
+        return is_array($parts) && isset($parts['host']) ? strtolower($parts['host']) : '';
     }
 
     function fetchPostGatingOptions()

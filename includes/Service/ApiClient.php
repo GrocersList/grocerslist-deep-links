@@ -345,6 +345,112 @@ class ApiClient
     }
 
     /**
+     * Buy a membership gift: creates the gift and a Stripe checkout session.
+     *
+     * Waits up to 15s: GRO makes up to three Stripe calls in a row before it
+     * answers, and giving up sooner would leave an unpaid gift and a Checkout
+     * session the buyer never sees.
+     *
+     * @param string $apiKey
+     * @param string $jwt
+     * @param string $recipientName
+     * @param string $recipientEmail
+     * @param string $recipientMessage
+     * @param int|null $termMonths Omitted from the request when null so the server default applies.
+     * @param string $redirectUrl
+     * @return array|\WP_Error
+     */
+    static function buyMembershipGift(string $apiKey, string $jwt, string $recipientName, string $recipientEmail, string $recipientMessage = '', ?int $termMonths = null, string $redirectUrl = '')
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        $body = [
+            'recipientName' => $recipientName,
+            'recipientEmail' => $recipientEmail,
+        ];
+        if ($recipientMessage !== '') {
+            $body['recipientMessage'] = $recipientMessage;
+        }
+        if ($termMonths !== null) {
+            $body['termMonths'] = $termMonths;
+        }
+        if ($redirectUrl !== '') {
+            $body['redirectUrl'] = $redirectUrl;
+        }
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/membership-gifts", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+                'Authorization' => $jwt ? "Bearer " . $jwt : null,
+            ],
+            'body' => wp_json_encode($body),
+            'timeout' => 15,
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * The buyer's read of their membership gift; includes the redemption code
+     * once payment settles. Waits up to 15s, as the other gift calls do.
+     *
+     * @param string $apiKey
+     * @param string $jwt
+     * @param string $membershipGiftId
+     * @return array|\WP_Error
+     */
+    static function getMembershipGift(string $apiKey, string $jwt, string $membershipGiftId)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        $response = wp_remote_get("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/membership-gifts/" . rawurlencode($membershipGiftId), [
+            'headers' => [
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+                'Authorization' => $jwt ? "Bearer " . $jwt : null,
+            ],
+            'timeout' => 15,
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * Redeem a membership gift code. The code goes in the POST body only —
+     * never a URL or a log line.
+     *
+     * Waits up to 15s: GRO asks Stripe whether the redeemer already
+     * subscribes before it grants the gift, and giving up sooner would show
+     * them an error for a gift they had just redeemed.
+     *
+     * @param string $apiKey
+     * @param string $jwt
+     * @param string $code
+     * @return array|\WP_Error
+     */
+    static function redeemMembershipGift(string $apiKey, string $jwt, string $code)
+    {
+        if (!$apiKey) return new \WP_Error('invalid_api_key', 'Invalid API key');
+
+        $response = wp_remote_post("https://" . Config::getApiBaseDomain() . "/api/v1/creator-api/followers/membership-gifts/redeem", [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $apiKey,
+                'x-gl-plugin-version' => Config::getPluginVersion(),
+                'Authorization' => $jwt ? "Bearer " . $jwt : null,
+            ],
+            'body' => wp_json_encode([
+                'code' => $code,
+            ]),
+            'timeout' => 15,
+        ]);
+
+        return $response;
+    }
+
+    /**
      * Clear the membership records for the given emails server-side.
      *
      * @param string $apiKey
