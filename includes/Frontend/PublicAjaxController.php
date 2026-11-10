@@ -173,13 +173,14 @@ class PublicAjaxController
                         $follower_account = isset($body['followerAccount']) ? $body['followerAccount'] : '';
                         $resp_email = isset($follower_account['email']) ? sanitize_email($follower_account['email']) : '';
                         $subscription_status = isset($follower_account['subscriptionStatus']) ? sanitize_text_field($follower_account['subscriptionStatus']) : '';
-                        $is_paid_member = isset($follower_account['isPaidMember']) ? rest_sanitize_boolean($follower_account['isPaidMember']) : '';
-                        $is_past_due = isset($follower_account['isPastDue']) ? rest_sanitize_boolean($follower_account['isPastDue']) : '';
+                        $is_paid_member = isset($follower_account['isPaidMember']) ? $this->memberFlag($follower_account['isPaidMember']) : '';
+                        $is_past_due = isset($follower_account['isPastDue']) ? $this->memberFlag($follower_account['isPastDue']) : '';
                         $subscription_management_link = isset($follower_account['subscriptionManagementLink']) ? sanitize_text_field($follower_account['subscriptionManagementLink']) : '';
                         $login_jwt = isset($body['token']) ? sanitize_text_field($body['token']) : '';
+                        list($membership_ends_at, $is_gift_membership) = $this->giftMemberFields($follower_account);
 
                         $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-                        $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $login_jwt);
+                        $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $login_jwt, $membership_ends_at, $is_gift_membership);
                     }
                 }
             }
@@ -227,13 +228,14 @@ class PublicAjaxController
                 $follower_account = isset($body['followerAccount']) ? $body['followerAccount'] : '';
                 $resp_email = isset($follower_account['email']) ? sanitize_email($follower_account['email']) : '';
                 $subscription_status = isset($follower_account['subscriptionStatus']) ? sanitize_text_field($follower_account['subscriptionStatus']) : '';
-                $is_paid_member = isset($follower_account['isPaidMember']) ? rest_sanitize_boolean($follower_account['isPaidMember']) : '';
-                $is_past_due = isset($follower_account['isPastDue']) ? rest_sanitize_boolean($follower_account['isPastDue']) : '';
+                $is_paid_member = isset($follower_account['isPaidMember']) ? $this->memberFlag($follower_account['isPaidMember']) : '';
+                $is_past_due = isset($follower_account['isPastDue']) ? $this->memberFlag($follower_account['isPastDue']) : '';
                 $subscription_management_link = isset($follower_account['subscriptionManagementLink']) ? sanitize_text_field($follower_account['subscriptionManagementLink']) : '';
                 $login_jwt = isset($body['token']) ? sanitize_text_field($body['token']) : '';
+                list($membership_ends_at, $is_gift_membership) = $this->giftMemberFields($follower_account);
 
                 $creatorSettings = $this->creatorSettingsFetcher->getCreatorSettings();
-                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $login_jwt);
+                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorSettings->creatorAccountId, $login_jwt, $membership_ends_at, $is_gift_membership);
             }
         }
 
@@ -479,13 +481,51 @@ class PublicAjaxController
             if ($status >= 200 && $status < 300 && is_array($body)) {
                 $resp_email = isset($body['email']) ? sanitize_email($body['email']) : '';
                 $subscription_status = isset($body['subscriptionStatus']) ? sanitize_text_field($body['subscriptionStatus']) : '';
-                $is_paid_member = isset($body['isPaidMember']) ? rest_sanitize_boolean($body['isPaidMember']) : '';
-                $is_past_due = isset($body['isPastDue']) ? rest_sanitize_boolean($body['isPastDue']) : '';
+                $is_paid_member = isset($body['isPaidMember']) ? $this->memberFlag($body['isPaidMember']) : '';
+                $is_past_due = isset($body['isPastDue']) ? $this->memberFlag($body['isPastDue']) : '';
                 $subscription_management_link = isset($body['subscriptionManagementLink']) ? sanitize_text_field($body['subscriptionManagementLink']) : '';
+                list($membership_ends_at, $is_gift_membership) = $this->giftMemberFields($body);
 
-                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorAccountId, $jwt);
+                $this->memberService->createOrUpdateMember($resp_email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $creatorAccountId, $jwt, $membership_ends_at, $is_gift_membership);
             }
         }
+    }
+
+    /**
+     * A GRO member flag (isPaidMember, isPastDue) as a bool.
+     * rest_sanitize_boolean() is WordPress 4.7+, so calling it on 4.4 to 4.6
+     * is a fatal error on every login, signup and refresh; there filter_var()
+     * reads GRO's JSON booleans the same way.
+     *
+     * @param mixed $value
+     */
+    private function memberFlag($value): bool
+    {
+        return function_exists('rest_sanitize_boolean')
+            ? rest_sanitize_boolean($value)
+            : filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * The gift fields of a GRO member (the /followers/me body, or
+     * followerAccount from /followers/login) as createOrUpdateMember() stores
+     * them: the ISO 8601 end of a gifted term or '', and a gift only on a JSON
+     * true, stricter than memberFlag() on purpose: nothing but GRO's own true
+     * offers a member the plans.
+     *
+     * @param mixed $member
+     * @return array{0: string, 1: bool}
+     */
+    private function giftMemberFields($member): array
+    {
+        if (!is_array($member)) {
+            return ['', false];
+        }
+
+        return [
+            MemberService::sanitizeMembershipEndsAt($member['membershipEndsAt'] ?? null),
+            ($member['isGiftMembership'] ?? false) === true,
+        ];
     }
 
     /**

@@ -131,7 +131,7 @@ EOD;
             $theme_data = json_decode( $theme_json_content, true );
         }
 
-        list($email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
+        list($email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, , $membership_ends_at, $is_gift_membership) = $this->memberService->getMemberData($creatorSettings->creatorAccountId);
 
         // Skip the gated-post-urls WP_Query work entirely when the creator hasn't
         // opted in — that setting is off for the vast majority of sites and the
@@ -162,6 +162,8 @@ EOD;
                 'isPastDue' => (bool) $is_past_due,
                 'subscriptionStatus' => $subscription_status ?: null,
                 'subscriptionManagementLink' => $subscription_management_link ?: null,
+                'membershipEndsAt' => $membership_ends_at ?: null,
+                'isGiftMembership' => (bool) $is_gift_membership,
             ]
         ];
 

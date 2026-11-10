@@ -12,6 +12,30 @@ class MemberService {
     protected $IS_PAST_DUE_METADATA_KEY = 'glIsPastDue';
     protected $SUBSCRIPTION_MANAGEMENT_LINK_METADATA_KEY = 'glSubscriptionManagementLink';
     protected $LAST_UPDATED = 'glLastUpdated';
+    protected $MEMBERSHIP_ENDS_AT_METADATA_KEY = 'glMembershipEndsAt';
+    protected $IS_GIFT_MEMBERSHIP_METADATA_KEY = 'glIsGiftMembership';
+
+    // What Date#toISOString() writes, with any UTC offset; no bare dates.
+    private const ISO_8601_DATE_TIME = '/\A(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?(Z|[+-]\d{2}:\d{2})\z/';
+
+    /**
+     * GRO's membershipEndsAt as the plugin stores it and hands it to the
+     * widget: an ISO 8601 date-time on a real calendar day, verbatim, or ''
+     * for anything else (null included).
+     *
+     * @param mixed $value
+     */
+    public static function sanitizeMembershipEndsAt($value): string {
+        if (
+            !is_string($value)
+            || !preg_match(self::ISO_8601_DATE_TIME, $value, $parts)
+            || !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
+        ) {
+            return '';
+        }
+
+        return $value;
+    }
 
     protected function _namespaceMetaDataKey(string $namespace, string $key): string {
         return $key . '-' . $namespace;
@@ -27,6 +51,8 @@ class MemberService {
         $is_past_due = false;
         $subscription_management_link = null;
         $last_updated = null;
+        $membership_ends_at = null;
+        $is_gift_membership = false;
 
         $current_user = wp_get_current_user();
 
@@ -38,9 +64,11 @@ class MemberService {
             $is_past_due = get_user_meta($current_user->ID, $this->_namespaceMetaDataKey($creator_id, $this->IS_PAST_DUE_METADATA_KEY), true);
             $subscription_management_link = get_user_meta($current_user->ID, $this->_namespaceMetaDataKey($creator_id, $this->SUBSCRIPTION_MANAGEMENT_LINK_METADATA_KEY), true);
             $last_updated = get_user_meta($current_user->ID, $this->_namespaceMetaDataKey($creator_id, $this->LAST_UPDATED), true);
+            $membership_ends_at = get_user_meta($current_user->ID, $this->_namespaceMetaDataKey($creator_id, $this->MEMBERSHIP_ENDS_AT_METADATA_KEY), true);
+            $is_gift_membership = get_user_meta($current_user->ID, $this->_namespaceMetaDataKey($creator_id, $this->IS_GIFT_MEMBERSHIP_METADATA_KEY), true);
         }
 
-        return [$email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $last_updated];
+        return [$email, $subscription_status, $is_paid_member, $is_past_due, $subscription_management_link, $last_updated, $membership_ends_at, $is_gift_membership];
     }
 
     public function getMemberData(string $creator_id = null) {
@@ -114,7 +142,7 @@ class MemberService {
         }
     }
 
-    public function createOrUpdateMember(string $email, string $subscription_status, bool $is_paid_member, bool $is_past_due, string $subscription_management_link, string $creator_id = null, string $jwt = null) {
+    public function createOrUpdateMember(string $email, string $subscription_status, bool $is_paid_member, bool $is_past_due, string $subscription_management_link, string $creator_id = null, string $jwt = null, string $membership_ends_at = '', bool $is_gift_membership = false) {
         $creator_id = $creator_id ?? '';
         if (!empty($email)) {
             Logger::debug("attempt to find user");
@@ -169,6 +197,8 @@ class MemberService {
                 update_user_meta($user->ID, $this->_namespaceMetaDataKey($creator_id, $this->IS_PAID_MEMBER_METADATA_KEY), $is_paid_member);
                 update_user_meta($user->ID, $this->_namespaceMetaDataKey($creator_id, $this->IS_PAST_DUE_METADATA_KEY), $is_past_due);
                 update_user_meta($user->ID, $this->_namespaceMetaDataKey($creator_id, $this->SUBSCRIPTION_MANAGEMENT_LINK_METADATA_KEY), $subscription_management_link);
+                update_user_meta($user->ID, $this->_namespaceMetaDataKey($creator_id, $this->MEMBERSHIP_ENDS_AT_METADATA_KEY), $membership_ends_at);
+                update_user_meta($user->ID, $this->_namespaceMetaDataKey($creator_id, $this->IS_GIFT_MEMBERSHIP_METADATA_KEY), $is_gift_membership);
                 update_user_meta($user->ID, $this->_namespaceMetaDataKey($creator_id, $this->LAST_UPDATED), time());
 
                 $this->login($email);
@@ -191,13 +221,34 @@ class MemberService {
         }
 
         if (is_user_logged_in()) {
-            list(, , , , , $last_updated) = $this->getMemberData($creator_id);
+            list(, , , , , $last_updated, $membership_ends_at) = $this->getMemberData($creator_id);
+            $last_updated = intval($last_updated);
+            $now = time();
             // One day in seconds
             $one_day = 86400;
 
-            return time() - intval($last_updated) > $one_day;
+            return $now - $last_updated > $one_day
+                || $this->_membershipEndedSince($membership_ends_at, $last_updated, $now);
         }
 
         return false;
+    }
+
+    /**
+     * Whether the stored membershipEndsAt has passed since $last_updated: the
+     * member is still stored as paid by a gift that is over. GRO stops sending
+     * the end once it has passed, so this costs one refresh. Comparing with
+     * $last_updated as well as $now keeps it at one whatever the refresh
+     * stores (an end past on this site's clock but not yet on GRO's would
+     * otherwise refresh every request), and only an end the sanitizer keeps
+     * counts: strtotime() alone reads "10 minutes ago" as one that just passed.
+     *
+     * @param mixed $membership_ends_at
+     */
+    protected function _membershipEndedSince($membership_ends_at, int $last_updated, int $now): bool {
+        $ends_at = self::sanitizeMembershipEndsAt($membership_ends_at);
+        $ends_at = $ends_at === '' ? false : strtotime($ends_at);
+
+        return $ends_at !== false && $last_updated <= $ends_at && $ends_at < $now;
     }
 }

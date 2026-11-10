@@ -21,6 +21,8 @@ class WpUserCleanupService
     private const META_IS_PAST_DUE = 'glIsPastDue';
     private const META_SUBSCRIPTION_MANAGEMENT_LINK = 'glSubscriptionManagementLink';
     private const META_LAST_UPDATED = 'glLastUpdated';
+    private const META_MEMBERSHIP_ENDS_AT = 'glMembershipEndsAt';
+    private const META_IS_GIFT_MEMBERSHIP = 'glIsGiftMembership';
 
     private CreatorSettingsFetcher $creatorSettingsFetcher;
 
@@ -196,6 +198,8 @@ class WpUserCleanupService
             self::META_IS_PAST_DUE . $suffix,
             self::META_SUBSCRIPTION_MANAGEMENT_LINK . $suffix,
             self::META_LAST_UPDATED . $suffix,
+            self::META_MEMBERSHIP_ENDS_AT . $suffix,
+            self::META_IS_GIFT_MEMBERSHIP . $suffix,
         ];
 
         foreach ($keys as $key) {
