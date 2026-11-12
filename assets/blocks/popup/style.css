@@ -27,6 +27,11 @@
  *                         the picture (popup.image, at popup.imageUrl): the
  *                         creator's profile photo, their logo, or none (as
  *                         when the one picked has no URL)
+ *   --sharp               square corners: the popup's form draws them
+ *                         (design.corners "sharp"; the form sheet's --sharp,
+ *                         which the form carries too, for its inputs and
+ *                         button). The card, the banner's top corners and a
+ *                         phone's sheet are square
  *   --theme-pair          the theme's palette has both a base and a contrast
  *                         colour, as on the popup's form (the form sheet's
  *                         --theme-pair): its rule reads them into
@@ -373,6 +378,13 @@ html.gl-popup-open {
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
     border-radius: 16px 16px 0 0;
   }
+}
+
+/* Square corners (the header's --sharp). Two classes, past the card's own
+   rule and the phone's sheet's, and after the banner's, which is as deep. */
+.gl-popup--sharp .gl-popup__card,
+.gl-popup--sharp .gl-popup__banner {
+  border-radius: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -52,6 +52,12 @@
  *                         white with near-black text and the badge
  *                         near-black with a white lock, or the theme's base
  *                         and contrast with --theme-pair
+ *   --sharp               square corners: the gate's form draws them
+ *                         (design.corners "sharp" on a content gate's form,
+ *                         or on a boxed one; the form sheet's --sharp, which
+ *                         the form carries too). On the card, not .gl-gate:
+ *                         the block editor draws the card with no .gl-gate
+ *                         round it
  * .gl-gate__badge         the lock over the card's top edge
  * .gl-gate__teaser        the sentence above the form
  *
@@ -530,6 +536,12 @@ li:nth-child(3n) > .gl-gate__line:only-child {
     padding-left: 1em;
     border-radius: 14px;
   }
+}
+
+/* Square corners (the header's --sharp), a phone's included: two classes,
+   past the card's one in both rules. */
+.gl-gate__card.gl-gate__card--sharp {
+  border-radius: 0;
 }
 
 @media (forced-colors: active) {

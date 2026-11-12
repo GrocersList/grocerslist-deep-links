@@ -204,7 +204,7 @@ class PopupRenderer
 
     /**
      * @param array<string, mixed> $config
-     * @param array{name: string, colors: array<string, string>, titleId: string} $frame FormRenderer::popupForm()
+     * @param array{name: string, colors: array<string, string>, titleId: string, sharp: bool} $frame FormRenderer::popupForm()
      */
     private static function dialog(array $config, array $frame, string $form): string
     {
@@ -230,6 +230,7 @@ class PopupRenderer
         }
 
         return '<dialog class="gl-popup' . ($banner !== '' ? ' gl-popup--banner' : '') . ' gl-popup--image-' . $slug
+            . ($frame['sharp'] ? ' gl-popup--sharp' : '')
             . (ThemePalette::hasBaseAndContrast() ? ' gl-popup--theme-pair' : '') . '"'
             . ' id="gl-popup-' . esc_attr($hash) . '" hidden'
             . ' data-gl-popup="' . esc_attr($hash . '.' . $version) . '"'

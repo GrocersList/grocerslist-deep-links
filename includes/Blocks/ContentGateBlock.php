@@ -273,7 +273,7 @@ class ContentGateBlock
 
         $html = '<div ' . self::wrapperAttributes($attrs, $gateId, $postId, $preview) . '>'
             . '<div class="gl-gate__preview" aria-hidden="true" inert>' . GatePreview::render(self::parsedBlock($block)) . '</div>'
-            . '<div class="gl-gate__overlay"><div class="gl-gate__card"' . self::cardStyle($form) . '>'
+            . '<div class="gl-gate__overlay"><div class="' . self::cardClass($form) . '"' . self::cardStyle($form) . '>'
             . '<span class="gl-gate__badge">' . self::lock('') . '</span>';
 
         if ($teaser !== '') {
@@ -345,10 +345,22 @@ class ContentGateBlock
     }
 
     /**
+     * The card's classes: square corners when the gate's form draws them
+     * (FormRenderer::gateForm()). On the card rather than the gate, since the
+     * block editor draws the card with no .gl-gate round it.
+     *
+     * @param array{name: string, colors: array<string, string>, sharp: bool}|null $form
+     */
+    private static function cardClass(?array $form): string
+    {
+        return $form !== null && $form['sharp'] ? 'gl-gate__card gl-gate__card--sharp' : 'gl-gate__card';
+    }
+
+    /**
      * The card's style: the gate form's brand colours, as the form has them,
      * so the card and its badge wear them too.
      *
-     * @param array{name: string, colors: array<string, string>}|null $form
+     * @param array{name: string, colors: array<string, string>, sharp: bool}|null $form
      */
     private static function cardStyle(?array $form): string
     {
@@ -642,7 +654,7 @@ class ContentGateBlock
      * content-gate or signup form). Only an editor's view asks GRO for that
      * last one.
      *
-     * @param array{name: string, colors: array<string, string>}|null $form
+     * @param array{name: string, colors: array<string, string>, sharp: bool}|null $form
      */
     private static function editorNotice(bool $connected, string $gateId, string $formId, ?array $form): string
     {

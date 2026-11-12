@@ -12,6 +12,13 @@
  *                                                   (assets/blocks/popup)
  *   --stacked | --inline | --split | --compact     design.layout
  *   --boxed | --plain                               design.appearance
+ *   --sharp     square corners: design.corners is "sharp" on a boxed form,
+ *               or on a popup's or a content gate's form whatever its
+ *               appearance (their cards are always drawn). Its rule sets the
+ *               corner settings below to 0; the popup's and the gate's cards
+ *               square under their own --sharp. Never on a plain signup or
+ *               Save to Email form, whose toggle GRO hides, nor without the
+ *               key or with another value: those are rounded, as before
  *   --icon                                          design.showIcon
  *   --banner    the form has a banner (design.bannerUrl), the creator's own
  *               image across its top
@@ -118,8 +125,11 @@
  * (assets/blocks/popup, assets/blocks/content-gate), so they win wherever
  * their sheet lands. blocks/tests/theme-proof.test.ts holds the three
  * sheets to this; blocks/tests/harness/hostile.html shows the forms under a
- * hostile theme. The box, the inputs and the spacing can be tuned through
- * the --gl-form-* custom properties below.
+ * hostile theme. The box, the inputs, the button and the spacing can be
+ * tuned through the --gl-form-* custom properties below; the corners
+ * through --gl-form-radius (the box and a boxed form's banner, 12px),
+ * --gl-form-input-radius (the inputs, 6px) and --gl-form-button-radius (the
+ * button, 6px), which --sharp sets to 0.
  *
  * Within this sheet, a layout's or a modifier's rule is mostly as deep as
  * the rule it changes and wins by coming after it: --boxed's box before
@@ -178,6 +188,15 @@
 
 .gl-form.gl-form--boxed.gl-form--compact {
   padding: var(--gl-form-padding, 0.625em 0.75em);
+}
+
+/* Square corners (the header's --sharp): the box, a boxed form's banner, the
+   inputs and the button read these. Three classes, so a theme's own setting
+   on the form does not round them again. */
+.gl-form.gl-form.gl-form--sharp {
+  --gl-form-radius: 0;
+  --gl-form-input-radius: 0;
+  --gl-form-button-radius: 0;
 }
 
 /* Whatever a theme gives forms: a margin, a box, a type size. */
@@ -501,7 +520,7 @@
   overflow: visible;
   border: 1px solid
     var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
-  border-radius: 6px;
+  border-radius: var(--gl-form-button-radius, 6px);
   outline: none;
   background: var(--gl-form-accent, var(--gl-form-theme-contrast, #1e1e1e));
   box-shadow: none;

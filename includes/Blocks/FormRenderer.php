@@ -30,6 +30,7 @@ class FormRenderer
 
     private const LAYOUTS = ['stacked', 'inline', 'split', 'compact'];
     private const APPEARANCES = ['boxed', 'plain'];
+    private const CORNERS = ['rounded', 'sharp'];
 
     /** design.image => the picture's modifier, gl-form--image-<slug>. */
     private const IMAGE_SLUGS = [
@@ -168,12 +169,13 @@ class FormRenderer
 
     /**
      * What a content gate shows of its form besides the form: its name, for
-     * the marker editors see where the gate starts, and its brand colours
-     * (the custom properties the form's wrapper gets), which the gate's card
-     * takes on. Null when the form cannot show (gateFormResolves()). Renders
-     * and loads nothing.
+     * the marker editors see where the gate starts, its brand colours (the
+     * custom properties the form's wrapper gets), which the gate's card
+     * takes on, and whether the form draws square corners (drawsSharp()),
+     * which the card then draws too. Null when the form cannot show
+     * (gateFormResolves()). Renders and loads nothing.
      *
-     * @return array{name: string, colors: array<string, string>}|null
+     * @return array{name: string, colors: array<string, string>, sharp: bool}|null
      */
     public function gateForm(string $formId): ?array
     {
@@ -186,6 +188,7 @@ class FormRenderer
         return [
             'name'   => isset($config['name']) && is_string($config['name']) ? trim($config['name']) : '',
             'colors' => $form['colors'],
+            'sharp'  => self::drawsSharp($form),
         ];
     }
 
@@ -231,12 +234,13 @@ class FormRenderer
 
     /**
      * What the popup shows of its form besides the form, as gateForm() does
-     * for a gate: its name, its brand colours and the id of its heading ('' when
-     * it has none). Null when $config is not a popup's form that can show.
-     * Renders and loads nothing.
+     * for a gate: its name, its brand colours, the id of its heading ('' when
+     * it has none) and whether it draws square corners (drawsSharp()). Null
+     * when $config is not a popup's form that can show. Renders and loads
+     * nothing.
      *
      * @param array<string, mixed> $config
-     * @return array{name: string, colors: array<string, string>, titleId: string}|null
+     * @return array{name: string, colors: array<string, string>, titleId: string, sharp: bool}|null
      */
     public function popupForm(array $config): ?array
     {
@@ -249,6 +253,7 @@ class FormRenderer
             'name'    => isset($config['name']) && is_string($config['name']) ? trim($config['name']) : '',
             'colors'  => $form['colors'],
             'titleId' => $form['heading'] !== '' ? self::popupTitleId($form['hash']) : '',
+            'sharp'   => self::drawsSharp($form),
         ];
     }
 
@@ -500,6 +505,10 @@ class FormRenderer
             'appearance'       => in_array($design['appearance'] ?? null, self::APPEARANCES, true)
                 ? $design['appearance']
                 : $defaults['appearance'],
+            // GRO sends design.corners only for "sharp": a config without it
+            // (every form before the toggle, and every copy cached since), or
+            // with a value GRO has no word for, is rounded, as before.
+            'corners'          => in_array($design['corners'] ?? null, self::CORNERS, true) ? $design['corners'] : 'rounded',
             'showIcon'         => !empty($design['showIcon']),
             'banner'           => $header ? self::imageUrl($design['bannerUrl'] ?? null) : '',
             'picture'          => $header ? self::picture($design) : null,
@@ -513,6 +522,24 @@ class FormRenderer
             'redirectUrl'      => $kind === 'CONTENT_GATE' ? '' : self::redirectUrl($design['redirectUrl'] ?? null),
             'colors'           => $useBrandColors ? self::brandColors($design, $brand) : [],
         ];
+    }
+
+    /**
+     * Whether the form draws its corners square: design.corners is "sharp"
+     * and the form has a box to square, being boxed, or a popup's or a
+     * content gate's (their cards are drawn whatever the appearance). A plain
+     * signup or Save to Email form has none, so GRO hides the toggle there,
+     * and "sharp" draws nothing on one. The wrapper's gl-form--sharp, the
+     * popup's gl-popup--sharp and the gate card's gl-gate__card--sharp all
+     * follow it, as the block editor's preview does
+     * (blocks/src/form/config.ts, drawsSharp()).
+     *
+     * @param array<string, mixed> $form normalize()'s
+     */
+    private static function drawsSharp(array $form): bool
+    {
+        return $form['corners'] === 'sharp'
+            && ($form['appearance'] === 'boxed' || $form['kind'] === 'POPUP' || $form['kind'] === 'CONTENT_GATE');
     }
 
     /**
@@ -711,6 +738,7 @@ class FormRenderer
         $classes = 'gl-form gl-form--' . self::KIND_SLUGS[$form['kind']]
             . ' gl-form--' . $form['layout']
             . ' gl-form--' . $form['appearance']
+            . (self::drawsSharp($form) ? ' gl-form--sharp' : '')
             . ($form['showIcon'] ? ' gl-form--icon' : '')
             . ($form['banner'] !== '' ? ' gl-form--banner' : '')
             . ($form['picture'] !== null ? ' gl-form--image-' . $form['picture']['slug'] : '')

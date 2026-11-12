@@ -21,6 +21,8 @@ export interface FormConfig {
     collectFirstName?: boolean;
     layout?: string;
     appearance?: string;
+    // Sent only for "sharp": without it, or with another value, rounded.
+    corners?: string;
     showIcon?: boolean;
     useBrandColors?: boolean;
     accentColor?: string | null;
@@ -66,6 +68,9 @@ export interface Preview {
   collectFirstName: boolean;
   compact: boolean;
   showIcon: boolean;
+  // Square corners (drawsSharp()): gl-form--sharp on the form, and the
+  // content gate's card's gl-gate__card--sharp.
+  sharp: boolean;
   // The banner's URL ('' for none), and the picture's modifier
   // (gl-form--image-<slug>) and URL.
   banner: string;
@@ -120,6 +125,19 @@ const textOn = (hex: string): string => {
 
 const text = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim() !== '' ? value.trim() : fallback;
+
+// FormRenderer::drawsSharp(), given the form's appearance as read (its
+// kind's default for none): "sharp" on a form with a box to square, a boxed
+// one or a popup's or a content gate's, whose cards are always drawn. A
+// popup's kind is no Kind here, as the editor never previews one, but the
+// rule is the renderer's whole.
+export const drawsSharp = (
+  corners: unknown,
+  appearance: string,
+  kind: Kind | 'POPUP'
+): boolean =>
+  corners === 'sharp' &&
+  (appearance === 'boxed' || kind === 'POPUP' || kind === 'CONTENT_GATE');
 
 // FormRenderer::IMAGE_SLUGS.
 const imageSlug = (image: unknown): string => {
@@ -212,6 +230,7 @@ export const toPreview = (config: FormConfig, inGate = false): Preview => {
         : 'plain';
   const style = brandStyle(config);
   const showIcon = Boolean(design.showIcon);
+  const sharp = drawsSharp(design.corners, appearance, config.kind);
   const header = !inGate && !gate;
   const banner = header ? imageUrl(design.bannerUrl) : '';
   const picture = header ? pictureOf(design) : null;
@@ -223,6 +242,7 @@ export const toPreview = (config: FormConfig, inGate = false): Preview => {
       `gl-form--${KIND_SLUGS[config.kind]}`,
       `gl-form--${layout}`,
       `gl-form--${appearance}`,
+      sharp ? 'gl-form--sharp' : '',
       showIcon ? 'gl-form--icon' : '',
       banner ? 'gl-form--banner' : '',
       picture ? `gl-form--image-${picture.slug}` : '',
@@ -252,6 +272,7 @@ export const toPreview = (config: FormConfig, inGate = false): Preview => {
     collectFirstName: Boolean(design.collectFirstName),
     compact: layout === 'compact',
     showIcon,
+    sharp,
     banner,
     picture,
     optIn: design.optIn?.show

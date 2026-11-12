@@ -243,7 +243,12 @@ const Edit = ({
   let card: JSX.Element;
   if (config && preview) {
     card = (
-      <div className="gl-gate__card" style={preview.style}>
+      <div
+        className={
+          preview.sharp ? 'gl-gate__card gl-gate__card--sharp' : 'gl-gate__card'
+        }
+        style={preview.style}
+      >
         <span className="gl-gate__badge">
           <Icon kind="CONTENT_GATE" className="" />
         </span>
