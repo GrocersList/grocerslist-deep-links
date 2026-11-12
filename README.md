@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 7.1
-Stable tag: 1.33.0
+Stable tag: 1.34.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -188,3 +188,11 @@ Send one-off emails to your subscribers, or set up sequences that go out automat
 
 - [Creator Terms of Service](https://gro.co/creator-tos)
 - [Privacy Policy](https://gro.co/privacy)
+
+#### - 11/12/2026 - 1.34.0 - Membership gifts and GRO Forms sharp corners
+
+- Membership gifts: fans can buy a membership as a gift for someone else, delivered right away or on a date they pick, and the recipient redeems it from a link on your site. Gifting stays off until you turn it on in GRO.
+- A member whose access is a gift can keep their membership before the gift ends, without being charged until it does.
+- Fix: member sign-up, login and membership refresh no longer fail on WordPress 4.4 to 4.6.
+- GRO Forms: a form's button colors now come from your GRO brand colors. Breaking: a `grocerslist_form_config` filter that set only `design.accentColor` must set `brand.accent` (and `brand.buttonText`) instead.
+- GRO Forms: sharp corners on the form, the popup card and the content-gate card, when you turn them on in GRO.
