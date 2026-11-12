@@ -184,6 +184,10 @@ const pictureOf = (
   return url ? { slug, url } : null;
 };
 
+// FormRenderer::brandColors(): GRO resolves the button's fill and its label
+// into brand, so the fill is brand.accent (design.accentColor only for a
+// brand without one) and the label brand.buttonText, else whichever of black
+// and white reads on the fill.
 const brandStyle = (config: FormConfig): Record<string, string> | undefined => {
   const design = config.design || {};
   const brand = config.brand || {};
@@ -191,12 +195,11 @@ const brandStyle = (config: FormConfig): Record<string, string> | undefined => {
     return undefined;
   }
 
-  const ownAccent = hexColor(design.accentColor);
-  const accent = ownAccent || hexColor(brand.accent);
-  const buttonText = ownAccent ? '' : hexColor(brand.buttonText);
+  const accent = hexColor(brand.accent) || hexColor(design.accentColor);
   const colors: Record<string, string> = {
     '--gl-form-accent': accent,
-    '--gl-form-accent-text': buttonText || (accent ? textOn(accent) : ''),
+    '--gl-form-accent-text':
+      hexColor(brand.buttonText) || (accent ? textOn(accent) : ''),
     '--gl-form-background': hexColor(brand.background),
     '--gl-form-text': hexColor(brand.text),
   };

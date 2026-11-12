@@ -32,12 +32,12 @@
  *               any form in a content gate, which shows neither
  *   --brand     brand colours are on (design.useBrandColors). The wrapper's
  *               style attribute then sets --gl-form-accent (the button and
- *               the icon; design.accentColor when set, else brand.accent),
+ *               the icon; brand.accent, else design.accentColor),
  *               --gl-form-accent-text (the button's text),
  *               --gl-form-background and --gl-form-text (a boxed form's
  *               colours). --gl-form-accent-text is brand.buttonText on
- *               brand.accent, and otherwise (on design.accentColor, or
- *               when brand.buttonText is null or not hex) #fff when
+ *               either fill, and otherwise (when brand.buttonText is null,
+ *               absent or not hex) #fff when
  *               1.05 / (L + 0.05) >= (L + 0.05) / 0.05, else #000, L being
  *               the accent's WCAG 2 relative luminance: #fff up to about
  *               L = 0.1791 (docs/FORMS.md has the whole formula). Without

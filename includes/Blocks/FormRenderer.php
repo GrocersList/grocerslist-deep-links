@@ -698,14 +698,16 @@ class FormRenderer
 
     /**
      * The brand colours as custom properties for the wrapper's style. GRO
-     * resolves brand.accent to the form's fill: the form's own accent colour
-     * when set, else the palette's primary (the colour the creator's email
-     * buttons use), and sends brand.buttonText only for that primary fill
-     * (the label picked for it in GRO's palette). Here the form's own accent,
-     * when it is a hex colour, replaces the brand accent, and the button's text is the
-     * brand's button text colour when the fill is the brand accent, and
-     * otherwise whichever of black and white reads on the fill: a palette
-     * from before the button-text swatch sends none.
+     * resolves the button's fill and its label into brand, so both are drawn
+     * as it sends them. brand.accent is the fill: the form's own accent
+     * colour when it has one, else the palette's primary (the colour the
+     * creator's email buttons use); design.accentColor stands in only for a
+     * brand without one. brand.buttonText is the label: the form's own button
+     * text colour when the creator picked one, else, on the palette's
+     * primary, the label picked for it in GRO's palette. Without one, as on a
+     * fill of the form's own with no label picked or from a palette older
+     * than the button-text swatch, the label is whichever of black and white
+     * reads on the fill.
      *
      * @param array<string, mixed> $design
      * @param array<string, mixed> $brand
@@ -713,9 +715,8 @@ class FormRenderer
      */
     private static function brandColors(array $design, array $brand): array
     {
-        $ownAccent = self::hexColor($design['accentColor'] ?? null);
-        $accent = $ownAccent !== '' ? $ownAccent : self::hexColor($brand['accent'] ?? null);
-        $accentText = $ownAccent === '' ? self::hexColor($brand['buttonText'] ?? null) : '';
+        $accent = self::hexColor($brand['accent'] ?? null) ?: self::hexColor($design['accentColor'] ?? null);
+        $accentText = self::hexColor($brand['buttonText'] ?? null);
         if ($accentText === '' && $accent !== '') {
             $accentText = self::textOn($accent);
         }
