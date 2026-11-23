@@ -3,7 +3,7 @@ Contributors: grocerslist
 Requires at least: 4.4
 Author: GRO Holdings, Inc
 Tested up to: 7.1
-Stable tag: 1.34.0
+Stable tag: 1.34.1
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0
@@ -196,3 +196,7 @@ Send one-off emails to your subscribers, or set up sequences that go out automat
 - Fix: member sign-up, login and membership refresh no longer fail on WordPress 4.4 to 4.6.
 - GRO Forms: a form's button colors now come from your GRO brand colors. Breaking: a `grocerslist_form_config` filter that set only `design.accentColor` must set `brand.accent` (and `brand.buttonText`) instead.
 - GRO Forms: sharp corners on the form, the popup card and the content-gate card, when you turn them on in GRO.
+
+#### - 11/23/2026 - 1.34.1 - Memberships work with JavaScript optimizers
+
+- Fix: members-only gating, the membership bar and the join drawer work again on sites that minify, combine, defer or delay JavaScript with WP Rocket, LiteSpeed Cache, Autoptimize, Perfmatters or SiteGround Optimizer. These optimizers now leave GRO's membership scripts alone.
