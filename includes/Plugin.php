@@ -22,6 +22,7 @@ use GrocersList\Blocks\Stylesheets;
 use GrocersList\Frontend\ClientScripts;
 use GrocersList\Frontend\EmailVerificationPage;
 use GrocersList\Frontend\PublicAjaxController;
+use GrocersList\Frontend\ScriptOptimizers;
 use GrocersList\Frontend\WprmPrintIntegration;
 use GrocersList\Rest\FormsController;
 use GrocersList\Rest\GateController;
@@ -113,6 +114,10 @@ class Plugin
 
         $clientScripts = new ClientScripts($creatorSettingsFetcher, $memberService);
         $clientScripts->register();
+
+        // Keeps the JS optimizers off the widget's script and the client bundle.
+        $scriptOptimizers = new ScriptOptimizers($clientScripts);
+        $scriptOptimizers->register();
 
         $wprmPrintIntegration = new WprmPrintIntegration($creatorSettingsFetcher, $clientScripts);
         $wprmPrintIntegration->register();
